@@ -23,6 +23,10 @@ generate glsl.zig
 > zig build shaders
 ```
 
+require
+
+https://github.com/floooh/sokol-tools-bin
+
 #### Web Builds
 
 TODO:
