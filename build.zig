@@ -15,6 +15,11 @@ const examples = [_]struct {
         .root_source = "src/1-4-hello-triangle/1-triangle.zig",
         .shader = "src/1-4-hello-triangle/1-triangle.glsl",
     },
+    .{
+        .name = "1-4-2-quad",
+        .root_source = "src/1-4-hello-triangle/2-quad.zig",
+        .shader = "src/1-4-hello-triangle/2-quad.glsl",
+    },
 };
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
@@ -22,6 +27,7 @@ const examples = [_]struct {
 fn buildShader(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
+    shdc_step: *std.Build.Step,
     comptime sokol_tools_bin_dir: []const u8,
     comptime shader: []const u8,
 ) void {
@@ -36,7 +42,6 @@ fn buildShader(
         return;
     }
     const shdc_path = sokol_tools_bin_dir ++ optional_shdc.?;
-    const shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)");
     const glsl = if (target.result.isDarwin()) "glsl410" else "glsl430";
     const slang = glsl ++ ":metal_macos:hlsl5:glsl300es:wgsl";
     const cmd = b.addSystemCommand(&.{
@@ -73,6 +78,7 @@ pub fn build(b: *std.Build) void {
         exe.root_module.addImport("sokol", dep_sokol.module("sokol"));
     }
 
+    const shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)");
     inline for (examples) |example| {
         const exe = b.addExecutable(.{
             .target = target,
@@ -83,7 +89,7 @@ pub fn build(b: *std.Build) void {
         b.installArtifact(exe);
         exe.root_module.addImport("sokol", dep_sokol.module("sokol"));
         if (example.shader) |shader| {
-            buildShader(b, target, "../../floooh/sokol-tools-bin/bin/", shader);
+            buildShader(b, target, shdc_step, "../../floooh/sokol-tools-bin/bin/", shader);
         }
     }
 }
