@@ -10,11 +10,22 @@ pub fn build(b: *std.Build) void {
     });
 
     const exe = b.addExecutable(.{
-        .name = "learnopengl-examples",
-        .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
+        .name = "learnopengl-examples",
+        .root_source_file = b.path("src/main.zig"),
     });
-    exe.root_module.addImport("sokol", dep_sokol.module("sokol"));
     b.installArtifact(exe);
+    exe.root_module.addImport("sokol", dep_sokol.module("sokol"));
+
+    {
+        const example = b.addExecutable(.{
+            .target = target,
+            .optimize = optimize,
+            .name = "1-3-hello-window",
+            .root_source_file = b.path("src/1-3-hello-window/1-rendering.zig"),
+        });
+        b.installArtifact(example);
+        example.root_module.addImport("sokol", dep_sokol.module("sokol"));
+    }
 }
