@@ -6,76 +6,69 @@ const slog = sokol.log;
 const sg = sokol.gfx;
 const sapp = sokol.app;
 const sglue = sokol.glue;
+const shader = @import("1-triangle.glsl.zig");
 
-// #include "sokol_app.h"
-// #include "sokol_gfx.h"
-// #include "sokol_glue.h"
-// #include "1-triangle.glsl.h"
-//
-// /* application state */
-// static struct {
-//     sg_pipeline pip;
-//     sg_bindings bind;
-//     sg_pass_action pass_action;
-// } state;
+// application state
+const state = struct {
+    var pip: sg.Pipeline = .{};
+    var bind: sg.Bindings = .{};
+    var pass_action: sg.PassAction = .{};
+};
 
 export fn init() void {
     sg.setup(.{ .environment = sglue.environment() });
 
     // create shader from code-generated sg_shader_desc
-    // const shd = sg.makeShader(shd.Desc(sg.queryBackend));
-    // _ = shd;
+    const shd = sg.makeShader(shader.simpleShaderDesc(sg.queryBackend()));
 
-    //     /* a vertex buffer with 3 vertices */
-    //     float vertices[] = {
-    //         // positions
-    //         -0.5f, -0.5f, 0.0f,     // bottom left
-    //         0.5f, -0.5f, 0.0f,      // bottom right
-    //         0.0f,  0.5f, 0.0f       // top
-    //     };
-    //     state.bind.vertex_buffers[0] = sg_make_buffer(&(sg_buffer_desc){
-    //         .size = sizeof(vertices),
-    //         .data = SG_RANGE(vertices),
-    //         .label = "triangle-vertices"
-    //     });
-    //
-    //     /* create a pipeline object (default render states are fine for triangle) */
-    //     state.pip = sg_make_pipeline(&(sg_pipeline_desc){
-    //         .shader = shd,
-    //         /* if the vertex layout doesn't have gaps, don't need to provide strides and offsets */
-    //         .layout = {
-    //             .attrs = {
-    //                 [ATTR_vs_position].format = SG_VERTEXFORMAT_FLOAT3
-    //             }
-    //         },
-    //         .label = "triangle-pipeline"
-    //     });
-    //
-    //     /* a pass action to clear framebuffer */
-    //     state.pass_action = (sg_pass_action) {
-    //         .colors[0] = { .load_action=SG_LOADACTION_CLEAR, .clear_value={0.2f, 0.3f, 0.3f, 1.0f} }
-    //     };
+    // a vertex buffer with 3 vertices
+    const vertices = [_]f32{
+        // positions
+        -0.5, -0.5, 0.0, // bottom left
+        0.5, -0.5, 0.0, // bottom right
+        0.0, 0.5, 0.0, // top
+    };
+    state.bind.vertex_buffers[0] = sg.makeBuffer(.{
+        .size = @sizeOf(@TypeOf(vertices)),
+        .data = sg.asRange(&vertices),
+        .label = "triangle-vertices",
+    });
+
+    // create a pipeline object (default render states are fine for triangle)
+    var pip_desc: sg.PipelineDesc = .{
+        .shader = shd,
+        // if the vertex layout doesn't have gaps, don't need to provide strides and offsets
+        .label = "triangle-pipeline",
+    };
+    pip_desc.layout.attrs[shader.ATTR_vs_position].format = .FLOAT3;
+    state.pip = sg.makePipeline(pip_desc);
+
+    // a pass action to clear framebuffer
+    state.pass_action.colors[0] = .{
+        .load_action = .CLEAR,
+        .clear_value = .{ .r = 0.2, .g = 0.3, .b = 0.3, .a = 1.0 },
+    };
 }
 
 export fn frame() void {
-    //     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
-    //     sg_apply_pipeline(state.pip);
-    //     sg_apply_bindings(&state.bind);
-    //     sg_draw(0, 3, 1);
-    //     sg_end_pass();
-    //     sg_commit();
+    sg.beginPass(.{ .action = state.pass_action, .swapchain = sglue.swapchain() });
+    sg.applyPipeline(state.pip);
+    sg.applyBindings(state.bind);
+    sg.draw(0, 3, 1);
+    sg.endPass();
+    sg.commit();
 }
 
 export fn cleanup() void {
-    //     sg_shutdown();
+    sg.shutdown();
 }
 
-export fn event(_: [*c]const sapp.Event) void {
-    //     if (e->type == SAPP_EVENTTYPE_KEY_DOWN) {
-    //         if (e->key_code == SAPP_KEYCODE_ESCAPE) {
-    //             sapp_request_quit();
-    //         }
-    //     }
+export fn event(e: [*c]const sapp.Event) void {
+    if (e.*.type == .KEY_DOWN) {
+        if (e.*.key_code == .ESCAPE) {
+            sapp.requestQuit();
+        }
+    }
 }
 
 pub fn main() void {
