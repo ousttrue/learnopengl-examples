@@ -20,6 +20,11 @@ const examples = [_]struct {
         .root_source = "src/1-4-hello-triangle/2-quad.zig",
         .shader = "src/1-4-hello-triangle/2-quad.glsl",
     },
+    .{
+        .name = "1-4-3-quad-wireframe",
+        .root_source = "src/1-4-hello-triangle/3-quad-wireframe.zig",
+        .shader = "src/1-4-hello-triangle/3-quad-wireframe.glsl",
+    },
 };
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
