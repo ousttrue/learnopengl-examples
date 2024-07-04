@@ -30,6 +30,11 @@ const examples = [_]struct {
         .root_source = "src/1-5-shaders/1-in-out.zig",
         .shader = "src/1-5-shaders/1-in-out.glsl",
     },
+    .{
+        .name = "1-5-2-uniforms",
+        .root_source = "src/1-5-shaders/2-uniforms.zig",
+        .shader = "src/1-5-shaders/2-uniforms.glsl",
+    },
 };
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
