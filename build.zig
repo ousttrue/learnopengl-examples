@@ -50,6 +50,11 @@ const examples = [_]struct {
         .root_source = "src/1-6-textures/2-texture-blend.zig",
         .shader = "src/1-6-textures/2-texture-blend.glsl",
     },
+    .{
+        .name = "1-6-3-multiple-textures",
+        .root_source = "src/1-6-textures/3-multiple-textures.zig",
+        .shader = "src/1-6-textures/3-multiple-textures.glsl",
+    },
 };
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
