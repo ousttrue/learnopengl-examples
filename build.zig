@@ -45,6 +45,11 @@ const examples = [_]struct {
         .root_source = "src/1-6-textures/1-texture.zig",
         .shader = "src/1-6-textures/1-texture.glsl",
     },
+    .{
+        .name = "1-6-2-texture-blend",
+        .root_source = "src/1-6-textures/2-texture-blend.zig",
+        .shader = "src/1-6-textures/2-texture-blend.glsl",
+    },
 };
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
@@ -103,6 +108,13 @@ pub fn build(b: *std.Build) void {
         exe.root_module.addImport("sokol", dep_sokol.module("sokol"));
     }
 
+    const helper = b.createModule(.{
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = b.path("src/sokol_helper/main.zig"),
+    });
+    helper.addImport("sokol", dep_sokol.module("sokol"));
+
     const shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)");
     inline for (examples) |example| {
         const exe = b.addExecutable(.{
@@ -116,6 +128,7 @@ pub fn build(b: *std.Build) void {
         if (example.shader) |shader| {
             buildShader(b, target, shdc_step, "../../floooh/sokol-tools-bin/bin/", shader);
         }
+        exe.root_module.addImport("sokol_helper", helper);
 
         exe.addIncludePath(b.path("c"));
         exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });

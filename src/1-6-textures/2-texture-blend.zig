@@ -1,25 +1,22 @@
 //------------------------------------------------------------------------------
-//  1-6-1-texture
+//  1-6-2-texture-blend
 //------------------------------------------------------------------------------
 const c = @cImport({
-    // @cDefine("STB_IMAGE_IMPLEMENTATION", "1");
     @cInclude("stb_image.h");
 });
-
 const sokol = @import("sokol");
 const sg = sokol.gfx;
-const shader = @import("1-texture.glsl.zig");
+const shader = @import("2-texture-blend.glsl.zig");
 const sokol_helper = @import("sokol_helper");
 
-// Mipmaps are left out of this example because currently Sokol does not provide
-// a generic way to generate them.
+//  Mipmaps are left out of this example because currently Sokol does not provide a generic way to generate them.
 
 // application state
 const state = struct {
     var pip = sg.Pipeline{};
     var bind = sg.Bindings{};
     var pass_action = sg.PassAction{};
-    var file_buffer = [1]u8{0} ** (512 * 1024);
+    var file_buffer = [1]u8{0} ** (256 * 1024);
 };
 
 export fn init() void {
@@ -32,6 +29,10 @@ export fn init() void {
         .num_lanes = 1,
     });
 
+    // Allocate an image handle, but don't actually initialize the image yet,
+    // this happens later when the asynchronous file load has finished.
+    // Any draw calls containing such an "incomplete" image handle
+    // will be silently dropped.
     sokol_helper.sg_alloc_image_smp(
         &state.bind.fs,
         shader.SLOT__ourTexture,
@@ -72,6 +73,7 @@ export fn init() void {
         .index_type = .UINT16,
         .label = "triangle-pipeline",
     };
+
     // if the vertex layout doesn't have gaps, don't need to provide strides and offsets
     pip_desc.layout.attrs[shader.ATTR_vs_position].format = .FLOAT3;
     pip_desc.layout.attrs[shader.ATTR_vs_aColor].format = .FLOAT3;
@@ -93,7 +95,6 @@ export fn init() void {
 }
 
 // The fetch-callback is called by sokol_fetch.h when the data is loaded, or when an error has occurred.
-
 export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
         // the file data has been fetched, since we provided a big-enough buffer we can be sure that all data has been loaded here
@@ -169,6 +170,6 @@ pub fn main() void {
         .width = 800,
         .height = 600,
         .high_dpi = true,
-        .window_title = "Texture - LearnOpenGL",
+        .window_title = "Texture Blend - LearnOpenGL",
     });
 }
