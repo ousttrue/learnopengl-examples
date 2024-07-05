@@ -116,5 +116,9 @@ pub fn build(b: *std.Build) void {
         if (example.shader) |shader| {
             buildShader(b, target, shdc_step, "../../floooh/sokol-tools-bin/bin/", shader);
         }
+
+        exe.addIncludePath(b.path("c"));
+        exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });
+        exe.linkLibC();
     }
 }

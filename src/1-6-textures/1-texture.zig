@@ -1,13 +1,13 @@
 //------------------------------------------------------------------------------
 //  1-6-1-texture
 //------------------------------------------------------------------------------
+const c = @cImport({
+    // @cDefine("STB_IMAGE_IMPLEMENTATION", "1");
+    @cInclude("stb_image.h");
+});
+
 const sokol = @import("sokol");
 const sg = sokol.gfx;
-// #include "sokol_app.h"
-// #include "sokol_gfx.h"
-// #include "sokol_glue.h"
-// #include "sokol_fetch.h"
-// #include "sokol_helper.h"
 const shader = @import("1-texture.glsl.zig");
 
 // Mipmaps are left out of this example because currently Sokol does not provide
@@ -31,11 +31,17 @@ export fn init() void {
         .num_lanes = 1,
     });
 
-    // Allocate an image handle, but don't actually initialize the image yet,
-    // this happens later when the asynchronous file load has finished.
-    // Any draw calls containing such an "incomplete" image handle
-    // will be silently dropped.
-    // sg.allocImageSmp(state.bind.fs, shader.SLOT__ourTexture, SLOT_ourTexture_smp);
+    // libs/sokol/sokol_helper.h
+    // #define sg_alloc_image_smp
+    state.bind.fs.images[shader.SLOT__ourTexture] = sg.allocImage();
+    state.bind.fs.samplers[shader.SLOT_ourTexture_smp] = sg.allocSampler();
+    sg.initSampler(state.bind.fs.samplers[shader.SLOT_ourTexture_smp], .{
+        .wrap_u = .REPEAT,
+        .wrap_v = .REPEAT,
+        .min_filter = .LINEAR,
+        .mag_filter = .LINEAR,
+        .compare = .NEVER,
+    });
 
     const vertices = [_]f32{
         // positions         // colors           // texture coords
@@ -93,49 +99,57 @@ export fn init() void {
 
 // The fetch-callback is called by sokol_fetch.h when the data is loaded, or when an error has occurred.
 
-export fn fetch_callback(_: [*c]const sokol.fetch.Response) void {
-    //     if (response->fetched) {
-    //         /* the file data has been fetched, since we provided a big-enough
-    //            buffer we can be sure that all data has been loaded here
-    //         */
-    //         int img_width, img_height, num_channels;
-    //         const int desired_channels = 4;
-    //         stbi_uc* pixels = stbi_load_from_memory(
-    //             response->data.ptr,
-    //             (int)response->data.size,
-    //             &img_width, &img_height,
-    //             &num_channels, desired_channels);
-    //         if (pixels) {
-    //             /* initialize the sokol-gfx texture */
-    //             sg_init_image(state.bind.fs.images[SLOT__ourTexture], &(sg_image_desc){
-    //                 .width = img_width,
-    //                 .height = img_height,
-    //                 /* set pixel_format to RGBA8 for WebGL */
-    //                 .pixel_format = SG_PIXELFORMAT_RGBA8,
-    //                 .data.subimage[0][0] = {
-    //                     .ptr = pixels,
-    //                     .size = img_width * img_height * 4,
-    //                 }
-    //             });
-    //             stbi_image_free(pixels);
-    //         }
-    //     }
-    //     else if (response->failed) {
-    //         // if loading the file failed, set clear color to red
-    //         state.pass_action = (sg_pass_action) {
-    //             .colors[0] = { .load_action = SG_LOADACTION_CLEAR, .clear_value = { 1.0f, 0.0f, 0.0f, 1.0f } }
-    //         };
-    //     }
+export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
+    if (response.*.fetched) {
+        // the file data has been fetched, since we provided a big-enough buffer we can be sure that all data has been loaded here
+
+        var img_width: c_int = undefined;
+        var img_height: c_int = undefined;
+        var num_channels: c_int = undefined;
+        const desired_channels = 4;
+        const pixels = c.stbi_load_from_memory(
+            @ptrCast(response.*.data.ptr),
+            @intCast(response.*.data.size),
+            &img_width,
+            &img_height,
+            &num_channels,
+            desired_channels,
+        );
+        if (pixels != null) {
+            // initialize the sokol-gfx texture
+            var img_desc = sg.ImageDesc{
+                .width = img_width,
+                .height = img_height,
+                // set pixel_format to RGBA8 for WebGL
+                .pixel_format = .RGBA8,
+            };
+            img_desc.data.subimage[0][0] = .{
+                .ptr = pixels,
+                .size = @intCast(img_width * img_height * 4),
+            };
+            sg.initImage(state.bind.fs.images[shader.SLOT__ourTexture], img_desc);
+            c.stbi_image_free(pixels);
+        }
+    } else if (response.*.failed) {
+        // if loading the file failed, set clear color to red
+        state.pass_action.colors[0] = .{
+            .load_action = .CLEAR,
+            .clear_value = .{ .r = 1.0, .g = 0.0, .b = 0.0, .a = 1.0 },
+        };
+    }
 }
 
 export fn frame() void {
-    //     sfetch_dowork();
-    //     sg_begin_pass(&(sg_pass){ .action = state.pass_action, .swapchain = sglue_swapchain() });
-    //     sg_apply_pipeline(state.pip);
-    //     sg_apply_bindings(&state.bind);
-    //     sg_draw(0, 6, 1);
-    //     sg_end_pass();
-    //     sg_commit();
+    sokol.fetch.dowork();
+    sg.beginPass(.{
+        .action = state.pass_action,
+        .swapchain = sokol.glue.swapchain(),
+    });
+    sg.applyPipeline(state.pip);
+    sg.applyBindings(state.bind);
+    sg.draw(0, 6, 1);
+    sg.endPass();
+    sg.commit();
 }
 
 export fn cleanup() void {
