@@ -1,15 +1,15 @@
 //------------------------------------------------------------------------------
-//  1-7-3-scale-rotate
+//  1-7-2-rotate-translate
 //------------------------------------------------------------------------------
-const std = @import("std");
 const c = @cImport({
     @cInclude("stb_image.h");
 });
+const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const math = @import("szmath");
-const sokol_helper = @import("sokol_helper");
 const shader = @import("transformations.glsl.zig");
+const sokol_helper = @import("sokol_helper");
 
 // application state
 const state = struct {
@@ -30,6 +30,9 @@ export fn init() void {
         .num_channels = 1,
         .num_lanes = 1,
     });
+
+    // initialize sokol_time
+    sokol.time.setup();
 
     // Allocate an image handle, but don't actually initialize the image yet,
     // this happens later when the asynchronous file load has finished.
@@ -69,7 +72,7 @@ export fn init() void {
     // create shader from code-generated sg_shader_desc
     const shd = sg.makeShader(shader.simpleShaderDesc(sg.queryBackend()));
 
-    // create a pipeline object (default render states are fine for triangle)
+    //     /* create a pipeline object (default render states are fine for triangle) */
     var pip_desc = sg.PipelineDesc{
         .shader = shd,
         .index_type = .UINT16,
@@ -98,7 +101,7 @@ export fn init() void {
     });
 
     // start loading the PNG file
-    // we can use the same buffer because we are serializing the request (see sfetch_setup)
+    // we can use the same buffer because we are serializing the request (see sfetch_setup) */
     _ = sokol.fetch.send(.{
         .path = "awesomeface.png",
         .callback = fetch_callback,
@@ -107,11 +110,12 @@ export fn init() void {
     });
 }
 
-// The fetch-callback is called by sokol_fetch.h when the data is loaded, or when an error has occurred.
+// The fetch-callback is called by sokol_fetch.h when the data is loaded,
+// or when an error has occurred.
 export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
-        // the file data has been fetched, since we provided a big-enough buffer we can be sure that all data has been loaded here
-
+        // the file data has been fetched, since we provided a big-enough
+        // buffer we can be sure that all data has been loaded here
         var img_width: c_int = undefined;
         var img_height: c_int = undefined;
         var num_channels: c_int = undefined;
@@ -129,7 +133,7 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
             var img_desc = sg.ImageDesc{
                 .width = img_width,
                 .height = img_height,
-                // set pixel_format to RGBA8 for WebGL
+                // set pixel_format to RGBA8 for WebGL *
                 .pixel_format = .RGBA8,
             };
             img_desc.data.subimage[0][0] = .{
@@ -150,12 +154,14 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
 
 export fn frame() void {
     sokol.fetch.dowork();
+
+    const translate = math.Mat4.translate(.{ .x = 0.5, .y = -0.5, .z = 0.0 });
+    // 强制声明为 rad 类型的角度
     const rotate = math.Mat4.rotate(
-        std.math.degreesToRadians(90.0),
+        @floatCast(std.math.degreesToRadians(sokol.time.sec(sokol.time.now()))),
         math.Vec3{ .x = 0.0, .y = 0.0, .z = 1.0 },
     );
-    const scale = math.Mat4.scale(.{ .x = 0.5, .y = 0.5, .z = 0.5 });
-    const trans = rotate.mul(scale);
+    const trans = translate.mul(rotate);
 
     sg.beginPass(.{
         .action = state.pass_action,
@@ -194,6 +200,6 @@ pub fn main() void {
         .width = 800,
         .height = 600,
         .high_dpi = true,
-        .window_title = "Scale Rotate - LearnOpenGL",
+        .window_title = "Rotate Translate - LearnOpenGL",
     });
 }
