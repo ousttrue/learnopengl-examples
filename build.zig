@@ -90,6 +90,11 @@ const examples = [_]struct {
         .root_source = "src/1-9-camera/2-walk.zig",
         // .shader = "src/1-9-camera/shaders.glsl",
     },
+    .{
+        .name = "1-9-3-look",
+        .root_source = "src/1-9-camera/3-look.zig",
+        // .shader = "src/1-9-camera/shaders.glsl",
+    },
 };
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/

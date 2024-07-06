@@ -50,7 +50,7 @@ TODO:
 - [x] [1-8-3-more-cubes](src/1-8-coordinate-systems/3-more-cubes.zig)
 - [x] [1-9-1-lookat](src/1-9-camera/1-lookat.zig)
 - [x] [1-9-2-walk](src/1-9-camera/2-walk.zig)
-- [ ] [1-9-3-look](src/1-9-camera/3-look.zig)
+- [x] [1-9-3-look](src/1-9-camera/3-look.zig)
 - [ ] [2-1-1-scene](src/2-1-colors/1-scene.zig)
 - [ ] [2-2-1-ambient](src/2-2-basic-lighting/1-ambient.zig)
 - [ ] [2-2-2-diffuse](src/2-2-basic-lighting/2-diffuse.zig)
