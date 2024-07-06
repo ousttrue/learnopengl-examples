@@ -48,7 +48,7 @@ TODO:
 - [x] [1-8-1-plane](src/1-8-coordinate-systems/1-plane.zig)
 - [x] [1-8-2-cube](src/1-8-coordinate-systems/2-cube.zig)
 - [x] [1-8-3-more-cubes](src/1-8-coordinate-systems/3-more-cubes.zig)
-- [ ] [1-9-1-lookat](src/1-9-camera/1-lookat.zig)
+- [x] [1-9-1-lookat](src/1-9-camera/1-lookat.zig)
 - [ ] [1-9-2-walk](src/1-9-camera/2-walk.zig)
 - [ ] [1-9-3-look](src/1-9-camera/3-look.zig)
 - [ ] [2-1-1-scene](src/2-1-colors/1-scene.zig)
