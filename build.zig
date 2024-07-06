@@ -1,95 +1,96 @@
 const std = @import("std");
 const builtin = @import("builtin");
+const sokol = @import("sokol");
 
 const examples = [_]struct {
     name: []const u8,
     root_source: []const u8,
     shader: ?[]const u8 = null,
 }{
-    .{
-        .name = "1-3-hello-window",
-        .root_source = "src/1-3-hello-window/1-rendering.zig",
-    },
-    .{
-        .name = "1-4-1-triangle",
-        .root_source = "src/1-4-hello-triangle/1-triangle.zig",
-        .shader = "src/1-4-hello-triangle/1-triangle.glsl",
-    },
-    .{
-        .name = "1-4-2-quad",
-        .root_source = "src/1-4-hello-triangle/2-quad.zig",
-        .shader = "src/1-4-hello-triangle/2-quad.glsl",
-    },
-    .{
-        .name = "1-4-3-quad-wireframe",
-        .root_source = "src/1-4-hello-triangle/3-quad-wireframe.zig",
-        .shader = "src/1-4-hello-triangle/3-quad-wireframe.glsl",
-    },
-    .{
-        .name = "1-5-1-in-out",
-        .root_source = "src/1-5-shaders/1-in-out.zig",
-        .shader = "src/1-5-shaders/1-in-out.glsl",
-    },
-    .{
-        .name = "1-5-2-uniforms",
-        .root_source = "src/1-5-shaders/2-uniforms.zig",
-        .shader = "src/1-5-shaders/2-uniforms.glsl",
-    },
-    .{
-        .name = "1-5-3-attributes",
-        .root_source = "src/1-5-shaders/3-attributes.zig",
-        .shader = "src/1-5-shaders/3-attributes.glsl",
-    },
-    .{
-        .name = "1-6-1-texture",
-        .root_source = "src/1-6-textures/1-texture.zig",
-        .shader = "src/1-6-textures/1-texture.glsl",
-    },
-    .{
-        .name = "1-6-2-texture-blend",
-        .root_source = "src/1-6-textures/2-texture-blend.zig",
-        .shader = "src/1-6-textures/2-texture-blend.glsl",
-    },
-    .{
-        .name = "1-6-3-multiple-textures",
-        .root_source = "src/1-6-textures/3-multiple-textures.zig",
-        .shader = "src/1-6-textures/3-multiple-textures.glsl",
-    },
-    .{
-        .name = "1-7-3-scale-rotate",
-        .root_source = "src/1-7-transformations/1-scale-rotate.zig",
-        .shader = "src/1-7-transformations/transformations.glsl",
-    },
-    .{
-        .name = "1-7-2-rotate-translate",
-        .root_source = "src/1-7-transformations/2-rotate-translate.zig",
-        // .shader = "src/1-7-transformations/transformations.glsl",
-    },
-    .{
-        .name = "1-8-1-plane",
-        .root_source = "src/1-8-coordinate-systems/1-plane.zig",
-        .shader = "src/1-8-coordinate-systems/shaders.glsl",
-    },
-    .{
-        .name = "1-8-2-cube",
-        .root_source = "src/1-8-coordinate-systems/2-cube.zig",
-        // .shader = "src/1-8-coordinate-systems/shaders.glsl",
-    },
-    .{
-        .name = "1-8-3-more-cubes",
-        .root_source = "src/1-8-coordinate-systems/3-more-cubes.zig",
-        // .shader = "src/1-8-coordinate-systems/shaders.glsl",
-    },
-    .{
-        .name = "1-9-1-lookat",
-        .root_source = "src/1-9-camera/1-lookat.zig",
-        .shader = "src/1-9-camera/shaders.glsl",
-    },
-    .{
-        .name = "1-9-2-walk",
-        .root_source = "src/1-9-camera/2-walk.zig",
-        // .shader = "src/1-9-camera/shaders.glsl",
-    },
+    // .{
+    //     .name = "1-3-hello-window",
+    //     .root_source = "src/1-3-hello-window/1-rendering.zig",
+    // },
+    // .{
+    //     .name = "1-4-1-triangle",
+    //     .root_source = "src/1-4-hello-triangle/1-triangle.zig",
+    //     .shader = "src/1-4-hello-triangle/1-triangle.glsl",
+    // },
+    // .{
+    //     .name = "1-4-2-quad",
+    //     .root_source = "src/1-4-hello-triangle/2-quad.zig",
+    //     .shader = "src/1-4-hello-triangle/2-quad.glsl",
+    // },
+    // .{
+    //     .name = "1-4-3-quad-wireframe",
+    //     .root_source = "src/1-4-hello-triangle/3-quad-wireframe.zig",
+    //     .shader = "src/1-4-hello-triangle/3-quad-wireframe.glsl",
+    // },
+    // .{
+    //     .name = "1-5-1-in-out",
+    //     .root_source = "src/1-5-shaders/1-in-out.zig",
+    //     .shader = "src/1-5-shaders/1-in-out.glsl",
+    // },
+    // .{
+    //     .name = "1-5-2-uniforms",
+    //     .root_source = "src/1-5-shaders/2-uniforms.zig",
+    //     .shader = "src/1-5-shaders/2-uniforms.glsl",
+    // },
+    // .{
+    //     .name = "1-5-3-attributes",
+    //     .root_source = "src/1-5-shaders/3-attributes.zig",
+    //     .shader = "src/1-5-shaders/3-attributes.glsl",
+    // },
+    // .{
+    //     .name = "1-6-1-texture",
+    //     .root_source = "src/1-6-textures/1-texture.zig",
+    //     .shader = "src/1-6-textures/1-texture.glsl",
+    // },
+    // .{
+    //     .name = "1-6-2-texture-blend",
+    //     .root_source = "src/1-6-textures/2-texture-blend.zig",
+    //     .shader = "src/1-6-textures/2-texture-blend.glsl",
+    // },
+    // .{
+    //     .name = "1-6-3-multiple-textures",
+    //     .root_source = "src/1-6-textures/3-multiple-textures.zig",
+    //     .shader = "src/1-6-textures/3-multiple-textures.glsl",
+    // },
+    // .{
+    //     .name = "1-7-3-scale-rotate",
+    //     .root_source = "src/1-7-transformations/1-scale-rotate.zig",
+    //     .shader = "src/1-7-transformations/transformations.glsl",
+    // },
+    // .{
+    //     .name = "1-7-2-rotate-translate",
+    //     .root_source = "src/1-7-transformations/2-rotate-translate.zig",
+    //     // .shader = "src/1-7-transformations/transformations.glsl",
+    // },
+    // .{
+    //     .name = "1-8-1-plane",
+    //     .root_source = "src/1-8-coordinate-systems/1-plane.zig",
+    //     .shader = "src/1-8-coordinate-systems/shaders.glsl",
+    // },
+    // .{
+    //     .name = "1-8-2-cube",
+    //     .root_source = "src/1-8-coordinate-systems/2-cube.zig",
+    //     // .shader = "src/1-8-coordinate-systems/shaders.glsl",
+    // },
+    // .{
+    //     .name = "1-8-3-more-cubes",
+    //     .root_source = "src/1-8-coordinate-systems/3-more-cubes.zig",
+    //     // .shader = "src/1-8-coordinate-systems/shaders.glsl",
+    // },
+    // .{
+    //     .name = "1-9-1-lookat",
+    //     .root_source = "src/1-9-camera/1-lookat.zig",
+    //     .shader = "src/1-9-camera/shaders.glsl",
+    // },
+    // .{
+    //     .name = "1-9-2-walk",
+    //     .root_source = "src/1-9-camera/2-walk.zig",
+    //     // .shader = "src/1-9-camera/shaders.glsl",
+    // },
     .{
         .name = "1-9-3-look",
         .root_source = "src/1-9-camera/3-look.zig",
@@ -142,16 +143,16 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    {
-        const exe = b.addExecutable(.{
-            .target = target,
-            .optimize = optimize,
-            .name = "learnopengl-examples",
-            .root_source_file = b.path("src/main.zig"),
-        });
-        b.installArtifact(exe);
-        exe.root_module.addImport("sokol", dep_sokol.module("sokol"));
-    }
+    // {
+    //     const exe = b.addExecutable(.{
+    //         .target = target,
+    //         .optimize = optimize,
+    //         .name = "learnopengl-examples",
+    //         .root_source_file = b.path("src/main.zig"),
+    //     });
+    //     b.installArtifact(exe);
+    //     exe.root_module.addImport("sokol", dep_sokol.module("sokol"));
+    // }
 
     const helper = b.createModule(.{
         .target = target,
@@ -166,9 +167,15 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("src/math.zig"),
     });
 
+    const stb_image = b.createModule(.{
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = b.path("c/stb_image.zig"),
+    });
+
     const shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)");
     inline for (examples) |example| {
-        const exe = b.addExecutable(.{
+        const exe = b.addStaticLibrary(.{
             .target = target,
             .optimize = optimize,
             .name = example.name,
@@ -181,9 +188,35 @@ pub fn build(b: *std.Build) void {
         }
         exe.root_module.addImport("sokol_helper", helper);
         exe.root_module.addImport("szmath", szmath);
+        exe.root_module.addImport("stb_image", stb_image);
 
-        exe.addIncludePath(b.path("c"));
-        exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });
+        // exe.addIncludePath(b.path("c"));
+        // exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });
         exe.linkLibC();
+
+        // special case handling for native vs web build
+        if (target.result.os.tag == .windows) {
+            std.debug.print("windows", .{});
+            exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });
+        } else {
+            // exe.entry = .disabled;
+            std.debug.print("wasm", .{});
+
+            // create a build step which invokes the Emscripten linker
+            const emsdk = dep_sokol.builder.dependency("emsdk", .{});
+            _ = try sokol.emLinkStep(b, .{
+                .lib_main = exe,
+                .target = target,
+                .optimize = optimize,
+                .emsdk = emsdk,
+                .use_webgl2 = true,
+                .use_emmalloc = true,
+                .use_filesystem = false,
+                .shell_file_path = dep_sokol.path("src/sokol/web/shell.html").getPath(b),
+                .extra_args = &.{
+                    "-sSTB_IMAGE=1",
+                },
+            });
+        }
     }
 }
