@@ -65,6 +65,11 @@ const examples = [_]struct {
         .root_source = "src/1-7-transformations/2-rotate-translate.zig",
         // .shader = "src/1-7-transformations/transformations.glsl",
     },
+    .{
+        .name = "1-8-1-plane",
+        .root_source = "src/1-8-coordinate-systems/1-plane.zig",
+        .shader = "src/1-8-coordinate-systems/shaders.glsl",
+    },
 };
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
