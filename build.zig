@@ -70,6 +70,11 @@ const examples = [_]struct {
         .root_source = "src/1-8-coordinate-systems/1-plane.zig",
         .shader = "src/1-8-coordinate-systems/shaders.glsl",
     },
+    .{
+        .name = "1-8-2-cube",
+        .root_source = "src/1-8-coordinate-systems/2-cube.zig",
+        // .shader = "src/1-8-coordinate-systems/shaders.glsl",
+    },
 };
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
