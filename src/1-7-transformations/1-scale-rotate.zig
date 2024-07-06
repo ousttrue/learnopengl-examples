@@ -1,16 +1,23 @@
 //------------------------------------------------------------------------------
-//  1-6-3-multiple-textures
+//  1-7-3-scale-rotate
 //------------------------------------------------------------------------------
+const std = @import("std");
 const c = @cImport({
     @cInclude("stb_image.h");
 });
 const sokol = @import("sokol");
 const sg = sokol.gfx;
+const math = @import("szmath");
 const sokol_helper = @import("sokol_helper");
-const shader = @import("3-multiple-textures.glsl.zig");
-
-// Mipmaps are left out of this example because currently Sokol does not provide
-// a generic way to generate them.
+// #include "sokol_app.h"
+// #include "sokol_gfx.h"
+// #include "sokol_glue.h"
+// #include "sokol_fetch.h"
+// #include "sokol_helper.h"
+// #include "HandmadeMath.h"
+// #define LOPGL_APP_IMPL
+// #include "../lopgl_app.h"
+const shader = @import("transformations.glsl.zig");
 
 // application state
 const state = struct {
@@ -25,7 +32,9 @@ const state = struct {
 export fn init() void {
     sg.setup(.{ .environment = sokol.glue.environment() });
 
-    // setup sokol-fetch The 1 channel and 1 lane configuration essentially serializes IO requests. Which is just fine for this example. */
+    // setup sokol-fetch
+    // The 1 channel and 1 lane configuration essentially serializes
+    // IO requests. Which is just fine for this example.
     sokol.fetch.setup(.{
         .max_requests = 2,
         .num_channels = 1,
@@ -36,26 +45,18 @@ export fn init() void {
     // this happens later when the asynchronous file load has finished.
     // Any draw calls containing such an "incomplete" image handle
     // will be silently dropped.
-    sokol_helper.sg_alloc_image_smp(
-        &state.bind.fs,
-        shader.SLOT__texture1,
-        shader.SLOT_texture1_smp,
-    );
-    sokol_helper.sg_alloc_image_smp(
-        &state.bind.fs,
-        shader.SLOT__texture2,
-        shader.SLOT_texture2_smp,
-    );
+    sokol_helper.sg_alloc_image_smp(&state.bind.fs, shader.SLOT__texture1, shader.SLOT_texture1_smp);
+    sokol_helper.sg_alloc_image_smp(&state.bind.fs, shader.SLOT__texture2, shader.SLOT_texture2_smp);
 
     // flip images vertically after loading
     c.stbi_set_flip_vertically_on_load(1);
 
     const vertices = [_]f32{
-        // positions         // colors           // texture coords
-        0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top right
-        0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom right
-        -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom let
-        -0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, // top let
+        // positions         // texture coords
+        0.5, 0.5, 0.0, 1.0, 1.0, // top right
+        0.5, -0.5, 0.0, 1.0, 0.0, // bottom right
+        -0.5, -0.5, 0.0, 0.0, 0.0, // bottom let
+        -0.5, 0.5, 0.0, 0.0, 1.0, // top let
     };
     state.bind.vertex_buffers[0] = sg.makeBuffer(.{
         .size = @sizeOf(@TypeOf(vertices)),
@@ -86,7 +87,6 @@ export fn init() void {
     };
     // if the vertex layout doesn't have gaps, don't need to provide strides and offsets
     pip_desc.layout.attrs[shader.ATTR_vs_position].format = .FLOAT3;
-    pip_desc.layout.attrs[shader.ATTR_vs_aColor].format = .FLOAT3;
     pip_desc.layout.attrs[shader.ATTR_vs_aTexCoord].format = .FLOAT2;
     state.pip = sg.makePipeline(pip_desc);
 
@@ -95,12 +95,16 @@ export fn init() void {
         .load_action = .CLEAR,
         .clear_value = .{ .r = 0.2, .g = 0.3, .b = 0.3, .a = 1.0 },
     };
+
+    const image1 = state.bind.fs.images[shader.SLOT__texture1];
+    const image2 = state.bind.fs.images[shader.SLOT__texture2];
+
     // start loading the JPG file
     _ = sokol.fetch.send(.{
         .path = "container.jpg",
         .callback = fetch_callback,
         .buffer = sokol.fetch.asRange(&state.file_buffer),
-        .user_data = sokol.fetch.asRange(&state.bind.fs.images[0]),
+        .user_data = sokol.fetch.asRange(&image1),
     });
 
     // start loading the PNG file
@@ -109,15 +113,15 @@ export fn init() void {
         .path = "awesomeface.png",
         .callback = fetch_callback,
         .buffer = sokol.fetch.asRange(&state.file_buffer),
-        .user_data = sokol.fetch.asRange(&state.bind.fs.images[1]),
+        .user_data = sokol.fetch.asRange(&image2),
     });
 }
 
 // The fetch-callback is called by sokol_fetch.h when the data is loaded, or when an error has occurred.
 export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
-        // the file data has been fetched, since we provided a big-enough
-        // buffer we can be sure that all data has been loaded here
+        // the file data has been fetched, since we provided a big-enough buffer we can be sure that all data has been loaded here
+
         var img_width: c_int = undefined;
         var img_height: c_int = undefined;
         var num_channels: c_int = undefined;
@@ -131,9 +135,7 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
             desired_channels,
         );
         if (pixels != null) {
-            // we attached the image slot value to the request's user_data
             const image: *sg.Image = @ptrCast(@alignCast(response.*.user_data));
-            // initialize the sokol-gfx texture
             var img_desc = sg.ImageDesc{
                 .width = img_width,
                 .height = img_height,
@@ -158,12 +160,23 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
 
 export fn frame() void {
     sokol.fetch.dowork();
+    const rotate = math.Mat4.rotate(
+        std.math.degreesToRadians(90.0),
+        math.Vec3{ .x = 0.0, .y = 0.0, .z = 1.0 },
+    );
+    const scale = math.Mat4.scale(.{ .x = 0.5, .y = 0.5, .z = 0.5 });
+    const trans = rotate.mul(scale);
+
     sg.beginPass(.{
         .action = state.pass_action,
         .swapchain = sokol.glue.swapchain(),
     });
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
+
+    const vs_params = shader.VsParams{ .transform = trans.toArray() };
+    sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
+
     sg.draw(0, 6, 1);
     sg.endPass();
     sg.commit();
@@ -191,6 +204,6 @@ pub fn main() void {
         .width = 800,
         .height = 600,
         .high_dpi = true,
-        .window_title = "Multiple Textures - LearnOpenGL",
+        .window_title = "Scale Rotate - LearnOpenGL",
     });
 }

@@ -80,6 +80,15 @@ pub const Vec3 = extern struct {
 pub const Mat4 = extern struct {
     m: [4][4]f32,
 
+    pub fn toArray(self:@This())[16]f32{
+        return [_]f32{
+            self.m[0][0], self.m[0][1], self.m[0][2], self.m[0][3],
+            self.m[1][0], self.m[1][1], self.m[1][2], self.m[1][3],
+            self.m[2][0], self.m[2][1], self.m[2][2], self.m[2][3],
+            self.m[3][0], self.m[3][1], self.m[3][2], self.m[3][3],
+        };
+    }
+
     pub fn identity() Mat4 {
         return Mat4{
             .m = [_][4]f32{ .{ 1.0, 0.0, 0.0, 0.0 }, .{ 0.0, 1.0, 0.0, 0.0 }, .{ 0.0, 0.0, 1.0, 0.0 }, .{ 0.0, 0.0, 0.0, 1.0 } },
@@ -89,6 +98,17 @@ pub const Mat4 = extern struct {
     pub fn zero() Mat4 {
         return Mat4{
             .m = [_][4]f32{ .{ 0.0, 0.0, 0.0, 0.0 }, .{ 0.0, 0.0, 0.0, 0.0 }, .{ 0.0, 0.0, 0.0, 0.0 }, .{ 0.0, 0.0, 0.0, 0.0 } },
+        };
+    }
+
+    pub fn scale(s: Vec3) Mat4 {
+        return Mat4{
+            .m = [_][4]f32{
+                .{ s.x, 0.0, 0.0, 0.0 },
+                .{ 0.0, s.y, 0.0, 0.0 },
+                .{ 0.0, 0.0, s.z, 0.0 },
+                .{ 0.0, 0.0, 0.0, 1.0 },
+            },
         };
     }
 
