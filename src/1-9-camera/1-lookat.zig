@@ -221,8 +221,8 @@ export fn frame() void {
     sg.applyBindings(state.bind);
 
     var vs_params = shader.VsParams{
-        .view = view.toArray(),
-        .projection = projection.toArray(),
+        .view = view.m,
+        .projection = projection.m,
         .model = undefined,
     };
 
@@ -233,7 +233,7 @@ export fn frame() void {
             std.math.degreesToRadians(angle),
             .{ .x = 1.0, .y = 0.3, .z = 0.5 },
         ));
-        vs_params.model = model.toArray();
+        vs_params.model = model.m;
         sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
 
         sg.draw(0, 36, 1);

@@ -164,7 +164,7 @@ export fn frame() void {
     sg.applyPipeline(state.pip);
     sg.applyBindings(state.bind);
 
-    const vs_params = shader.VsParams{ .transform = trans.toArray() };
+    const vs_params = shader.VsParams{ .transform = trans.m };
     sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
 
     sg.draw(0, 6, 1);

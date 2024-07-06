@@ -214,9 +214,9 @@ export fn frame() void {
     sg.applyBindings(state.bind);
 
     const vs_params = shader.VsParams{
-        .model = model.toArray(),
-        .view = view.toArray(),
-        .projection = projection.toArray(),
+        .model = model.m,
+        .view = view.m,
+        .projection = projection.m,
     };
     sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
 
