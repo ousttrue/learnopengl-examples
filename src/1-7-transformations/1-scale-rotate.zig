@@ -2,9 +2,7 @@
 //  1-7-3-scale-rotate
 //------------------------------------------------------------------------------
 const std = @import("std");
-const c = @cImport({
-    @cInclude("stb_image.h");
-});
+const stb_image = @import("stb_image");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const math = @import("szmath");
@@ -39,7 +37,7 @@ export fn init() void {
     sokol_helper.sg_alloc_image_smp(&state.bind.fs, shader.SLOT__texture2, shader.SLOT_texture2_smp);
 
     // flip images vertically after loading
-    c.stbi_set_flip_vertically_on_load(1);
+    stb_image.stbi_set_flip_vertically_on_load(1);
 
     const vertices = [_]f32{
         // positions         // texture coords
@@ -116,7 +114,7 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
         var img_height: c_int = undefined;
         var num_channels: c_int = undefined;
         const desired_channels = 4;
-        const pixels = c.stbi_load_from_memory(
+        const pixels = stb_image.stbi_load_from_memory(
             @ptrCast(response.*.data.ptr),
             @intCast(response.*.data.size),
             &img_width,
@@ -137,7 +135,7 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
                 .size = @intCast(img_width * img_height * 4),
             };
             sg.initImage(image.*, img_desc);
-            c.stbi_image_free(pixels);
+            stb_image.stbi_image_free(pixels);
         }
     } else if (response.*.failed) {
         // if loading the file failed, set clear color to red

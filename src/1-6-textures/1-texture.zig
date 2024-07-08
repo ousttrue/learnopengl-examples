@@ -1,11 +1,7 @@
 //------------------------------------------------------------------------------
 //  1-6-1-texture
 //------------------------------------------------------------------------------
-const c = @cImport({
-    // @cDefine("STB_IMAGE_IMPLEMENTATION", "1");
-    @cInclude("stb_image.h");
-});
-
+const stb_image = @import("stb_image");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const shader = @import("1-texture.glsl.zig");
@@ -102,7 +98,7 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
         var img_height: c_int = undefined;
         var num_channels: c_int = undefined;
         const desired_channels = 4;
-        const pixels = c.stbi_load_from_memory(
+        const pixels = stb_image.stbi_load_from_memory(
             @ptrCast(response.*.data.ptr),
             @intCast(response.*.data.size),
             &img_width,
@@ -123,7 +119,7 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
                 .size = @intCast(img_width * img_height * 4),
             };
             sg.initImage(state.bind.fs.images[shader.SLOT__ourTexture], img_desc);
-            c.stbi_image_free(pixels);
+            stb_image.stbi_image_free(pixels);
         }
     } else if (response.*.failed) {
         // if loading the file failed, set clear color to red

@@ -1,9 +1,7 @@
 //------------------------------------------------------------------------------
 //  1-9-2-walk
 //------------------------------------------------------------------------------
-const c = @cImport({
-    @cInclude("stb_image.h");
-});
+const stb_image = @import("stb_image");
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
@@ -56,7 +54,7 @@ export fn init() void {
     );
 
     // flip images vertically after loading
-    c.stbi_set_flip_vertically_on_load(1);
+    stb_image.stbi_set_flip_vertically_on_load(1);
 
     // set default camera configuration
     state.camera_pos = .{ .x = 0.0, .y = 0.0, .z = 3.0 };
@@ -178,7 +176,7 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
         var img_height: c_int = undefined;
         var num_channels: c_int = undefined;
         const desired_channels = 4;
-        const pixels = c.stbi_load_from_memory(@ptrCast(response.*.data.ptr), @intCast(response.*.data.size), &img_width, &img_height, &num_channels, desired_channels);
+        const pixels = stb_image.stbi_load_from_memory(@ptrCast(response.*.data.ptr), @intCast(response.*.data.size), &img_width, &img_height, &num_channels, desired_channels);
         if (pixels != null) {
             const image: *sg.Image = @ptrCast(@alignCast(response.*.user_data));
             var img_desc = sg.ImageDesc{
@@ -192,7 +190,7 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
                 .size = @intCast(img_width * img_height * 4),
             };
             sg.initImage(image.*, img_desc);
-            c.stbi_image_free(pixels);
+            stb_image.stbi_image_free(pixels);
         }
     } else if (response.*.failed) {
         // if loading the file failed, set clear color to red
