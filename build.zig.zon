@@ -27,6 +27,9 @@
             .url = "git+https://github.com/floooh/sokol-zig.git#ed91d03b62ef9e5850f33a98a3f703c01d86798d",
             .hash = "12208af0258178372af254d34e32e7f6cdf2e0f6a51bfb8d6706aff159e2ec6d2c65",
         },
+        .cimgui = .{
+            .path = "deps/cimgui",
+        },
         // See `zig fetch --save <url>` for a command-line interface for adding dependencies.
         //.example = .{
         //    // When updating this field to a new URL, be sure to delete the corresponding

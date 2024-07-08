@@ -12,6 +12,10 @@ const examples = [_]struct {
         .root_source = "src/main.zig",
     },
     .{
+        .name = "sokol-zig-imgui-sample",
+        .root_source = "src/sokol-zig-imgui-sample/main.zig",
+    },
+    .{
         .name = "1-3-1",
         .root_source = "src/1-3-hello-window/1-rendering.zig",
     },
@@ -145,7 +149,16 @@ pub fn build(b: *std.Build) void {
     const dep_sokol = b.dependency("sokol", .{
         .target = target,
         .optimize = optimize,
+        .with_sokol_imgui = true,
     });
+
+    const dep_cimgui = b.dependency("cimgui", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    // inject the cimgui header search path into the sokol C library compile step
+    const cimgui_root = dep_cimgui.namedWriteFiles("cimgui").getDirectory();
+    dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);
 
     const helper = b.createModule(.{
         .target = target,
@@ -196,6 +209,7 @@ pub fn build(b: *std.Build) void {
         compile.root_module.addImport("sokol_helper", helper);
         compile.root_module.addImport("szmath", szmath);
         compile.root_module.addImport("stb_image", stb_image);
+        compile.root_module.addImport("cimgui", dep_cimgui.module("cimgui"));
         compile.linkLibC();
         if (target.result.isWasm()) {
             // create a build step which invokes the Emscripten linker
