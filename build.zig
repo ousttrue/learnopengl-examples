@@ -192,7 +192,7 @@ pub fn build(b: *std.Build) void {
                 .name = example.name,
                 .root_source_file = b.path(example.root_source),
             });
-            // exe.entry = .disabled;
+
             break :wasm lib;
         } else native: {
             const exe = b.addExecutable(.{
@@ -213,12 +213,12 @@ pub fn build(b: *std.Build) void {
         compile.linkLibC();
         if (target.result.isWasm()) {
             // create a build step which invokes the Emscripten linker
-            const emsdk = dep_sokol.builder.dependency("emsdk", .{});
+            const dep_emsdk = dep_sokol.builder.dependency("emsdk", .{});
             _ = try sokol.emLinkStep(b, .{
                 .lib_main = compile,
                 .target = target,
                 .optimize = optimize,
-                .emsdk = emsdk,
+                .emsdk = dep_emsdk,
                 .use_webgl2 = true,
                 .use_emmalloc = true,
                 .use_filesystem = false,
@@ -228,6 +228,18 @@ pub fn build(b: *std.Build) void {
                     "-sSTB_IMAGE=1",
                 },
             });
+
+            // need to inject the Emscripten system header include path into
+            // the cimgui C library otherwise the C/C++ code won't find
+            // C stdlib headers
+            const emsdk_incl_path = dep_emsdk.path("upstream/emscripten/cache/sysroot/include");
+            dep_cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
+
+            // all C libraries need to depend on the sokol library, when building for
+            // WASM this makes sure that the Emscripten SDK has been setup before
+            // C compilation is attempted (since the sokol C library depends on the
+            // Emscripten SDK setup step)
+            dep_cimgui.artifact("cimgui_clib").step.dependOn(&dep_sokol.artifact("sokol_clib").step);
         }
     }
 }
