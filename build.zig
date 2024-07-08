@@ -180,21 +180,6 @@ pub fn build(b: *std.Build) void {
                 .root_source_file = b.path(example.root_source),
             });
             // exe.entry = .disabled;
-            // create a build step which invokes the Emscripten linker
-            const emsdk = dep_sokol.builder.dependency("emsdk", .{});
-            _ = try sokol.emLinkStep(b, .{
-                .lib_main = lib,
-                .target = target,
-                .optimize = optimize,
-                .emsdk = emsdk,
-                .use_webgl2 = true,
-                .use_emmalloc = true,
-                .use_filesystem = false,
-                .shell_file_path = dep_sokol.path("src/sokol/web/shell.html").getPath(b),
-                .extra_args = &.{
-                    "-sSTB_IMAGE=1",
-                },
-            });
             break :wasm lib;
         } else native: {
             const exe = b.addExecutable(.{
@@ -212,5 +197,23 @@ pub fn build(b: *std.Build) void {
         compile.root_module.addImport("szmath", szmath);
         compile.root_module.addImport("stb_image", stb_image);
         compile.linkLibC();
+        if (target.result.isWasm()) {
+            // create a build step which invokes the Emscripten linker
+            const emsdk = dep_sokol.builder.dependency("emsdk", .{});
+            _ = try sokol.emLinkStep(b, .{
+                .lib_main = compile,
+                .target = target,
+                .optimize = optimize,
+                .emsdk = emsdk,
+                .use_webgl2 = true,
+                .use_emmalloc = true,
+                .use_filesystem = false,
+                .shell_file_path = dep_sokol.path("src/sokol/web/shell.html").getPath(b),
+                .extra_args = &.{
+                    // "-sERROR_ON_UNDEFINED_SYMBOLS=0",
+                    "-sSTB_IMAGE=1",
+                },
+            });
+        }
     }
 }
