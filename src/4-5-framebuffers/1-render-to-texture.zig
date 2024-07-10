@@ -5,6 +5,7 @@ const sokol = @import("sokol");
 const sg = sokol.gfx;
 const sokol_helper = @import("sokol_helper");
 const shader = @import("1-render-to-texture.glsl.zig");
+const lopgl = @import("lopgl");
 
 // application state
 const state = struct {
@@ -72,7 +73,7 @@ fn create_offscreen_pass(width: i32, height: i32) void {
 }
 
 export fn init() void {
-    // lopgl_setup();
+    lopgl.setup();
 
     // a render pass with one color- and one depth-attachment image
     create_offscreen_pass(sokol.app.width(), sokol.app.height());

@@ -184,6 +184,14 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("c/stb_image.zig"),
     });
 
+    const lopgl = b.createModule(.{
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = b.path("src/lopgl_app.zig"),
+    });
+    lopgl.addImport("sokol", dep_sokol.module("sokol"));
+    lopgl.addImport("szmath", szmath);
+
     const shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)");
     inline for (examples) |example| {
         if (example.shader) |shader| {
@@ -215,6 +223,7 @@ pub fn build(b: *std.Build) void {
         compile.root_module.addImport("szmath", szmath);
         compile.root_module.addImport("stb_image", stb_image);
         compile.root_module.addImport("cimgui", dep_cimgui.module("cimgui"));
+        compile.root_module.addImport("lopgl", lopgl);
         compile.linkLibC();
         if (target.result.isWasm()) {
             // create a build step which invokes the Emscripten linker
