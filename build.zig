@@ -174,6 +174,7 @@ const Deps = struct {
     stb_image: *std.Build.Module,
     lopgl: *std.Build.Module,
     dbgui: *std.Build.Module,
+    util_camera: *std.Build.Module,
 
     fn init(b: *std.Build) @This() {
         const target = b.standardTargetOptions(.{});
@@ -218,6 +219,11 @@ const Deps = struct {
                 .optimize = optimize,
                 .root_source_file = b.path("sapp/libs/dbgui/dbgui.zig"),
             }),
+            .util_camera = b.createModule(.{
+                .target = target,
+                .optimize = optimize,
+                .root_source_file = b.path("sapp/libs/util/camera.zig"),
+            }),
         };
 
         // inject the cimgui header search path into the sokol C library compile step
@@ -227,6 +233,8 @@ const Deps = struct {
         deps.lopgl.addImport("sokol", deps.dep_sokol.module("sokol"));
         deps.lopgl.addImport("szmath", deps.szmath);
         deps.dbgui.addImport("sokol", deps.dep_sokol.module("sokol"));
+        deps.util_camera.addImport("sokol", deps.dep_sokol.module("sokol"));
+        deps.util_camera.addImport("szmath", deps.szmath);
 
         return deps;
     }
@@ -267,6 +275,7 @@ const Deps = struct {
         compile.root_module.addImport("cimgui", self.dep_cimgui.module("cimgui"));
         compile.root_module.addImport("lopgl", self.lopgl);
         compile.root_module.addImport("dbgui", self.dbgui);
+        compile.root_module.addImport("util_camera", self.util_camera);
         compile.linkLibC();
         if (self.target.result.isWasm()) {
             // create a build step which invokes the Emscripten linker

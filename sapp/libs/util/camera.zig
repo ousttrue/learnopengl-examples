@@ -1,134 +1,130 @@
-#pragma once
-/*
-    Quick'n'dirty Maya-style camera. Include after HandmadeMath.h
-    and sokol_app.h
-*/
-#include <string.h>
-#include <math.h>
-#include <assert.h>
+//  Quick'n'dirty Maya-style camera. Include after HandmadeMath.h
+//  and sokol_app.h
+const std = @import("std");
+const sokol = @import("sokol");
+const szmath = @import("szmath");
 
-#define CAMERA_DEFAULT_MIN_DIST (2.0f)
-#define CAMERA_DEFAULT_MAX_DIST (30.0f)
-#define CAMERA_DEFAULT_MIN_LAT (-85.0f)
-#define CAMERA_DEFAULT_MAX_LAT (85.0f)
-#define CAMERA_DEFAULT_DIST (5.0f)
-#define CAMERA_DEFAULT_ASPECT (60.0f)
-#define CAMERA_DEFAULT_NEARZ (0.01f)
-#define CAMERA_DEFAULT_FARZ (100.0f)
+const CAMERA_DEFAULT_MIN_DIST = 2.0;
+const CAMERA_DEFAULT_MAX_DIST = 30.0;
+const CAMERA_DEFAULT_MIN_LAT = -85.0;
+const CAMERA_DEFAULT_MAX_LAT = 85.0;
+const CAMERA_DEFAULT_DIST = 5.0;
+const CAMERA_DEFAULT_ASPECT = 60.0;
+const CAMERA_DEFAULT_NEARZ = 0.01;
+const CAMERA_DEFAULT_FARZ = 100.0;
 
-typedef struct {
-    float min_dist;
-    float max_dist;
-    float min_lat;
-    float max_lat;
-    float distance;
-    float latitude;
-    float longitude;
-    float aspect;
-    float nearz;
-    float farz;
-    hmm_vec3 center;
-} camera_desc_t;
+pub const Desc = struct {
+    min_dist: f32 = 0,
+    max_dist: f32 = 0,
+    min_lat: f32 = 0,
+    max_lat: f32 = 0,
+    distance: f32 = 0,
+    latitude: f32 = 0,
+    longitude: f32 = 0,
+    aspect: f32 = 0,
+    nearz: f32 = 0,
+    farz: f32 = 0,
+    center: szmath.Vec3 = szmath.Vec3.zero(),
+};
 
-typedef struct {
-    float min_dist;
-    float max_dist;
-    float min_lat;
-    float max_lat;
-    float distance;
-    float latitude;
-    float longitude;
-    float aspect;
-    float nearz;
-    float farz;
-    hmm_vec3 center;
-    hmm_vec3 eye_pos;
-    hmm_mat4 view;
-    hmm_mat4 proj;
-    hmm_mat4 view_proj;
-} camera_t;
+pub const Camera = struct {
+    min_dist: f32 = 0,
+    max_dist: f32 = 0,
+    min_lat: f32 = 0,
+    max_lat: f32 = 0,
+    distance: f32 = 0,
+    latitude: f32 = 0,
+    longitude: f32 = 0,
+    aspect: f32 = 0,
+    nearz: f32 = 0,
+    farz: f32 = 0,
+    center: szmath.Vec3 = szmath.Vec3.zero(),
+    eye_pos: szmath.Vec3 = szmath.Vec3.zero(),
+    view: szmath.Mat4 = szmath.Mat4.identity(),
+    proj: szmath.Mat4 = szmath.Mat4.identity(),
+    view_proj: szmath.Mat4 = szmath.Mat4.identity(),
 
-static float _cam_def(float val, float def) {
-    return ((val == 0.0f) ? def:val);
-}
-
-/* initialize to default parameters */
-static void cam_init(camera_t* cam, const camera_desc_t* desc) {
-    assert(cam && desc);
-    memset(cam, 0, sizeof(camera_t));
-    cam->min_dist = _cam_def(desc->min_dist, CAMERA_DEFAULT_MIN_DIST);
-    cam->max_dist = _cam_def(desc->max_dist, CAMERA_DEFAULT_MAX_DIST);
-    cam->min_lat = _cam_def(desc->min_lat, CAMERA_DEFAULT_MIN_LAT);
-    cam->max_lat = _cam_def(desc->max_lat, CAMERA_DEFAULT_MAX_LAT);
-    cam->distance = _cam_def(desc->distance, CAMERA_DEFAULT_DIST);
-    cam->center = desc->center;
-    cam->latitude = desc->latitude;
-    cam->longitude = desc->longitude;
-    cam->aspect = _cam_def(desc->aspect, CAMERA_DEFAULT_ASPECT);
-    cam->nearz = _cam_def(desc->nearz, CAMERA_DEFAULT_NEARZ);
-    cam->farz = _cam_def(desc->farz, CAMERA_DEFAULT_FARZ);
-}
-
-/* feed mouse movement */
-static void cam_orbit(camera_t* cam, float dx, float dy) {
-    assert(cam);
-    cam->longitude -= dx;
-    if (cam->longitude < 0.0f) {
-        cam->longitude += 360.0f;
+    // initialize to default parameters
+    pub fn init(desc: Desc) @This() {
+        return .{
+            .min_dist = _cam_def(desc.min_dist, CAMERA_DEFAULT_MIN_DIST),
+            .max_dist = _cam_def(desc.max_dist, CAMERA_DEFAULT_MAX_DIST),
+            .min_lat = _cam_def(desc.min_lat, CAMERA_DEFAULT_MIN_LAT),
+            .max_lat = _cam_def(desc.max_lat, CAMERA_DEFAULT_MAX_LAT),
+            .distance = _cam_def(desc.distance, CAMERA_DEFAULT_DIST),
+            .center = desc.center,
+            .latitude = desc.latitude,
+            .longitude = desc.longitude,
+            .aspect = _cam_def(desc.aspect, CAMERA_DEFAULT_ASPECT),
+            .nearz = _cam_def(desc.nearz, CAMERA_DEFAULT_NEARZ),
+            .farz = _cam_def(desc.farz, CAMERA_DEFAULT_FARZ),
+        };
     }
-    if (cam->longitude > 360.0f) {
-        cam->longitude -= 360.0f;
+
+    // feed mouse movement
+    pub fn orbit(cam: *@This(), dx: f32, dy: f32) void {
+        cam.longitude -= dx;
+        if (cam.longitude < 0.0) {
+            cam.longitude += 360.0;
+        }
+        if (cam.longitude > 360.0) {
+            cam.longitude -= 360.0;
+        }
+        cam.latitude = std.math.clamp(cam.min_lat, cam.latitude + dy, cam.max_lat);
     }
-    cam->latitude = HMM_Clamp(cam->min_lat, cam->latitude + dy, cam->max_lat);
-}
 
-/* feed zoom (mouse wheel) input */
-static void cam_zoom(camera_t* cam, float d) {
-    assert(cam);
-    cam->distance = HMM_Clamp(cam->min_dist, cam->distance + d, cam->max_dist);
-}
-
-static hmm_vec3 _cam_euclidean(float latitude, float longitude) {
-    const float lat = HMM_ToRadians(latitude);
-    const float lng = HMM_ToRadians(longitude);
-    return HMM_Vec3(cosf(lat) * sinf(lng), sinf(lat), cosf(lat) * cosf(lng));
-}
-
-/* update the view, proj and view_proj matrix */
-static void cam_update(camera_t* cam, int fb_width, int fb_height) {
-    assert(cam);
-    assert((fb_width > 0) && (fb_height > 0));
-    const float w = (float) fb_width;
-    const float h = (float) fb_height;
-    cam->eye_pos = HMM_AddVec3(cam->center, HMM_MultiplyVec3f(_cam_euclidean(cam->latitude, cam->longitude), cam->distance));
-    cam->view = HMM_LookAt(cam->eye_pos, cam->center, HMM_Vec3(0.0f, 1.0f, 0.0f));
-    cam->proj = HMM_Perspective(cam->aspect, w/h, cam->nearz, cam->farz);
-    cam->view_proj = HMM_MultiplyMat4(cam->proj, cam->view);
-}
-
-/* handle sokol-app input events */
-static void cam_handle_event(camera_t* cam, const sapp_event* ev) {
-    assert(cam);
-    switch (ev->type) {
-        case SAPP_EVENTTYPE_MOUSE_DOWN:
-            if (ev->mouse_button == SAPP_MOUSEBUTTON_LEFT) {
-                sapp_lock_mouse(true);
-            }
-            break;
-        case SAPP_EVENTTYPE_MOUSE_UP:
-            if (ev->mouse_button == SAPP_MOUSEBUTTON_LEFT) {
-                sapp_lock_mouse(false);
-            }
-            break;
-        case SAPP_EVENTTYPE_MOUSE_SCROLL:
-            cam_zoom(cam, ev->scroll_y * 0.5f);
-            break;
-        case SAPP_EVENTTYPE_MOUSE_MOVE:
-            if (sapp_mouse_locked()) {
-                cam_orbit(cam, ev->mouse_dx * 0.25f, ev->mouse_dy * 0.25f);
-            }
-            break;
-        default:
-            break;
+    // feed zoom (mouse wheel) input
+    pub fn zoom(cam: *@This(), d: f32) void {
+        cam.distance = std.math.clamp(cam.min_dist, cam.distance + d, cam.max_dist);
     }
+
+    // update the view, proj and view_proj matrix
+    pub fn update(cam: *@This(), fb_width: i32, fb_height: i32) void {
+        // assert((fb_width > 0) && (fb_height > 0));
+        const w: f32 = @floatFromInt(fb_width);
+        const h: f32 = @floatFromInt(fb_height);
+        cam.eye_pos = cam.center.add(_cam_euclidean(cam.latitude, cam.longitude).mul(cam.distance));
+        cam.view = szmath.Mat4.lookat(cam.eye_pos, cam.center, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
+        cam.proj = szmath.Mat4.persp(cam.aspect, w / h, cam.nearz, cam.farz);
+        cam.view_proj = cam.proj.mul(cam.view);
+    }
+
+    // handle sokol-app input events
+    pub fn handleEvent(cam: *@This(), ev: [*c]const sokol.app.Event) void {
+        switch (ev.*.type) {
+            .MOUSE_DOWN => {
+                if (ev.*.mouse_button == .LEFT) {
+                    sokol.app.lockMouse(true);
+                }
+            },
+            .MOUSE_UP => {
+                if (ev.*.mouse_button == .LEFT) {
+                    sokol.app.lockMouse(false);
+                }
+            },
+            .MOUSE_SCROLL => {
+                cam.zoom(ev.*.scroll_y * 0.5);
+            },
+            .MOUSE_MOVE => {
+                if (sokol.app.mouseLocked()) {
+                    cam.orbit(ev.*.mouse_dx * 0.25, ev.*.mouse_dy * 0.25);
+                }
+            },
+            else => {},
+        }
+    }
+};
+
+fn _cam_def(val: f32, def: f32) f32 {
+    return if (val == 0.0) def else val;
+}
+
+fn _cam_euclidean(latitude: f32, longitude: f32) szmath.Vec3 {
+    const lat = std.math.degreesToRadians(latitude);
+    const lng = std.math.degreesToRadians(longitude);
+    return .{
+        .x = std.math.cos(lat) * std.math.sin(lng),
+        .y = std.math.sin(lat),
+        .z = std.math.cos(lat) * std.math.cos(lng),
+    };
 }
