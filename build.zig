@@ -120,6 +120,10 @@ const sokol_apps = [_]struct {
         .name = "clear",
         .root_source = "sapp/clear-sapp.zig",
     },
+    .{
+        .name = "ozz-anim",
+        .root_source = "sapp/ozz-anim-sapp.zig",
+    },
 };
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
@@ -158,172 +162,159 @@ fn buildShader(
     shdc_step.dependOn(&cmd.step);
 }
 
-fn compile_example(
+const Deps = struct {
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
     shdc_step: *std.Build.Step,
-    name: []const u8,
-    root_source: []const u8,
-    comptime _shader: ?[]const u8,
     dep_sokol: *std.Build.Dependency,
+    dep_cimgui: *std.Build.Dependency,
     helper: *std.Build.Module,
     szmath: *std.Build.Module,
     stb_image: *std.Build.Module,
-    dep_cimgui: *std.Build.Dependency,
     lopgl: *std.Build.Module,
     dbgui: *std.Build.Module,
-) void {
-    if (_shader) |shader| {
-        buildShader(b, target, shdc_step, "../../floooh/sokol-tools-bin/bin/", shader);
+
+    fn init(b: *std.Build) @This() {
+        const target = b.standardTargetOptions(.{});
+        const optimize = b.standardOptimizeOption(.{});
+
+        var deps = @This(){
+            .b = b,
+            .target = target,
+            .optimize = optimize,
+            .shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)"),
+            .dep_sokol = b.dependency("sokol", .{
+                .target = target,
+                .optimize = optimize,
+                .with_sokol_imgui = true,
+            }),
+            .dep_cimgui = b.dependency("cimgui", .{
+                .target = target,
+                .optimize = optimize,
+            }),
+            .helper = b.createModule(.{
+                .target = target,
+                .optimize = optimize,
+                .root_source_file = b.path("src/sokol_helper/main.zig"),
+            }),
+            .szmath = b.createModule(.{
+                .target = target,
+                .optimize = optimize,
+                .root_source_file = b.path("src/math.zig"),
+            }),
+            .stb_image = b.createModule(.{
+                .target = target,
+                .optimize = optimize,
+                .root_source_file = b.path("c/stb_image.zig"),
+            }),
+            .lopgl = b.createModule(.{
+                .target = target,
+                .optimize = optimize,
+                .root_source_file = b.path("src/lopgl_app.zig"),
+            }),
+            .dbgui = b.createModule(.{
+                .target = target,
+                .optimize = optimize,
+                .root_source_file = b.path("sapp/libs/dbgui/dbgui.zig"),
+            }),
+        };
+
+        // inject the cimgui header search path into the sokol C library compile step
+        const cimgui_root = deps.dep_cimgui.namedWriteFiles("cimgui").getDirectory();
+        deps.dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);
+        deps.helper.addImport("sokol", deps.dep_sokol.module("sokol"));
+        deps.lopgl.addImport("sokol", deps.dep_sokol.module("sokol"));
+        deps.lopgl.addImport("szmath", deps.szmath);
+        deps.dbgui.addImport("sokol", deps.dep_sokol.module("sokol"));
+
+        return deps;
     }
-    const compile = if (target.result.isWasm()) wasm: {
-        const lib = b.addStaticLibrary(.{
-            .target = target,
-            .optimize = optimize,
-            .name = name,
-            .root_source_file = b.path(root_source),
-        });
 
-        break :wasm lib;
-    } else native: {
-        const exe = b.addExecutable(.{
-            .target = target,
-            .optimize = optimize,
-            .name = name,
-            .root_source_file = b.path(root_source),
-        });
-        exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });
-        break :native exe;
-    };
-    b.installArtifact(compile);
-    compile.root_module.addImport("sokol", dep_sokol.module("sokol"));
-    compile.root_module.addImport("sokol_helper", helper);
-    compile.root_module.addImport("szmath", szmath);
-    compile.root_module.addImport("stb_image", stb_image);
-    compile.root_module.addImport("cimgui", dep_cimgui.module("cimgui"));
-    compile.root_module.addImport("lopgl", lopgl);
-    compile.root_module.addImport("dbgui", dbgui);
-    compile.linkLibC();
-    if (target.result.isWasm()) {
-        // create a build step which invokes the Emscripten linker
-        const dep_emsdk = dep_sokol.builder.dependency("emsdk", .{});
-        _ = try sokol.emLinkStep(b, .{
-            .lib_main = compile,
-            .target = target,
-            .optimize = optimize,
-            .emsdk = dep_emsdk,
-            .use_webgl2 = true,
-            .use_emmalloc = true,
-            .use_filesystem = false,
-            .shell_file_path = dep_sokol.path("src/sokol/web/shell.html").getPath(b),
-            .extra_args = &.{
-                // "-sERROR_ON_UNDEFINED_SYMBOLS=0",
-                "-sSTB_IMAGE=1",
-            },
-        });
+    fn compile_example(
+        self: *@This(),
+        name: []const u8,
+        root_source: []const u8,
+        comptime _shader: ?[]const u8,
+    ) void {
+        if (_shader) |shader| {
+            buildShader(self.b, self.target, self.shdc_step, "../../floooh/sokol-tools-bin/bin/", shader);
+        }
+        const compile = if (self.target.result.isWasm()) wasm: {
+            const lib = self.b.addStaticLibrary(.{
+                .target = self.target,
+                .optimize = self.optimize,
+                .name = name,
+                .root_source_file = self.b.path(root_source),
+            });
 
-        // need to inject the Emscripten system header include path into
-        // the cimgui C library otherwise the C/C++ code won't find
-        // C stdlib headers
-        const emsdk_incl_path = dep_emsdk.path("upstream/emscripten/cache/sysroot/include");
-        dep_cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
+            break :wasm lib;
+        } else native: {
+            const exe = self.b.addExecutable(.{
+                .target = self.target,
+                .optimize = self.optimize,
+                .name = name,
+                .root_source_file = self.b.path(root_source),
+            });
+            exe.addCSourceFile(.{ .file = self.b.path("c/stb_image.c") });
+            break :native exe;
+        };
+        self.b.installArtifact(compile);
+        compile.root_module.addImport("sokol", self.dep_sokol.module("sokol"));
+        compile.root_module.addImport("sokol_helper", self.helper);
+        compile.root_module.addImport("szmath", self.szmath);
+        compile.root_module.addImport("stb_image", self.stb_image);
+        compile.root_module.addImport("cimgui", self.dep_cimgui.module("cimgui"));
+        compile.root_module.addImport("lopgl", self.lopgl);
+        compile.root_module.addImport("dbgui", self.dbgui);
+        compile.linkLibC();
+        if (self.target.result.isWasm()) {
+            // create a build step which invokes the Emscripten linker
+            const dep_emsdk = self.dep_sokol.builder.dependency("emsdk", .{});
+            _ = try sokol.emLinkStep(self.b, .{
+                .lib_main = compile,
+                .target = self.target,
+                .optimize = self.optimize,
+                .emsdk = dep_emsdk,
+                .use_webgl2 = true,
+                .use_emmalloc = true,
+                .use_filesystem = false,
+                .shell_file_path = self.dep_sokol.path("src/sokol/web/shell.html").getPath(self.b),
+                .extra_args = &.{
+                    // "-sERROR_ON_UNDEFINED_SYMBOLS=0",
+                    "-sSTB_IMAGE=1",
+                },
+            });
 
-        // all C libraries need to depend on the sokol library, when building for
-        // WASM this makes sure that the Emscripten SDK has been setup before
-        // C compilation is attempted (since the sokol C library depends on the
-        // Emscripten SDK setup step)
-        dep_cimgui.artifact("cimgui_clib").step.dependOn(&dep_sokol.artifact("sokol_clib").step);
+            // need to inject the Emscripten system header include path into
+            // the cimgui C library otherwise the C/C++ code won't find
+            // C stdlib headers
+            const emsdk_incl_path = dep_emsdk.path("upstream/emscripten/cache/sysroot/include");
+            self.dep_cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
+
+            // all C libraries need to depend on the sokol library, when building for
+            // WASM this makes sure that the Emscripten SDK has been setup before
+            // C compilation is attempted (since the sokol C library depends on the
+            // Emscripten SDK setup step)
+            self.dep_cimgui.artifact("cimgui_clib").step.dependOn(&self.dep_sokol.artifact("sokol_clib").step);
+        }
     }
-}
+};
 
 pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{});
-
-    const dep_sokol = b.dependency("sokol", .{
-        .target = target,
-        .optimize = optimize,
-        .with_sokol_imgui = true,
-    });
-
-    const dep_cimgui = b.dependency("cimgui", .{
-        .target = target,
-        .optimize = optimize,
-    });
-    // inject the cimgui header search path into the sokol C library compile step
-    const cimgui_root = dep_cimgui.namedWriteFiles("cimgui").getDirectory();
-    dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);
-
-    const helper = b.createModule(.{
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("src/sokol_helper/main.zig"),
-    });
-    helper.addImport("sokol", dep_sokol.module("sokol"));
-
-    const szmath = b.createModule(.{
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("src/math.zig"),
-    });
-
-    const stb_image = b.createModule(.{
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("c/stb_image.zig"),
-    });
-
-    const lopgl = b.createModule(.{
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("src/lopgl_app.zig"),
-    });
-    lopgl.addImport("sokol", dep_sokol.module("sokol"));
-    lopgl.addImport("szmath", szmath);
-
-    const dbgui = b.createModule(.{
-        .target = target,
-        .optimize = optimize,
-        .root_source_file = b.path("sapp/libs/dbgui/dbgui.zig"),
-    });
-    dbgui.addImport("sokol", dep_sokol.module("sokol"));
-
-    const shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)");
+    var deps = Deps.init(b);
     inline for (examples) |example| {
-        compile_example(
-            b,
-            target,
-            optimize,
-            shdc_step,
+        deps.compile_example(
             example.name,
             example.root_source,
             example.shader,
-            dep_sokol,
-            helper,
-            szmath,
-            stb_image,
-            dep_cimgui,
-            lopgl,
-            dbgui,
         );
     }
     inline for (sokol_apps) |example| {
-        compile_example(
-            b,
-            target,
-            optimize,
-            shdc_step,
+        deps.compile_example(
             example.name,
             example.root_source,
             example.shader,
-            dep_sokol,
-            helper,
-            szmath,
-            stb_image,
-            dep_cimgui,
-            lopgl,
-            dbgui,
         );
     }
 }
