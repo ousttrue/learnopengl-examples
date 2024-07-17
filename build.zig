@@ -121,6 +121,11 @@ const sokol_apps = [_]struct {
         .root_source = "sapp/clear-sapp.zig",
     },
     .{
+        .name = "triangle",
+        .root_source = "sapp/triangle-sapp.zig",
+        .shader = "sapp/triangle-sapp.glsl",
+    },
+    .{
         .name = "ozz-anim",
         .root_source = "sapp/ozz-anim-sapp.zig",
     },

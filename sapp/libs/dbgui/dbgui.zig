@@ -11,7 +11,7 @@ pub fn shutdown() void {}
 
 pub fn draw() void {}
 
-pub fn event(e: [*c]const sokol.app.Event) void {
+pub export fn event(e: [*c]const sokol.app.Event) void {
     _ = e;
 }
 
