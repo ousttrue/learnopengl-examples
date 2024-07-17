@@ -155,6 +155,10 @@ const sokol_apps = [_]struct {
         .root_source = "sapp/texcube-sapp.zig",
         .shader = "sapp/texcube-sapp.glsl",
     },
+    .{
+        .name = "sgl-lines",
+        .root_source = "sapp/sgl-lines-sapp.zig",
+    },
     //
     //
     //
