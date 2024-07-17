@@ -136,6 +136,11 @@ const sokol_apps = [_]struct {
         .shader = "sapp/quad-sapp.glsl",
     },
     .{
+        .name = "bufferoffsets-sapp",
+        .root_source = "sapp/bufferoffsets-sapp.zig",
+        .shader = "sapp/bufferoffsets-sapp.glsl",
+    },
+    .{
         .name = "ozz-anim",
         .root_source = "sapp/ozz-anim-sapp.zig",
     },
