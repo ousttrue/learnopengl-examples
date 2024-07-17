@@ -131,6 +131,11 @@ const sokol_apps = [_]struct {
         .shader = "sapp/triangle-bufferless-sapp.glsl",
     },
     .{
+        .name = "quad",
+        .root_source = "sapp/quad-sapp.zig",
+        .shader = "sapp/quad-sapp.glsl",
+    },
+    .{
         .name = "ozz-anim",
         .root_source = "sapp/ozz-anim-sapp.zig",
     },
