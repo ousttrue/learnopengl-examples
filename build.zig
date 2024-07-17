@@ -151,6 +151,14 @@ const sokol_apps = [_]struct {
         .shader = "sapp/noninterleaved-sapp.glsl",
     },
     .{
+        .name = "texcube",
+        .root_source = "sapp/texcube-sapp.zig",
+        .shader = "sapp/texcube-sapp.glsl",
+    },
+    //
+    //
+    //
+    .{
         .name = "ozz-anim",
         .root_source = "sapp/ozz-anim-sapp.zig",
     },
