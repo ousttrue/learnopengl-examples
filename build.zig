@@ -126,6 +126,11 @@ const sokol_apps = [_]struct {
         .shader = "sapp/triangle-sapp.glsl",
     },
     .{
+        .name = "triangle-bufferless",
+        .root_source = "sapp/triangle-bufferless-sapp.zig",
+        .shader = "sapp/triangle-bufferless-sapp.glsl",
+    },
+    .{
         .name = "ozz-anim",
         .root_source = "sapp/ozz-anim-sapp.zig",
     },
