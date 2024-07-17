@@ -145,7 +145,11 @@ const sokol_apps = [_]struct {
         .root_source = "sapp/cube-sapp.zig",
         .shader = "sapp/cube-sapp.glsl",
     },
-    //
+    .{
+        .name = "noninterleaved",
+        .root_source = "sapp/noninterleaved-sapp.zig",
+        .shader = "sapp/noninterleaved-sapp.glsl",
+    },
     .{
         .name = "ozz-anim",
         .root_source = "sapp/ozz-anim-sapp.zig",
