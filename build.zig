@@ -277,6 +277,17 @@ const Deps = struct {
         compile.root_module.addImport("dbgui", self.dbgui);
         compile.root_module.addImport("util_camera", self.util_camera);
         compile.linkLibC();
+
+        compile.addIncludePath(self.b.path("sapp/libs/ozzanim/include"));
+        compile.addCSourceFile(.{ .file = self.b.path("sapp/ozz_wrap.cpp") });
+
+        compile.addCSourceFiles(.{
+            .files = &.{
+                "sapp/libs/ozzanim/src/ozz_animation.cc",
+                "sapp/libs/ozzanim/src/ozz_base.cc",
+            },
+        });
+
         if (self.target.result.isWasm()) {
             // create a build step which invokes the Emscripten linker
             const dep_emsdk = self.dep_sokol.builder.dependency("emsdk", .{});

@@ -75,7 +75,7 @@ pub const Camera = struct {
 
     // feed zoom (mouse wheel) input
     pub fn zoom(cam: *@This(), d: f32) void {
-        cam.distance = std.math.clamp(cam.min_dist, cam.distance + d, cam.max_dist);
+        cam.distance = std.math.clamp(cam.distance + d, cam.min_dist, cam.max_dist);
     }
 
     // update the view, proj and view_proj matrix
@@ -103,7 +103,7 @@ pub const Camera = struct {
                 }
             },
             .MOUSE_SCROLL => {
-                cam.zoom(ev.*.scroll_y * 0.5);
+                cam.zoom(-ev.*.scroll_y);
             },
             .MOUSE_MOVE => {
                 if (sokol.app.mouseLocked()) {
