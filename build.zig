@@ -159,6 +159,11 @@ const sokol_apps = [_]struct {
         .name = "sgl-lines",
         .root_source = "sapp/sgl-lines-sapp.zig",
     },
+    .{
+        .name = "offscreen",
+        .root_source = "sapp/offscreen-sapp.zig",
+        .shader = "sapp/offscreen-sapp.glsl",
+    },
     //
     //
     //
