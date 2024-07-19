@@ -164,6 +164,11 @@ const sokol_apps = [_]struct {
         .root_source = "sapp/offscreen-sapp.zig",
         .shader = "sapp/offscreen-sapp.glsl",
     },
+    .{
+        .name = "ozz-skin",
+        .root_source = "sapp/ozz-skin-sapp.zig",
+        .shader = "sapp/ozz-skin-sapp.glsl",
+    },
     //
     //
     //
