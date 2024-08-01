@@ -10,6 +10,7 @@ const examples = [_]struct {
     .{
         .name = "learnopengl-examples",
         .root_source = "src/main.zig",
+        .shader = "src/shaders/cube.glsl",
     },
     .{
         .name = "sokol-zig-imgui-sample",
@@ -72,7 +73,7 @@ const examples = [_]struct {
     .{
         .name = "1-7-2",
         .root_source = "src/1-7-transformations/2-rotate-translate.zig",
-        // .shader = "src/1-7-transformations/transformations.glsl",
+        .shader = "src/1-7-transformations/transformations.glsl",
     },
     .{
         .name = "1-8-1",
@@ -82,12 +83,12 @@ const examples = [_]struct {
     .{
         .name = "1-8-2",
         .root_source = "src/1-8-coordinate-systems/2-cube.zig",
-        // .shader = "src/1-8-coordinate-systems/shaders.glsl",
+        .shader = "src/1-8-coordinate-systems/shaders.glsl",
     },
     .{
         .name = "1-8-3",
         .root_source = "src/1-8-coordinate-systems/3-more-cubes.zig",
-        // .shader = "src/1-8-coordinate-systems/shaders.glsl",
+        .shader = "src/1-8-coordinate-systems/shaders.glsl",
     },
     .{
         .name = "1-9-1",
@@ -97,12 +98,12 @@ const examples = [_]struct {
     .{
         .name = "1-9-2",
         .root_source = "src/1-9-camera/2-walk.zig",
-        // .shader = "src/1-9-camera/shaders.glsl",
+        .shader = "src/1-9-camera/shaders.glsl",
     },
     .{
         .name = "1-9-3",
         .root_source = "src/1-9-camera/3-look.zig",
-        // .shader = "src/1-9-camera/shaders.glsl",
+        .shader = "src/1-9-camera/shaders.glsl",
     },
     .{
         .name = "4-5-1",
@@ -183,10 +184,9 @@ const sokol_apps = [_]struct {
 fn buildShader(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    shdc_step: *std.Build.Step,
     comptime sokol_tools_bin_dir: []const u8,
     comptime shader: []const u8,
-) void {
+) *std.Build.Step {
     const optional_shdc: ?[:0]const u8 = comptime switch (builtin.os.tag) {
         .windows => "win32/sokol-shdc.exe",
         .linux => "linux/sokol-shdc",
@@ -200,7 +200,7 @@ fn buildShader(
     const shdc_path = sokol_tools_bin_dir ++ optional_shdc.?;
     const glsl = if (target.result.isDarwin()) "glsl410" else "glsl430";
     const slang = glsl ++ ":metal_macos:hlsl5:glsl300es:wgsl";
-    const cmd = b.addSystemCommand(&.{
+    return &b.addSystemCommand(&.{
         shdc_path,
         "-i",
         shader,
@@ -210,15 +210,13 @@ fn buildShader(
         slang,
         "-f",
         "sokol_zig",
-    });
-    shdc_step.dependOn(&cmd.step);
+    }).step;
 }
 
 const Deps = struct {
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
-    shdc_step: *std.Build.Step,
     dep_sokol: *std.Build.Dependency,
     dep_cimgui: *std.Build.Dependency,
     helper: *std.Build.Module,
@@ -236,7 +234,6 @@ const Deps = struct {
             .b = b,
             .target = target,
             .optimize = optimize,
-            .shdc_step = b.step("shaders", "Compile shaders (needs ../sokol-tools-bin)"),
             .dep_sokol = b.dependency("sokol", .{
                 .target = target,
                 .optimize = optimize,
@@ -297,9 +294,6 @@ const Deps = struct {
         root_source: []const u8,
         comptime _shader: ?[]const u8,
     ) void {
-        if (_shader) |shader| {
-            buildShader(self.b, self.target, self.shdc_step, "../../floooh/sokol-tools-bin/bin/", shader);
-        }
         const compile = if (self.target.result.isWasm()) wasm: {
             const lib = self.b.addStaticLibrary(.{
                 .target = self.target,
@@ -319,6 +313,15 @@ const Deps = struct {
             exe.addCSourceFile(.{ .file = self.b.path("c/stb_image.c") });
             break :native exe;
         };
+        if (_shader) |shader| {
+            compile.step.dependOn(buildShader(
+                self.b,
+                self.target,
+                "../../floooh/sokol-tools-bin/bin/",
+                shader,
+            ));
+        }
+
         self.b.installArtifact(compile);
         compile.root_module.addImport("sokol", self.dep_sokol.module("sokol"));
         compile.root_module.addImport("sokol_helper", self.helper);

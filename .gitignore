@@ -10,3 +10,5 @@ build/
 .DS_Store
 zig-out/
 .zig-cache/
+
+*.glsl.zig
