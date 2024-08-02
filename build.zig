@@ -170,6 +170,11 @@ const sokol_apps = [_]struct {
         .root_source = "sapp/ozz-skin-sapp.zig",
         .shader = "sapp/ozz-skin-sapp.glsl",
     },
+    .{
+        .name = "shapes-transform",
+        .root_source = "sapp/shapes-transform-sapp.zig",
+        .shader = "sapp/shapes-transform-sapp.glsl",
+    },
     //
     //
     //
