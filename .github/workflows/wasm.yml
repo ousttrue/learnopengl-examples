@@ -39,7 +39,7 @@ jobs:
       - name: ss
         run: |
           pip install pytest-playwright
-          playwright install chrome
+          playwright install
           cd docs
           python -m http.server 8080&
           cd ..
