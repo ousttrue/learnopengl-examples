@@ -165,11 +165,11 @@ const sokol_apps = [_]struct {
         .root_source = "sapp/offscreen-sapp.zig",
         .shader = "sapp/offscreen-sapp.glsl",
     },
-    .{
-        .name = "ozz-skin",
-        .root_source = "sapp/ozz-skin-sapp.zig",
-        .shader = "sapp/ozz-skin-sapp.glsl",
-    },
+    // .{
+    //     .name = "ozz-skin",
+    //     .root_source = "sapp/ozz-skin-sapp.zig",
+    //     .shader = "sapp/ozz-skin-sapp.glsl",
+    // },
     .{
         .name = "shapes-transform",
         .root_source = "sapp/shapes-transform-sapp.zig",
@@ -178,31 +178,26 @@ const sokol_apps = [_]struct {
     //
     //
     //
-    .{
-        .name = "ozz-anim",
-        .root_source = "sapp/ozz-anim-sapp.zig",
-    },
+    // .{
+    //     .name = "ozz-anim",
+    //     .root_source = "sapp/ozz-anim-sapp.zig",
+    // },
 };
 
 // a separate step to compile shaders, expects the shader compiler in ../sokol-tools-bin/
-// TODO: install sokol-shdc via package manager
 fn buildShader(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    comptime sokol_tools_bin_dir: []const u8,
     comptime shader: []const u8,
 ) *std.Build.Step {
-    const optional_shdc: ?[:0]const u8 = comptime switch (builtin.os.tag) {
+    const optional_shdc = comptime switch (builtin.os.tag) {
         .windows => "win32/sokol-shdc.exe",
         .linux => "linux/sokol-shdc",
         .macos => if (builtin.cpu.arch.isX86()) "osx/sokol-shdc" else "osx_arm64/sokol-shdc",
-        else => null,
+        else => @panic("unsupported host platform, skipping shader compiler step"),
     };
-    if (optional_shdc == null) {
-        std.log.warn("unsupported host platform, skipping shader compiler step", .{});
-        return;
-    }
-    const shdc_path = sokol_tools_bin_dir ++ optional_shdc.?;
+    const tools = b.dependency("sokol-tools-bin", .{});
+    const shdc_path = tools.path(b.pathJoin(&.{ "bin", optional_shdc })).getPath(b);
     const glsl = if (target.result.isDarwin()) "glsl410" else "glsl430";
     const slang = glsl ++ ":metal_macos:hlsl5:glsl300es:wgsl";
     return &b.addSystemCommand(&.{
@@ -322,7 +317,6 @@ const Deps = struct {
             compile.step.dependOn(buildShader(
                 self.b,
                 self.target,
-                "../../floooh/sokol-tools-bin/bin/",
                 shader,
             ));
         }
@@ -338,15 +332,14 @@ const Deps = struct {
         compile.root_module.addImport("util_camera", self.util_camera);
         compile.linkLibC();
 
-        compile.addIncludePath(self.b.path("sapp/libs/ozzanim/include"));
-        compile.addCSourceFile(.{ .file = self.b.path("sapp/ozz_wrap.cpp") });
-
-        compile.addCSourceFiles(.{
-            .files = &.{
-                "sapp/libs/ozzanim/src/ozz_animation.cc",
-                "sapp/libs/ozzanim/src/ozz_base.cc",
-            },
-        });
+        // compile.addIncludePath(self.b.path("sapp/libs/ozzanim/include"));
+        // compile.addCSourceFile(.{ .file = self.b.path("sapp/ozz_wrap.cpp") });
+        // compile.addCSourceFiles(.{
+        //     .files = &.{
+        //         "sapp/libs/ozzanim/src/ozz_animation.cc",
+        //         "sapp/libs/ozzanim/src/ozz_base.cc",
+        //     },
+        // });
 
         if (self.target.result.isWasm()) {
             // create a build step which invokes the Emscripten linker
@@ -398,3 +391,4 @@ pub fn build(b: *std.Build) void {
         );
     }
 }
+
