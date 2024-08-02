@@ -117,59 +117,59 @@ const sokol_apps = [_]struct {
     root_source: []const u8,
     shader: ?[]const u8 = null,
 }{
-    .{
-        .name = "clear",
-        .root_source = "sapp/clear-sapp.zig",
-    },
-    .{
-        .name = "triangle",
-        .root_source = "sapp/triangle-sapp.zig",
-        .shader = "sapp/triangle-sapp.glsl",
-    },
-    .{
-        .name = "triangle-bufferless",
-        .root_source = "sapp/triangle-bufferless-sapp.zig",
-        .shader = "sapp/triangle-bufferless-sapp.glsl",
-    },
-    .{
-        .name = "quad",
-        .root_source = "sapp/quad-sapp.zig",
-        .shader = "sapp/quad-sapp.glsl",
-    },
-    .{
-        .name = "bufferoffsets-sapp",
-        .root_source = "sapp/bufferoffsets-sapp.zig",
-        .shader = "sapp/bufferoffsets-sapp.glsl",
-    },
-    .{
-        .name = "cube",
-        .root_source = "sapp/cube-sapp.zig",
-        .shader = "sapp/cube-sapp.glsl",
-    },
-    .{
-        .name = "noninterleaved",
-        .root_source = "sapp/noninterleaved-sapp.zig",
-        .shader = "sapp/noninterleaved-sapp.glsl",
-    },
-    .{
-        .name = "texcube",
-        .root_source = "sapp/texcube-sapp.zig",
-        .shader = "sapp/texcube-sapp.glsl",
-    },
-    .{
-        .name = "sgl-lines",
-        .root_source = "sapp/sgl-lines-sapp.zig",
-    },
-    .{
-        .name = "offscreen",
-        .root_source = "sapp/offscreen-sapp.zig",
-        .shader = "sapp/offscreen-sapp.glsl",
-    },
     // .{
-    //     .name = "ozz-skin",
-    //     .root_source = "sapp/ozz-skin-sapp.zig",
-    //     .shader = "sapp/ozz-skin-sapp.glsl",
+    //     .name = "clear",
+    //     .root_source = "sapp/clear-sapp.zig",
     // },
+    // .{
+    //     .name = "triangle",
+    //     .root_source = "sapp/triangle-sapp.zig",
+    //     .shader = "sapp/triangle-sapp.glsl",
+    // },
+    // .{
+    //     .name = "triangle-bufferless",
+    //     .root_source = "sapp/triangle-bufferless-sapp.zig",
+    //     .shader = "sapp/triangle-bufferless-sapp.glsl",
+    // },
+    // .{
+    //     .name = "quad",
+    //     .root_source = "sapp/quad-sapp.zig",
+    //     .shader = "sapp/quad-sapp.glsl",
+    // },
+    // .{
+    //     .name = "bufferoffsets-sapp",
+    //     .root_source = "sapp/bufferoffsets-sapp.zig",
+    //     .shader = "sapp/bufferoffsets-sapp.glsl",
+    // },
+    // .{
+    //     .name = "cube",
+    //     .root_source = "sapp/cube-sapp.zig",
+    //     .shader = "sapp/cube-sapp.glsl",
+    // },
+    // .{
+    //     .name = "noninterleaved",
+    //     .root_source = "sapp/noninterleaved-sapp.zig",
+    //     .shader = "sapp/noninterleaved-sapp.glsl",
+    // },
+    // .{
+    //     .name = "texcube",
+    //     .root_source = "sapp/texcube-sapp.zig",
+    //     .shader = "sapp/texcube-sapp.glsl",
+    // },
+    // .{
+    //     .name = "sgl-lines",
+    //     .root_source = "sapp/sgl-lines-sapp.zig",
+    // },
+    // .{
+    //     .name = "offscreen",
+    //     .root_source = "sapp/offscreen-sapp.zig",
+    //     .shader = "sapp/offscreen-sapp.glsl",
+    // },
+    // // .{
+    // //     .name = "ozz-skin",
+    // //     .root_source = "sapp/ozz-skin-sapp.zig",
+    // //     .shader = "sapp/ozz-skin-sapp.glsl",
+    // // },
     .{
         .name = "shapes-transform",
         .root_source = "sapp/shapes-transform-sapp.zig",
@@ -356,6 +356,9 @@ const Deps = struct {
                 .extra_args = &.{
                     // "-sERROR_ON_UNDEFINED_SYMBOLS=0",
                     "-sSTB_IMAGE=1",
+                    "-g",
+                    "-sTOTAL_MEMORY=200MB",
+                    "-sUSE_OFFSET_CONVERTER=1",
                 },
             });
 
@@ -370,19 +373,27 @@ const Deps = struct {
             // C compilation is attempted (since the sokol C library depends on the
             // Emscripten SDK setup step)
             self.dep_cimgui.artifact("cimgui_clib").step.dependOn(&self.dep_sokol.artifact("sokol_clib").step);
+
+            // ...and a special run step to start the web build output via 'emrun'
+            const run = sokol.emRunStep(self.b, .{
+                .name = "shapes-transform",
+                .emsdk = dep_emsdk,
+            });
+            run.step.dependOn(&compile.step);
+            self.b.step("run", "Run shapes-transform").dependOn(&run.step);
         }
     }
 };
 
 pub fn build(b: *std.Build) void {
     var deps = Deps.init(b);
-    inline for (examples) |example| {
-        deps.compile_example(
-            example.name,
-            example.root_source,
-            example.shader,
-        );
-    }
+    // inline for (examples) |example| {
+    //     deps.compile_example(
+    //         example.name,
+    //         example.root_source,
+    //         example.shader,
+    //     );
+    // }
     inline for (sokol_apps) |example| {
         deps.compile_example(
             example.name,
@@ -391,4 +402,3 @@ pub fn build(b: *std.Build) void {
         );
     }
 }
-

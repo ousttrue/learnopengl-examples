@@ -10,6 +10,8 @@ const sg = sokol.gfx;
 const dbgui = @import("dbgui");
 const shd = @import("shapes-transform-sapp.glsl.zig");
 const szmath = @import("szmath");
+// const zshape = @import("zshape.zig");
+const zshape = sokol.shape;
 
 const state = struct {
     var pass_action = sg.PassAction{};
@@ -21,15 +23,18 @@ const state = struct {
     var ry: f32 = 0;
 };
 
+var vertices = [1]zshape.Vertex{.{}} ** (6 * 1024);
+var indices = [1]u16{0} ** (16 * 1024);
+
 export fn init() void {
     sg.setup(.{
         .environment = sokol.glue.environment(),
         .logger = .{ .func = sokol.log.func },
     });
-    sokol.debugtext.setup(.{
-        .fonts = .{ sokol.debugtext.fontOric(), .{}, .{}, .{}, .{}, .{}, .{}, .{} },
-        .logger = .{ .func = sokol.log.func },
-    });
+    // sokol.debugtext.setup(.{
+    //     .fonts = .{ sokol.debugtext.fontOric(), .{}, .{}, .{}, .{}, .{}, .{}, .{} },
+    //     .logger = .{ .func = sokol.log.func },
+    // });
     dbgui.setup(sokol.app.sampleCount());
 
     // clear to black
@@ -50,84 +55,82 @@ export fn init() void {
         .cull_mode = .NONE,
         .depth = .{ .compare = .LESS_EQUAL, .write_enabled = true },
     };
-    pip_desc.layout.buffers[0] = sokol.shape.vertexBufferLayoutState();
-    pip_desc.layout.attrs[0] = sokol.shape.positionVertexAttrState();
-    pip_desc.layout.attrs[1] = sokol.shape.normalVertexAttrState();
-    pip_desc.layout.attrs[2] = sokol.shape.texcoordVertexAttrState();
-    pip_desc.layout.attrs[3] = sokol.shape.colorVertexAttrState();
+    pip_desc.layout.buffers[0] = zshape.vertexBufferLayoutState();
+    pip_desc.layout.attrs[0] = zshape.positionVertexAttrState();
+    pip_desc.layout.attrs[1] = zshape.normalVertexAttrState();
+    pip_desc.layout.attrs[2] = zshape.texcoordVertexAttrState();
+    pip_desc.layout.attrs[3] = zshape.colorVertexAttrState();
     state.pip = sg.makePipeline(pip_desc);
 
     // generate merged shape geometries
-    var vertices = [1]sokol.shape.Vertex{.{}} ** (6 * 1024);
-    var indices = [1]u16{0} ** (16 * 1024);
-    var buf: sokol.shape.Buffer = .{};
+    var buf: zshape.Buffer = .{};
     buf.vertices.buffer = sokol.shape.asRange(&vertices);
     buf.indices.buffer = sokol.shape.asRange(&indices);
 
     // transform matrices for the shapes
     const box_transform = szmath.Mat4.translate(.{ .x = -1.0, .y = 0.0, .z = 1.0 });
-    const sphere_transform = szmath.Mat4.translate(.{ .x = 1.0, .y = 0.0, .z = 1.0 });
-    const cylinder_transform = szmath.Mat4.translate(.{ .x = -1.0, .y = 0.0, .z = -1.0 });
-    const torus_transform = szmath.Mat4.translate(.{ .x = 1.0, .y = 0.0, .z = -1.0 });
+    // const sphere_transform = szmath.Mat4.translate(.{ .x = 1.0, .y = 0.0, .z = 1.0 });
+    // const cylinder_transform = szmath.Mat4.translate(.{ .x = -1.0, .y = 0.0, .z = -1.0 });
+    // const torus_transform = szmath.Mat4.translate(.{ .x = 1.0, .y = 0.0, .z = -1.0 });
 
     // build the shapes...
-    buf = sokol.shape.buildBox(buf, .{
+    buf = zshape.buildBox(buf, .{
         .width = 1.0,
         .height = 1.0,
         .depth = 1.0,
         .tiles = 10,
         .random_colors = true,
-        .transform = sokol.shape.mat4(&box_transform.m[0]),
+        .transform = zshape.mat4(&box_transform.m[0]),
     });
-    buf = sokol.shape.buildSphere(buf, .{
-        .merge = true,
-        .radius = 0.75,
-        .slices = 36,
-        .stacks = 20,
-        .random_colors = true,
-        .transform = sokol.shape.mat4(&sphere_transform.m[0]),
-    });
-    buf = sokol.shape.buildCylinder(buf, .{
-        .merge = true,
-        .radius = 0.5,
-        .height = 1.0,
-        .slices = 36,
-        .stacks = 10,
-        .random_colors = true,
-        .transform = sokol.shape.mat4(&cylinder_transform.m[0]),
-    });
-    buf = sokol.shape.buildTorus(buf, .{
-        .merge = true,
-        .radius = 0.5,
-        .ring_radius = 0.3,
-        .rings = 36,
-        .sides = 18,
-        .random_colors = true,
-        .transform = sokol.shape.mat4(&torus_transform.m[0]),
-    });
-    std.debug.assert(buf.valid);
+    // buf = zshape.buildSphere(buf, .{
+    //     .merge = true,
+    //     .radius = 0.75,
+    //     .slices = 36,
+    //     .stacks = 20,
+    //     .random_colors = true,
+    //     .transform = zshape.Mat4.init(sphere_transform.m),
+    // });
+    // buf = zshape.buildCylinder(buf, .{
+    //     .merge = true,
+    //     .radius = 0.5,
+    //     .height = 1.0,
+    //     .slices = 36,
+    //     .stacks = 10,
+    //     .random_colors = true,
+    //     .transform = zshape.Mat4.init(cylinder_transform.m),
+    // });
+    // buf = zshape.buildTorus(buf, .{
+    //     .merge = true,
+    //     .radius = 0.5,
+    //     .ring_radius = 0.3,
+    //     .rings = 36,
+    //     .sides = 18,
+    //     .random_colors = true,
+    //     .transform = zshape.Mat4.init(torus_transform.m),
+    // });
+    // std.debug.assert(buf.valid);
 
     // extract element range for sg_draw()
-    state.elms = sokol.shape.elementRange(buf);
+    state.elms = sokol.shape.elementRange(@as(*sokol.shape.Buffer, @ptrCast(&buf)).*);
 
     // and finally create the vertex- and index-buffer
-    const vbuf_desc = sokol.shape.vertexBufferDesc(buf);
-    const ibuf_desc = sokol.shape.indexBufferDesc(buf);
+    const vbuf_desc = zshape.vertexBufferDesc(buf);
+    const ibuf_desc = zshape.indexBufferDesc(buf);
     state.bind.vertex_buffers[0] = sg.makeBuffer(vbuf_desc);
     state.bind.index_buffer = sg.makeBuffer(ibuf_desc);
 }
 
 export fn frame() void {
     // help text
-    sokol.debugtext.canvas(sokol.app.widthf() * 0.5, sokol.app.heightf() * 0.5);
-    sokol.debugtext.pos(0.5, 0.5);
-    sokol.debugtext.puts(
-        \\press key to switch draw mode:
-        \\
-        \\  1: vertex normals
-        \\  2: texture coords
-        \\  3: vertex color
-    );
+    // sokol.debugtext.canvas(sokol.app.widthf() * 0.5, sokol.app.heightf() * 0.5);
+    // sokol.debugtext.pos(0.5, 0.5);
+    // sokol.debugtext.puts(
+    //     \\press key to switch draw mode:
+    //     \\
+    //     \\  1: vertex normals
+    //     \\  2: texture coords
+    //     \\  3: vertex color
+    // );
 
     // build model-view-projection matrix
     const t = (sokol.app.frameDuration() * 60.0);
@@ -161,7 +164,7 @@ export fn frame() void {
     sg.draw(state.elms.base_element, state.elms.num_elements, 1);
 
     // render help text and finish frame
-    sokol.debugtext.draw();
+    // sokol.debugtext.draw();
     dbgui.draw();
     sg.endPass();
     sg.commit();
