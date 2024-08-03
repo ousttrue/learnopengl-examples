@@ -17,8 +17,10 @@ pub fn build(b: *std.Build) void {
                 .name = example.name,
                 .root_source_file = b.path(example.root_source),
             });
+            b.installArtifact(lib);
+            // const install = b.addInstallArtifact(lib, .{});
             deps.inject_dependencies(lib);
-            deps.inject_ozz_animation(b, lib);
+            // deps.inject_ozz_animation(b, lib);
 
             const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
 
@@ -53,17 +55,13 @@ pub fn build(b: *std.Build) void {
             // Emscripten SDK setup step)
             deps.dep_cimgui.artifact("cimgui_clib").step.dependOn(&deps.dep_sokol.artifact("sokol_clib").step);
 
-            const install = b.addInstallArtifact(lib, .{});
-            b.getInstallStep().dependOn(&install.step);
-
             // ...and a special run step to start the web build output via 'emrun'
             const run = sokol.emRunStep(b, .{
                 .name = "run-" ++ example.name,
                 .emsdk = dep_emsdk,
             });
-            run.step.dependOn(&install.step);
+            run.step.dependOn(&lib.step);
             b.step("run-" ++ example.name, "Run " ++ example.name).dependOn(&run.step);
-
             break :wasm lib;
         } else native: {
             const exe = b.addExecutable(.{
@@ -75,6 +73,7 @@ pub fn build(b: *std.Build) void {
             exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });
             deps.inject_dependencies(exe);
             deps.inject_ozz_animation(b, exe);
+            b.installArtifact(exe);
 
             // ...and a special run step to start the web build output via 'emrun'
             const run = b.addRunArtifact(exe);

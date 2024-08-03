@@ -85,11 +85,14 @@ pub const Deps = struct {
 
     pub fn inject_ozz_animation(_: @This(), b: *std.Build, compile: *std.Build.Step.Compile) void {
         compile.addIncludePath(b.path("sapp/libs/ozzanim/include"));
-        compile.addCSourceFile(.{ .file = b.path("sapp/ozz_wrap.cpp") });
         compile.addCSourceFiles(.{
             .files = &.{
+                "sapp/ozz_wrap.cpp",
                 "sapp/libs/ozzanim/src/ozz_animation.cc",
                 "sapp/libs/ozzanim/src/ozz_base.cc",
+            },
+            .flags = &.{
+                "-std=c++11",
             },
         });
         compile.linkLibCpp();

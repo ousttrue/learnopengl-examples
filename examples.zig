@@ -172,8 +172,8 @@ pub const sokol_examples = [_]Example{
     //
     //
     //
-    .{
-        .name = "ozz-anim",
-        .root_source = "sapp/ozz-anim-sapp.zig",
-    },
+    // .{
+    //     .name = "ozz-anim",
+    //     .root_source = "sapp/ozz-anim-sapp.zig",
+    // },
 };
