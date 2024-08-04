@@ -239,16 +239,16 @@ BEGIN_HTML = f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Learn OpenGL Examples(zig)</title>
+<title>Learn OpenGL Examples(⚡zig⚡)</title>
 <link rel="icon" type="image/png" href="favicon.png"/>
 <link href="style.css" rel="stylesheet" />
 </head>
 <body>
 <header>
-<h1><a class="main-menu-link" href="https://github.com/ousttrue/learnopengl-examples">Learn OpenGL Examples(sokol + zig)</a></h1>
+<h1><a class="main-menu-link" href="https://github.com/ousttrue/learnopengl-examples">Learn OpenGL Examples(sokol + ⚡zig⚡)</a></h1>
 <nav>
     <ul>
-    <li><a href="https://github.com/floooh/sokol-zig">sokol-zig</a></li>
+    <li><a href="https://github.com/floooh/sokol-zig">⚡sokol-zig⚡</a></li>
     <li><a href="https://learnopengl.com">learnopengl</a></li>
     <li><a href="https://github.com/zeromake/learnopengl-examples">learnopengl-examples(sokol)</a></li>
     </ul>
@@ -260,7 +260,7 @@ BEGIN_HTML = f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w
             <b>Unofficial</b> WebGL examples for <a href="https://learnopengl.com/">learnopengl.com</a>
         </p>
         <ul>
-            <li> written in ZIG, compiled to WebAssembly </li>
+            <li> written in ⚡Zig⚡, compiled to WebAssembly </li>
             <li> shader dialect GLSL v450, cross-compiled to GLSL v300es (WebGL2) </li>
             <li> uses <a href="https://github.com/floooh/sokol-zig">Sokol-zig libraries</a> for cross platform support </li>
             <li> last updated: {datetime.datetime.now()} </i>
@@ -296,7 +296,7 @@ def main():
     with pathlib.Path("docs/index.html").open("w", encoding="utf-8") as f:
         f.write(BEGIN_HTML)
         for group, articles in EXAMPLE_MAP.items():
-            f.write(f"<h2>{group}<h2>\n")
+            f.write(f"<h2>{group}</h2>\n")
             for article in articles:
                 f.write(
                     f'<article><section class="header"><h3><a href="{article.url}">{article.name}<i class="icon-link-ext"></i></a></h3></section>\n'
