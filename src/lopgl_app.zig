@@ -85,7 +85,7 @@ const state = struct {
     var orbital_cam = OrbitalCamera{};
     //     struct fp_cam fp_cam;
     var fp_enabled = false;
-    var show_help = false;
+    var show_help = true;
     var hide_ui = false;
     var first_mouse = true;
     var last_mouse = Vec2{ .x = 0, .y = 0 };
@@ -119,19 +119,18 @@ pub fn setup() void {
     // flip images vertically after loading
     // stbi_set_flip_vertically_on_load(true);
 
-    state.orbital_cam.init(.{
+    state.orbital_cam.desc = .{
         .target = .{ .x = 0.0, .y = 0.0, .z = 0.0 },
         .up = .{ .x = 0.0, .y = 1.0, .z = 0.0 },
         .pitch = 0.0,
         .heading = 0.0,
         .distance = 6.0,
         .zoom_speed = 0.5,
-        .rotate_speed = std.math.radiansToDegrees(1.0),
         .min_dist = 1.0,
         .max_dist = 10.0,
         .min_pitch = -89.0,
         .max_pitch = 89.0,
-    });
+    };
 
     //     lopgl_set_fp_cam(&(lopgl_fp_cam_desc_t) {
     //         .position = HMM_V3(0.0f, 0.0f,  6.0f),
@@ -193,6 +192,24 @@ pub fn cameraDirection() Vec3 {
     }
 }
 
+fn get_mouse_delta(e: [*c]const sokol.app.Event) Vec2 {
+    defer state.last_mouse = .{
+        .x = e.*.mouse_x,
+        .y = e.*.mouse_y,
+    };
+    if (e.*.type == .MOUSE_MOVE) {
+        if (!state.first_mouse) {
+            return Vec2{
+                .x = e.*.mouse_x - state.last_mouse.x,
+                .y = state.last_mouse.y - e.*.mouse_y,
+            };
+        } else {
+            state.first_mouse = false;
+        }
+    }
+    return .{ .x = 0, .y = 0 };
+}
+
 pub fn handleInput(e: [*c]const sokol.app.Event) void {
     if (e.*.type == .KEY_DOWN) {
         if (e.*.key_code == .C) {
@@ -206,19 +223,7 @@ pub fn handleInput(e: [*c]const sokol.app.Event) void {
         }
     }
 
-    var mouse_offset = Vec2{ .x = 0.0, .y = 0.0 };
-
-    if (e.*.type == .MOUSE_MOVE) {
-        if (!state.first_mouse) {
-            mouse_offset.x = e.*.mouse_x - state.last_mouse.x;
-            mouse_offset.y = state.last_mouse.y - e.*.mouse_y;
-        } else {
-            state.first_mouse = false;
-        }
-
-        state.last_mouse.x = e.*.mouse_x;
-        state.last_mouse.y = e.*.mouse_y;
-    }
+    const mouse_offset = get_mouse_delta(e);
 
     if (state.fp_enabled) {
         unreachable;
@@ -237,32 +242,36 @@ pub fn renderHelp() void {
         return;
     }
 
-    //     sdtx_canvas(sapp_width()*0.5f, sapp_height()*0.5f);
-    //     sdtx_origin(0.25f, 0.25f);
-    //     sdtx_home();
-    //
-    //     if (!state.show_help) {
-    //         sdtx_color4b(0xff, 0xff, 0xff, 0xaf);
-    //         sdtx_puts(  "Show help:\t'H'");
-    //     }
-    //     else {
-    //         sdtx_color4b(0x00, 0xff, 0x00, 0xaf);
-    //         sdtx_puts(  "Hide help:\t'H'\n\n");
-    //         sdtx_printf("Frame Time:\t%.3f\n\n", stm_ms(state.frame_time));
-    //         sdtx_printf("Orbital Cam\t[%c]\n", state.fp_enabled ? ' ': '*');
-    //         sdtx_printf("FP Cam\t\t[%c]\n\n", state.fp_enabled ? '*' : ' ');
-    //         sdtx_puts("Switch Cam:\t'C'\n\n");
-    //
-    //         if (state.fp_enabled) {
-    //             sdtx_puts(help_fp(&state.fp_cam));
-    //         }
-    //         else {
-    //             sdtx_puts(help_orbital(&state.orbital_cam));
-    //         }
-    //
-    //         sdtx_puts("\nExit:\t\t'ESC'");
-    //     }
-    //
+    sokol.debugtext.canvas(sokol.app.widthf() * 0.5, sokol.app.heightf() * 0.5);
+    sokol.debugtext.origin(0.25, 0.25);
+    sokol.debugtext.home();
+
+    if (!state.show_help) {
+        sokol.debugtext.color4b(0xff, 0xff, 0xff, 0xaf);
+        sokol.debugtext.puts("Show help:\t'H'");
+    } else {
+        sokol.debugtext.color4b(0x00, 0xff, 0x00, 0xaf);
+        sokol.debugtext.puts("Hide help:\t'H'\n\n");
+        sokol.debugtext.print("Frame Time:\t{}\n\n", .{sokol.time.ms(state.frame_time)});
+        sokol.debugtext.print("Orbital Cam\t[{}]\n", .{@as(u8, if (state.fp_enabled) ' ' else '*')});
+        sokol.debugtext.print("yaw, pitch\t[{d:.3}, {d:.3}]\n", .{
+            state.orbital_cam.desc.heading,
+            state.orbital_cam.desc.pitch,
+        });
+        sokol.debugtext.print("mouse\t[{d:.3}, {d:.3}]\n", .{ state.last_mouse.x, state.last_mouse.y });
+        sokol.debugtext.print("FP Cam\t\t[{}]\n\n", .{@as(u8, if (state.fp_enabled) '*' else ' ')});
+        sokol.debugtext.puts("Switch Cam:\t'C'\n\n");
+
+        if (state.fp_enabled) {
+            unreachable;
+            // sokol.debugtext.puts(help_fp(&state.fp_cam));
+        } else {
+            sokol.debugtext.puts(state.orbital_cam.help());
+        }
+
+        sokol.debugtext.puts("\nExit:\t\t'ESC'");
+    }
+
     sokol.debugtext.draw();
 }
 
