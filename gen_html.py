@@ -304,7 +304,10 @@ def main():
                     f'<article><section class="header"><h3><a href="{article.url}">{article.name}<i class="icon-link-ext"></i></a></h3></section>\n'
                 )
                 for section in article.sections:
-                    screen_shot(section.name, port, 400, 300)
+                    try:
+                        screen_shot(section.name, port, 400, 300)
+                    except Exception:
+                        pass
                     f.write(str(section))
             f.write("</article>\n")
         f.write(END_HTML)
