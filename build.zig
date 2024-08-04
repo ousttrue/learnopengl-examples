@@ -8,6 +8,7 @@ const WASM_ARGS = [_][]const u8{
     "-sTOTAL_MEMORY=200MB",
     "-sUSE_OFFSET_CONVERTER=1",
     "-sSTB_IMAGE=1",
+    "-Wno-limited-postlink-optimizations",
 };
 const WASM_ARGS_DEBUG = [_][]const u8{
     "-g",
@@ -26,15 +27,13 @@ pub fn build(b: *std.Build) void {
                 .name = example.name,
                 .root_source_file = b.path(example.root_source),
             });
-            b.installArtifact(lib);
-            // const install = b.addInstallArtifact(lib, .{});
             deps.inject_dependencies(lib);
             // deps.inject_ozz_animation(b, lib);
 
             const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
 
             // create a build step which invokes the Emscripten linker
-            _ = try sokol.emLinkStep(b, .{
+            const install = try sokol.emLinkStep(b, .{
                 .lib_main = lib,
                 .target = target,
                 .optimize = optimize,
@@ -63,10 +62,10 @@ pub fn build(b: *std.Build) void {
 
             // ...and a special run step to start the web build output via 'emrun'
             const run = sokol.emRunStep(b, .{
-                .name = "run-" ++ example.name,
+                .name = example.name,
                 .emsdk = dep_emsdk,
             });
-            run.step.dependOn(&lib.step);
+            run.step.dependOn(&install.step);
             b.step("run-" ++ example.name, "Run " ++ example.name).dependOn(&run.step);
             break :wasm lib;
         } else native: {
