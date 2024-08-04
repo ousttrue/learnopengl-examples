@@ -213,6 +213,27 @@ EXAMPLE_MAP: Dict[str, List[Article]] = {
             [Section("5-5-1"), Section("5-5-2"), Section("5-5-3")],
         ),
     ],
+    "sokol-examples": [
+        Article(
+            "Sokol WebGL",
+            "https://floooh.github.io/sokol-html5/",
+            [
+                Section("clear"),
+                Section("triangle"),
+                Section("triangle-bufferless"),
+                Section("quad"),
+                Section("bufferoffsets-sapp"),
+                Section("cube"),
+                Section("noninterleaved"),
+                Section("texcube"),
+                Section("sgl-lines"),
+                Section("offscreen"),
+                Section("shapes-transform"),
+                Section("ozz-anim"),
+                Section("ozz-skin"),
+            ],
+        ),
+    ],
 }
 
 BEGIN_HTML = f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
@@ -222,7 +243,7 @@ BEGIN_HTML = f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Learn OpenGL Examples(zig)</title>
 <link rel="icon" type="image/png" href="favicon.png"/>
-<link href="styles/style.css" rel="stylesheet" />
+<link href="style.css" rel="stylesheet" />
 </head>
 <body>
 <header>
