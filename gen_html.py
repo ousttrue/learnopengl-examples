@@ -13,13 +13,11 @@ class Section:
     name: str
 
     def __str__(self) -> str:
-        return f"""<section class="group examples">
-    <figure class="col-15">
-        <figcaption><h4>rendering</h4></figcaption>
-        <div><img class="responsive" src="{self.name}.jpg" alt=""></div>
-        <a href="{self.name}.html">Read More</a>
-    </figure>
-</section>
+        return f"""<figure class="col-15">
+    <figcaption><h4>rendering</h4></figcaption>
+    <div><img class="responsive" src="{self.name}.jpg" alt=""></div>
+    <a href="{self.name}.html">Read More</a>
+</figure>
 """
 
 
@@ -252,7 +250,7 @@ BEGIN_HTML = f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w
     <ul>
     <li><a href="https://github.com/floooh/sokol-zig">sokol-zig</a></li>
     <li><a href="https://learnopengl.com">learnopengl</a></li>
-    <li><a href="https://github.com/zeromake/learnopengl-examples">github</a></li>
+    <li><a href="https://github.com/zeromake/learnopengl-examples">learnopengl-examples(sokol)</a></li>
     </ul>
 </nav>
 </header>
@@ -303,13 +301,14 @@ def main():
                 f.write(
                     f'<article><section class="header"><h3><a href="{article.url}">{article.name}<i class="icon-link-ext"></i></a></h3></section>\n'
                 )
+                f.write('<section class="group examples">\n')
                 for section in article.sections:
                     try:
                         screen_shot(section.name, port, 400, 300)
                     except Exception:
                         pass
                     f.write(str(section))
-            f.write("</article>\n")
+            f.write("</section></article>\n")
         f.write(END_HTML)
 
 
