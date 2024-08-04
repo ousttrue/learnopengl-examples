@@ -1,70 +1,26 @@
 from typing import List, Dict
 import pathlib
 import sys
+import datetime
+
 # pip install pytest-playwright
 from playwright.sync_api import sync_playwright
 import dataclasses
-
-BEGIN_HTML = """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Learn OpenGL Examples</title>
-<link rel="icon" type="image/png" href="favicon.png"/>
-<link href="styles/style.css" rel="stylesheet" />
-</head>
-<body>
-<header>
-<h1><a class="main-menu-link" href="https://github.com/zeromake/learnopengl-examples">Learn OpenGL Examples</a></h1>
-<nav>
-    <ul>
-    <li><a href="https://github.com/zeromake/learnopengl-examples">github</a></li>
-    <li><a href="https://learnopengl.com">learnopengl</a></li>
-    <li><a href="https://github.com/floooh/sokol">sokol</a></li>
-    <li><a href="https://www.geertarien.com">blog</a></li>
-    </ul>
-</nav>
-</header>
-<main>
-    <section id="intro">
-        <p>
-            <b>Unofficial</b> WebGL examples for <a href="https://learnopengl.com/">learnopengl.com</a>
-        </p>
-        <ul>
-            <li> written in C, compiled to WebAssembly </li>
-            <li> shader dialect GLSL v450, cross-compiled to GLSL v300es (WebGL2) </li>
-            <li> uses <a href="https://github.com/floooh/sokol">Sokol libraries</a> for cross platform support </li>
-            <li> last updated: 2024-06-11 08:54:50 +00:00 </i>
-        </ul>
-    </section>
-"""
-
-END_HTML = """
-<hr>
-
-</main>
-</body>
-</html>
-"""
-
-ARTICLE_HTML = """
-<article>
-    <section class="header"><h3><a href="">Hello Window <i class="icon-link-ext"></i></a></h3></section>
-    <section class="group examples">
-        <figure class="col-15">
-            <figcaption><h4>rendering</h4></figcaption>
-            <div><img class="responsive" src="1-3-1.jpg" alt=""></div>
-            <a href="1-3-1.html">Read More</a>
-        </figure>
-    </section>
-</article>
-"""
 
 
 @dataclasses.dataclass
 class Section:
     name: str
+
+    def __str__(self) -> str:
+        return f"""<section class="group examples">
+    <figure class="col-15">
+        <figcaption><h4>rendering</h4></figcaption>
+        <div><img class="responsive" src="{self.name}.jpg" alt=""></div>
+        <a href="{self.name}.html">Read More</a>
+    </figure>
+</section>
+"""
 
 
 @dataclasses.dataclass
@@ -259,6 +215,49 @@ EXAMPLE_MAP: Dict[str, List[Article]] = {
     ],
 }
 
+BEGIN_HTML = f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Learn OpenGL Examples(zig)</title>
+<link rel="icon" type="image/png" href="favicon.png"/>
+<link href="styles/style.css" rel="stylesheet" />
+</head>
+<body>
+<header>
+<h1><a class="main-menu-link" href="https://github.com/ousttrue/learnopengl-examples">Learn OpenGL Examples(sokol + zig)</a></h1>
+<nav>
+    <ul>
+    <li><a href="https://github.com/floooh/sokol-zig">sokol-zig</a></li>
+    <li><a href="https://learnopengl.com">learnopengl</a></li>
+    <li><a href="https://github.com/zeromake/learnopengl-examples">github</a></li>
+    </ul>
+</nav>
+</header>
+<main>
+    <section id="intro">
+        <p>
+            <b>Unofficial</b> WebGL examples for <a href="https://learnopengl.com/">learnopengl.com</a>
+        </p>
+        <ul>
+            <li> written in ZIG, compiled to WebAssembly </li>
+            <li> shader dialect GLSL v450, cross-compiled to GLSL v300es (WebGL2) </li>
+            <li> uses <a href="https://github.com/floooh/sokol-zig">Sokol-zig libraries</a> for cross platform support </li>
+            <li> last updated: {datetime.datetime.now()} </i>
+        </ul>
+    </section>
+    """
+
+
+END_HTML = """
+<hr>
+
+</main>
+</body>
+</html>
+"""
+
 
 def screen_shot(name: str, port: int, width: int, height: int):
     with sync_playwright() as p:
@@ -277,10 +276,17 @@ def main():
 
     with pathlib.Path("docs/index.html").open("w", encoding="utf-8") as f:
         f.write(BEGIN_HTML)
+        for group, articles in EXAMPLE_MAP.items():
+            f.write(f"<h2>{group}<h2>\n")
+            for article in articles:
+                f.write(
+                    f'<article><section class="header"><h3><a href="{article.url}">{article.name}<i class="icon-link-ext"></i></a></h3></section>\n'
+                )
+                for section in article.sections:
+                    screen_shot(section.name, port, 400, 300)
+                    f.write(str(section))
+            f.write("</article>\n")
         f.write(END_HTML)
-
-        # for k, v in EXAMPLE_MAP.items():
-        # screen_shot("shapes-transform", port, 400, 300)
 
 
 if __name__ == "__main__":
