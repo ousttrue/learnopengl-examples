@@ -4,6 +4,15 @@ const sokol = @import("sokol");
 const examples = @import("examples.zig");
 const Deps = @import("deps.zig").Deps;
 
+const WASM_ARGS = [_][]const u8{
+    "-sTOTAL_MEMORY=200MB",
+    "-sUSE_OFFSET_CONVERTER=1",
+    "-sSTB_IMAGE=1",
+};
+const WASM_ARGS_DEBUG = [_][]const u8{
+    "-g",
+};
+
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -34,13 +43,10 @@ pub fn build(b: *std.Build) void {
                 .use_emmalloc = true,
                 .use_filesystem = false,
                 .shell_file_path = deps.dep_sokol.path("src/sokol/web/shell.html").getPath(b),
-                .extra_args = &.{
-                    // "-sERROR_ON_UNDEFINED_SYMBOLS=0",
-                    "-sSTB_IMAGE=1",
-                    "-g",
-                    "-sTOTAL_MEMORY=200MB",
-                    "-sUSE_OFFSET_CONVERTER=1",
-                },
+                .extra_args = &(if (optimize == .Debug)
+                    WASM_ARGS ++ WASM_ARGS_DEBUG
+                else
+                    WASM_ARGS),
             });
 
             // need to inject the Emscripten system header include path into
