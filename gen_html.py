@@ -308,7 +308,7 @@ def main():
                     except Exception:
                         pass
                     f.write(str(section))
-            f.write("</section></article>\n")
+                f.write("</section></article>\n")
         f.write(END_HTML)
 
 
