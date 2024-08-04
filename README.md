@@ -1,7 +1,8 @@
-# LearnOpenGl Examples
+# LearnOpenGl Examples(zig)
 
 **Unofficial** cross platform examples for [learnopengl.com](https://learnopengl.com/)
 
+- forked from https://github.com/zeromake/learnopengl-examples
 - written in Zig.
 - shader dialect GLSL v450
 - runs on OSX, Linux, Windows and web (emscripten) from the same source
@@ -17,21 +18,15 @@
 > zig build
 ```
 
-generate glsl.zig
+#### WASM Builds
 
 ```bash
-> zig build shaders
+# ubuntu ok
+# windows failed
+> zig build -Dtarget=wasm32-emscripten
 ```
 
-require
-
-https://github.com/floooh/sokol-tools-bin
-
-#### Web Builds
-
-TODO:
-
-#### Todo
+#### LearnOpenGl
 
 - [x] [1-3-1-rendering](src/1-3-hello-window/1-rendering.zig)
 - [x] [1-4-1-triangle](src/1-4-hello-triangle/1-triangle.zig)
@@ -43,7 +38,7 @@ TODO:
 - [x] [1-6-1-texture](src/1-6-textures/1-texture.zig)
 - [x] [1-6-2-texture-blend](src/1-6-textures/2-texture-blend.zig)
 - [x] [1-6-3-multiple-textures](src/1-6-textures/3-multiple-textures.zig)
-- [x] [1-7-3-scale-rotate](src/1-7-transformations/1-scale-rotate.zig)
+- [x] [1-7-1-scale-rotate](src/1-7-transformations/1-scale-rotate.zig)
 - [x] [1-7-2-rotate-translate](src/1-7-transformations/2-rotate-translate.zig)
 - [x] [1-8-1-plane](src/1-8-coordinate-systems/1-plane.zig)
 - [x] [1-8-2-cube](src/1-8-coordinate-systems/2-cube.zig)
@@ -51,7 +46,7 @@ TODO:
 - [x] [1-9-1-lookat](src/1-9-camera/1-lookat.zig)
 - [x] [1-9-2-walk](src/1-9-camera/2-walk.zig)
 - [x] [1-9-3-look](src/1-9-camera/3-look.zig)
-- [ ] [2-1-1-scene](src/2-1-colors/1-scene.zig)
+- [x] [2-1-1-scene](src/2-1-colors/1-scene.zig)
 - [ ] [2-2-1-ambient](src/2-2-basic-lighting/1-ambient.zig)
 - [ ] [2-2-2-diffuse](src/2-2-basic-lighting/2-diffuse.zig)
 - [ ] [2-2-3-specular](src/2-2-basic-lighting/3-specular.zig)
@@ -77,7 +72,7 @@ TODO:
 - [ ] [4-3-3-blending](src/4-3-blending/3-blending.zig)
 - [ ] [4-3-4-blending-sorted](src/4-3-blending/4-blending-sorted.zig)
 - [ ] [4-4-1-cull-front](src/4-4-face-culling/1-cull-front.zig)
-- [ ] [4-5-1-render-to-texture](src/4-5-framebuffers/1-render-to-texture.zig)
+- [x] [4-5-1-render-to-texture](src/4-5-framebuffers/1-render-to-texture.zig)
 - [ ] [4-5-2-inversion](src/4-5-framebuffers/2-inversion.zig)
 - [ ] [4-5-3-grayscale](src/4-5-framebuffers/3-grayscale.zig)
 - [ ] [4-5-4-sharpen](src/4-5-framebuffers/4-sharpen.zig)
@@ -115,3 +110,83 @@ TODO:
 - [ ] [5-5-1-normal-mapping](src/5-5-normal-mapping/1-normal-mapping.zig)
 - [ ] [5-5-2-tangent-space](src/5-5-normal-mapping/2-tangent-space.zig)
 - [ ] [5-5-3-complex-object](src/5-5-normal-mapping/3-complex-object.zig)
+
+### Sokol
+
+- [ ] [clear](sapp/clear-sapp.zig)
+- [ ] [triangle](sapp/triangle-sapp.zig)
+- [ ] [triangle-bufferless](sapp/triangle-bufferless-sapp.zig)
+- [ ] [quad](sapp/quad-sapp.zig)
+- [ ] [bufferoffsets](sapp/bufferoffsets-sapp.zig)
+- [ ] [cube](sapp/cube-sapp.zig)
+- [ ] [noninterleaved](sapp/noninterleaved-sapp.zig)
+- [ ] [texcube](sapp/texcube-sapp.zig)
+- [ ] [vertexpull](sapp/vertexpull-sapp.zig)
+- [ ] [sbuftex](sapp/sbuftex-sapp.zig)
+- [ ] [shapes](sapp/shapes-sapp.zig)
+- [ ] [shapes-transform](sapp/shapes-transform-sapp.zig)
+- [ ] [offscreen](sapp/offscreen-sapp.zig)
+- [ ] [offscreen-msaa](sapp/offscreen-msaa-sapp.zig)
+- [ ] [instancing](sapp/instancing-sapp.zig)
+- [ ] [instancing-pull](sapp/instancing-pull-sapp.zig)
+- [ ] [mrt](sapp/mrt-sapp.zig)
+- [ ] [mrt-pixelformats](sapp/mrt-pixelformats-sapp.zig)
+- [ ] [arraytex](sapp/arraytex-sapp.zig)
+- [ ] [tex3d](sapp/tex3d-sapp.zig)
+- [ ] [dyntex3d](sapp/dyntex3d-sapp.zig)
+- [ ] [dyntex](sapp/dyntex-sapp.zig)
+- [ ] [basisu](sapp/basisu-sapp.zig)
+- [ ] [cubemap-jpeg](sapp/cubemap-jpeg-sapp.zig)
+- [ ] [cubemaprt](sapp/cubemaprt-sapp.zig)
+- [ ] [miprender](sapp/miprender-sapp.zig)
+- [ ] [layerrender](sapp/layerrender-sapp.zig)
+- [ ] [primtypes](sapp/primtypes-sapp.zig)
+- [ ] [uvwrap](sapp/uvwrap-sapp.zig)
+- [ ] [mipmap](sapp/mipmap-sapp.zig)
+- [ ] [uniformtypes](sapp/uniformtypes-sapp.zig)
+- [ ] [blend](sapp/blend-sapp.zig)
+- [ ] [sdf](sapp/sdf-sapp.zig)
+- [ ] [shadows](sapp/shadows-sapp.zig)
+- [ ] [shadows-depthtex](sapp/shadows-depthtex-sapp.zig)
+- [ ] [imgui](sapp/imgui-sapp.zig)
+- [ ] [imgui-dock](sapp/imgui-dock-sapp.zig)
+- [ ] [imgui-highdpi](sapp/imgui-highdpi-sapp.zig)
+- [ ] [cimgui](sapp/cimgui-sapp.zig)
+- [ ] [imgui-images](sapp/imgui-images-sapp.zig)
+- [ ] [imgui-usercallback](sapp/imgui-usercallback-sapp.zig)
+- [ ] [nuklear](sapp/nuklear-sapp.zig)
+- [ ] [nuklear-images](sapp/nuklear-images-sapp.zig)
+- [ ] [sgl-microui](sapp/sgl-microui-sapp.zig)
+- [ ] [fontstash](sapp/fontstash-sapp.zig)
+- [ ] [fontstash-layers](sapp/fontstash-layers-sapp.zig)
+- [ ] [debugtext](sapp/debugtext-sapp.zig)
+- [ ] [debugtext-printf](sapp/debugtext-printf-sapp.zig)
+- [ ] [debugtext-userfont](sapp/debugtext-userfont-sapp.zig)
+- [ ] [debugtext-context](sapp/debugtext-context-sapp.zig)
+- [ ] [debugtext-layers](sapp/debugtext-layers-sapp.zig)
+- [ ] [events](sapp/events-sapp.zig)
+- [ ] [icon](sapp/icon-sapp.zig)
+- [ ] [droptest](sapp/droptest-sapp.zig)
+- [ ] [pixelformats](sapp/pixelformats-sapp.zig)
+- [ ] [drawcallperf](sapp/drawcallperf-sapp.zig)
+- [ ] [saudio](sapp/saudio-sapp.zig)
+- [ ] [modplay](sapp/modplay-sapp.zig)
+- [ ] [noentry](sapp/noentry-sapp.zig)
+- [ ] [restart](sapp/restart-sapp.zig)
+- [ ] [sgl](sapp/sgl-sapp.zig)
+- [ ] [sgl-lines](sapp/sgl-lines-sapp.zig)
+- [ ] [sgl-points](sapp/sgl-points-sapp.zig)
+- [ ] [sgl-context](sapp/sgl-context-sapp.zig)
+- [ ] [loadpng](sapp/loadpng-sapp.zig)
+- [ ] [plmpeg](sapp/plmpeg-sapp.zig)
+- [ ] [cgltf](sapp/cgltf-sapp.zig)
+- [ ] [ozz-anim](sapp/ozz-anim-sapp.zig)
+- [ ] [ozz-skin](sapp/ozz-skin-sapp.zig)
+- [ ] [ozz-storagebuffer](sapp/ozz-storagebuffer-sapp.zig)
+- [ ] [shdfeatures](sapp/shdfeatures-sapp.zig)
+- [ ] [spine-simple](sapp/spine-simple-sapp.zig)
+- [ ] [spine-inspector](sapp/spine-inspector-sapp.zig)
+- [ ] [spine-layers](sapp/spine-layers-sapp.zig)
+- [ ] [spine-skinsets](sapp/spine-skinsets-sapp.zig)
+- [ ] [spine-switch-skinsets](sapp/spine-switch-skinsets-sapp.zig)
+- [ ] [spine-contexts](sapp/spine-contexts-sapp.zig)

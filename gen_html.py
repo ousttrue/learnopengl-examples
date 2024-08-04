@@ -212,15 +212,79 @@ EXAMPLE_MAP: Dict[str, List[Article]] = {
                 Section("triangle"),
                 Section("triangle-bufferless"),
                 Section("quad"),
-                Section("bufferoffsets-sapp"),
+                Section("bufferoffsets"),
                 Section("cube"),
                 Section("noninterleaved"),
                 Section("texcube"),
-                Section("sgl-lines"),
-                Section("offscreen"),
+                Section("vertexpull"),
+                Section("sbuftex"),
+                Section("shapes"),
                 Section("shapes-transform"),
+                Section("offscreen"),
+                Section("offscreen-msaa"),
+                Section("instancing"),
+                Section("instancing-pull"),
+                Section("mrt"),
+                Section("mrt-pixelformats"),
+                Section("arraytex"),
+                Section("tex3d"),
+                Section("dyntex3d"),
+                Section("dyntex"),
+                Section("basisu"),
+                Section("cubemap-jpeg"),
+                Section("cubemaprt"),
+                Section("miprender"),
+                Section("layerrender"),
+                Section("primtypes"),
+                Section("uvwrap"),
+                Section("mipmap"),
+                Section("uniformtypes"),
+                Section("blend"),
+                Section("sdf"),
+                Section("shadows"),
+                Section("shadows-depthtex"),
+                Section("imgui"),
+                Section("imgui-dock"),
+                Section("imgui-highdpi"),
+                Section("cimgui"),
+                Section("imgui-images"),
+                Section("imgui-usercallback"),
+                Section("nuklear"),
+                Section("nuklear-images"),
+                Section("sgl-microui"),
+                Section("fontstash"),
+                Section("fontstash-layers"),
+                Section("debugtext"),
+                Section("debugtext-printf"),
+                Section("debugtext-userfont"),
+                Section("debugtext-context"),
+                Section("debugtext-layers"),
+                Section("events"),
+                Section("icon"),
+                Section("droptest"),
+                Section("pixelformats"),
+                Section("drawcallperf"),
+                Section("saudio"),
+                Section("modplay"),
+                Section("noentry"),
+                Section("restart"),
+                Section("sgl"),
+                Section("sgl-lines"),
+                Section("sgl-points"),
+                Section("sgl-context"),
+                Section("loadpng"),
+                Section("plmpeg"),
+                Section("cgltf"),
                 Section("ozz-anim"),
                 Section("ozz-skin"),
+                Section("ozz-storagebuffer"),
+                Section("shdfeatures"),
+                Section("spine-simple"),
+                Section("spine-inspector"),
+                Section("spine-layers"),
+                Section("spine-skinsets"),
+                Section("spine-switch-skinsets"),
+                Section("spine-contexts"),
             ],
         ),
     ],
@@ -270,46 +334,42 @@ END_HTML = """
 """
 
 
-def screen_shot(name: str, port: int, width: int, height: int):
-    with sync_playwright() as p:
-        browser = p.chromium.launch()
-        page = browser.new_page(viewport={"width": width, "height": height})
-        page.goto(f"http://localhost:{port}/{name}.html")
-        page.screenshot(path=f"docs/{name}.jpg")
-
-        browser.close()
-
-
 def main():
     port = 8080
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
 
-    with pathlib.Path("docs/index.html").open("w", encoding="utf-8") as f:
-        f.write(BEGIN_HTML)
-        for group, articles in EXAMPLE_MAP.items():
-            f.write(f"<h2>{group}</h2>\n")
-            for article in articles:
-                f.write(
-                    f'<article><section class="header"><h3><a href="{article.url}">{article.name}<i class="icon-link-ext"></i></a></h3></section>\n'
-                )
-                f.write('<section class="group examples">\n')
-                for section in article.sections:
-                    try:
-                        screen_shot(section.name, port, 400, 300)
-                    except Exception:
-                        pass
-                    f.write(
-                        f"""<figure class="col-15">
-    <figcaption><h4>{section.name}</h4></figcaption>
-    <div><img class="responsive" src="{section.name}.jpg" alt=""></div>
-    <a href="{section.name}.html">{section.name}</a>
-</figure>
-"""
-                    )
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": 400, "height": 300})
 
-                f.write("</section></article>\n")
-        f.write(END_HTML)
+        with pathlib.Path("docs/index.html").open("w", encoding="utf-8") as f:
+            f.write(BEGIN_HTML)
+            for group, articles in EXAMPLE_MAP.items():
+                f.write(f"<h2>{group}</h2>\n")
+                for article in articles:
+                    f.write(
+                        f'<article><section class="header"><h3><a href="{article.url}">{article.name}<i class="icon-link-ext"></i></a></h3></section>\n'
+                    )
+                    f.write('<section class="group examples">\n')
+                    for section in article.sections:
+                        try:
+                            page.goto(f"http://localhost:{port}/{section.name}.html")
+                            page.screenshot(path=f"docs/{section.name}.jpg")
+                        except Exception:
+                            pass
+                        f.write(
+                            f"""<figure class="col-15">
+        <figcaption><h4>{section.name}</h4></figcaption>
+        <div><img class="responsive" src="{section.name}.jpg" alt=""></div>
+        <a href="{section.name}.html">{section.name}</a>
+    </figure>
+    """
+                        )
+
+                    f.write("</section></article>\n")
+            f.write(END_HTML)
+    browser.close()
 
 
 if __name__ == "__main__":
