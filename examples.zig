@@ -104,6 +104,11 @@ pub const learnopengl_examples = [_]Example{
         .shader = "src/1-9-camera/shaders.glsl",
     },
     .{
+        .name = "2-1-1",
+        .root_source = "src/2-1-colors/1-scene.zig",
+        .shader = "src/2-1-colors/shaders.glsl",
+    },
+    .{
         .name = "4-5-1",
         .root_source = "src/4-5-framebuffers/1-render-to-texture.zig",
         .shader = "src/4-5-framebuffers/1-render-to-texture.glsl",

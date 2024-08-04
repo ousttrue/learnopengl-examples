@@ -88,9 +88,9 @@ const state = struct {
     var show_help = false;
     var hide_ui = false;
     var first_mouse = true;
-    //     HMM_Vec2 last_mouse;
-    //     uint64_t time_stamp;
-    //     uint64_t frame_time;
+    var last_mouse = Vec2{ .x = 0, .y = 0 };
+    var time_stamp: u64 = 0;
+    var frame_time: u64 = 0;
     //     _cubemap_request_t cubemap_req;
 };
 
@@ -169,7 +169,7 @@ pub fn viewMatrix() Mat4 {
         unreachable;
         // return view_matrix_fp(&state.fp_cam);
     } else {
-        return state.orbital_cam.viewMatrix(); //_orbital(&state.orbital_cam);
+        return state.orbital_cam.view_matrix(); //_orbital(&state.orbital_cam);
     }
 }
 
@@ -195,13 +195,13 @@ pub fn cameraDirection() Vec3 {
 
 pub fn handleInput(e: [*c]const sokol.app.Event) void {
     if (e.*.type == .KEY_DOWN) {
-        if (e.key_code == .KEYCODE_C) {
+        if (e.*.key_code == .C) {
             state.fp_enabled = !state.fp_enabled;
-        } else if (e.key_code == .KEYCODE_H) {
+        } else if (e.*.key_code == .H) {
             state.show_help = !state.show_help;
-        } else if (e.key_code == .KEYCODE_U) {
+        } else if (e.*.key_code == .U) {
             state.hide_ui = !state.hide_ui;
-        } else if (e.key_code == .KEYCODE_ESCAPE) {
+        } else if (e.*.key_code == .ESCAPE) {
             sokol.app.requestQuit();
         }
     }
@@ -210,20 +210,21 @@ pub fn handleInput(e: [*c]const sokol.app.Event) void {
 
     if (e.*.type == .MOUSE_MOVE) {
         if (!state.first_mouse) {
-            mouse_offset.X = e.mouse_x - state.last_mouse.X;
-            mouse_offset.Y = state.last_mouse.Y - e.mouse_y;
+            mouse_offset.x = e.*.mouse_x - state.last_mouse.x;
+            mouse_offset.y = state.last_mouse.y - e.*.mouse_y;
         } else {
             state.first_mouse = false;
         }
 
-        state.last_mouse.X = e.mouse_x;
-        state.last_mouse.Y = e.mouse_y;
+        state.last_mouse.x = e.*.mouse_x;
+        state.last_mouse.y = e.*.mouse_y;
     }
 
     if (state.fp_enabled) {
+        unreachable;
         // handle_input_fp(&state.fp_cam, e, mouse_offset);
     } else {
-        state.orbital_cam.handle_input(&state.orbital_cam, e, mouse_offset);
+        state.orbital_cam.handle_input(e, mouse_offset);
     }
 }
 

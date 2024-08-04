@@ -37,7 +37,7 @@ pub const OrbitalCamera = struct {
     zoom_speed: f32 = 0,
     enable_rotate: bool = false,
     // internal state
-    position: szmath.Vec3 = szmath.Vec3.zero(),
+    position: Vec3 = Vec3.zero(),
     last_touch: [sokol.app.max_touchpoints]Vec2 = undefined,
 
     pub fn init(self: *@This(), desc: OrbitalCameraDesc) void {
@@ -60,7 +60,7 @@ pub const OrbitalCamera = struct {
         self.update_vectors();
     }
 
-    pub fn view_matrix_orbital(self: @This()) Mat4 {
+    pub fn view_matrix(self: @This()) Mat4 {
         return Mat4.lookat(self.position, self.target, self.up);
     }
 
@@ -78,43 +78,43 @@ pub const OrbitalCamera = struct {
 
     pub fn handle_input(camera: *@This(), e: [*c]const sokol.app.Event, mouse_offset: Vec2) void {
         if (e.*.type == .MOUSE_DOWN) {
-            if (e.mouse_button == .LEFT) {
+            if (e.*.mouse_button == .LEFT) {
                 camera.enable_rotate = true;
             }
-        } else if (e.type == .MOUSE_UP) {
-            if (e.mouse_button == .LEFT) {
+        } else if (e.*.type == .MOUSE_UP) {
+            if (e.*.mouse_button == .LEFT) {
                 camera.enable_rotate = false;
             }
-        } else if (e.type == .MOUSE_MOVE) {
+        } else if (e.*.type == .MOUSE_MOVE) {
             if (camera.enable_rotate) {
                 move_orbital_camera(camera, mouse_offset);
             }
-        } else if (e.type == .MOUSE_SCROLL) {
-            zoom_orbital_camera(camera, e.scroll_y);
-        } else if (e.type == .TOUCHES_BEGAN) {
-            for (0..e.num_touches) |i| {
-                const touch = &e.touches[i];
-                camera.last_touch[touch.identifier].X = touch.pos_x;
-                camera.last_touch[touch.identifier].Y = touch.pos_y;
+        } else if (e.*.type == .MOUSE_SCROLL) {
+            zoom_orbital_camera(camera, e.*.scroll_y);
+        } else if (e.*.type == .TOUCHES_BEGAN) {
+            for (0..@intCast(e.*.num_touches)) |i| {
+                const touch = &e.*.touches[i];
+                camera.last_touch[touch.identifier].x = touch.pos_x;
+                camera.last_touch[touch.identifier].y = touch.pos_y;
             }
-        } else if (e.type == .TOUCHES_MOVED) {
-            if (e.num_touches == 1) {
-                const touch = &e.touches[0];
+        } else if (e.*.type == .TOUCHES_MOVED) {
+            if (e.*.num_touches == 1) {
+                const touch = &e.*.touches[0];
                 const last_touch = &camera.last_touch[touch.identifier];
 
                 var _offset = Vec2{ .x = 0.0, .y = 0.0 };
 
-                _offset.X = touch.pos_x - last_touch.X;
-                _offset.Y = last_touch.Y - touch.pos_y;
+                _offset.x = touch.pos_x - last_touch.x;
+                _offset.y = last_touch.y - touch.pos_y;
 
                 // reduce speed of touch controls
-                _offset.X *= 0.3;
-                _offset.Y *= 0.3;
+                _offset.x *= 0.3;
+                _offset.y *= 0.3;
 
                 move_orbital_camera(camera, _offset);
-            } else if (e.num_touches == 2) {
-                const touch0 = &e.touches[0];
-                const touch1 = &e.touches[1];
+            } else if (e.*.num_touches == 2) {
+                const touch0 = &e.*.touches[0];
+                const touch1 = &e.*.touches[1];
 
                 const v0 = Vec2{ .x = touch0.pos_x, .y = touch0.pos_y };
                 const v1 = Vec2{ .x = touch1.pos_x, .y = touch1.pos_y };
@@ -123,9 +123,9 @@ pub const OrbitalCamera = struct {
                 const prev_v1 = &camera.last_touch[touch1.identifier];
 
                 const length0 = v1.distance(v0);
-                const length1 = prev_v1.disance(prev_v0);
+                const length1 = prev_v1.distance(prev_v0.*);
 
-                const diff = length0 - length1;
+                var diff = length0 - length1;
                 // reduce speed of touch controls
                 diff *= 0.1;
 
@@ -133,20 +133,20 @@ pub const OrbitalCamera = struct {
             }
 
             // update all touch coords
-            for (0..e.num_touches) |i| {
-                const touch = &e.touches[i];
-                camera.last_touch[touch.identifier].X = touch.pos_x;
-                camera.last_touch[touch.identifier].Y = touch.pos_y;
+            for (0..@intCast(e.*.num_touches)) |i| {
+                const touch = &e.*.touches[i];
+                camera.last_touch[touch.identifier].x = touch.pos_x;
+                camera.last_touch[touch.identifier].y = touch.pos_y;
             }
         }
 
-        camera.update_orbital_cam_vectors();
+        camera.update_vectors();
     }
 
     fn move_orbital_camera(camera: *@This(), mouse_offset: Vec2) void {
-        camera.polar.Y -= mouse_offset.X * camera.rotate_speed;
-        const pitch = camera.polar.X + mouse_offset.Y * camera.rotate_speed;
-        camera.polar.X = std.math.clamp(pitch, camera.min_pitch, camera.max_pitch);
+        camera.polar.y -= mouse_offset.x * camera.rotate_speed;
+        const pitch = camera.polar.x + mouse_offset.y * camera.rotate_speed;
+        camera.polar.x = std.math.clamp(pitch, camera.min_pitch, camera.max_pitch);
     }
 
     fn zoom_orbital_camera(camera: *@This(), val: f32) void {

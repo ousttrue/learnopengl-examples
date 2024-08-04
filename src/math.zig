@@ -6,11 +6,10 @@
 //
 //  Ported from HandmadeMath.h
 //------------------------------------------------------------------------------
-const assert = @import("std").debug.assert;
-const math = @import("std").math;
+const std = @import("std");
 
 fn radians(deg: f32) f32 {
-    return deg * (math.pi / 180.0);
+    return deg * (std.math.pi / 180.0);
 }
 
 pub const Vec2 = extern struct {
@@ -23,6 +22,22 @@ pub const Vec2 = extern struct {
 
     pub fn new(x: f32, y: f32) Vec2 {
         return Vec2{ .x = x, .y = y };
+    }
+
+    pub fn sub(lhs: @This(), rhs: @This()) @This() {
+        return .{
+            .x = lhs.x - rhs.x,
+            .y = lhs.y - rhs.y,
+        };
+    }
+
+    pub fn dot(lhs: @This(), rhs: @This()) f32 {
+        return lhs.x * rhs.x + lhs.y * rhs.y;
+    }
+
+    pub fn distance(lhs: @This(), rhs: @This()) f32 {
+        const v = lhs.sub(rhs);
+        return std.math.sqrt(v.dot(v));
     }
 };
 
@@ -44,7 +59,7 @@ pub const Vec3 = extern struct {
     }
 
     pub fn len(v: Vec3) f32 {
-        return math.sqrt(Vec3.dot(v, v));
+        return std.math.sqrt(Vec3.dot(v, v));
     }
 
     pub fn add(left: Vec3, right: Vec3) Vec3 {
@@ -181,7 +196,7 @@ pub const Mat4 = extern struct {
 
     pub fn persp(fov: f32, aspect: f32, near: f32, far: f32) Mat4 {
         var res = Mat4.identity();
-        const t = math.tan(fov * (math.pi / 360.0));
+        const t = std.math.tan(fov * (std.math.pi / 360.0));
         res.m[0] = 1.0 / t;
         res.m[5] = aspect / t;
         res.m[11] = -1.0;
@@ -222,8 +237,8 @@ pub const Mat4 = extern struct {
         var res = Mat4.identity();
 
         const axis = Vec3.norm(axis_unorm);
-        const sin_theta = math.sin(radians(angle));
-        const cos_theta = math.cos(radians(angle));
+        const sin_theta = std.math.sin(radians(angle));
+        const cos_theta = std.math.cos(radians(angle));
         const cos_value = 1.0 - cos_theta;
 
         res.m[0] = (axis.x * axis.x * cos_value) + cos_theta;
@@ -250,12 +265,12 @@ pub const Mat4 = extern struct {
 
 test "Vec3.zero" {
     const v = Vec3.zero();
-    assert(v.x == 0.0 and v.y == 0.0 and v.z == 0.0);
+    std.debug.assert(v.x == 0.0 and v.y == 0.0 and v.z == 0.0);
 }
 
 test "Vec3.new" {
     const v = Vec3.new(1.0, 2.0, 3.0);
-    assert(v.x == 1.0 and v.y == 2.0 and v.z == 3.0);
+    std.debug.assert(v.x == 1.0 and v.y == 2.0 and v.z == 3.0);
 }
 
 test "Mat4.ident" {
@@ -263,9 +278,9 @@ test "Mat4.ident" {
     for (m.m, 0..) |row, y| {
         for (row, 0..) |val, x| {
             if (x == y) {
-                assert(val == 1.0);
+                std.debug.assert(val == 1.0);
             } else {
-                assert(val == 0.0);
+                std.debug.assert(val == 0.0);
             }
         }
     }
@@ -278,9 +293,9 @@ test "Mat4.mul" {
     for (m.m, 0..) |row, y| {
         for (row, 0..) |val, x| {
             if (x == y) {
-                assert(val == 1.0);
+                std.debug.assert(val == 1.0);
             } else {
-                assert(val == 0.0);
+                std.debug.assert(val == 0.0);
             }
         }
     }
@@ -294,71 +309,71 @@ fn eq(val: f32, cmp: f32) bool {
 test "Mat4.persp" {
     const m = Mat4.persp(60.0, 1.33333337, 0.01, 10.0);
 
-    assert(eq(m.m[0][0], 1.73205));
-    assert(eq(m.m[0][1], 0.0));
-    assert(eq(m.m[0][2], 0.0));
-    assert(eq(m.m[0][3], 0.0));
+    std.debug.assert(eq(m.m[0][0], 1.73205));
+    std.debug.assert(eq(m.m[0][1], 0.0));
+    std.debug.assert(eq(m.m[0][2], 0.0));
+    std.debug.assert(eq(m.m[0][3], 0.0));
 
-    assert(eq(m.m[1][0], 0.0));
-    assert(eq(m.m[1][1], 2.30940));
-    assert(eq(m.m[1][2], 0.0));
-    assert(eq(m.m[1][3], 0.0));
+    std.debug.assert(eq(m.m[1][0], 0.0));
+    std.debug.assert(eq(m.m[1][1], 2.30940));
+    std.debug.assert(eq(m.m[1][2], 0.0));
+    std.debug.assert(eq(m.m[1][3], 0.0));
 
-    assert(eq(m.m[2][0], 0.0));
-    assert(eq(m.m[2][1], 0.0));
-    assert(eq(m.m[2][2], -1.00200));
-    assert(eq(m.m[2][3], -1.0));
+    std.debug.assert(eq(m.m[2][0], 0.0));
+    std.debug.assert(eq(m.m[2][1], 0.0));
+    std.debug.assert(eq(m.m[2][2], -1.00200));
+    std.debug.assert(eq(m.m[2][3], -1.0));
 
-    assert(eq(m.m[3][0], 0.0));
-    assert(eq(m.m[3][1], 0.0));
-    assert(eq(m.m[3][2], -0.02002));
-    assert(eq(m.m[3][3], 0.0));
+    std.debug.assert(eq(m.m[3][0], 0.0));
+    std.debug.assert(eq(m.m[3][1], 0.0));
+    std.debug.assert(eq(m.m[3][2], -0.02002));
+    std.debug.assert(eq(m.m[3][3], 0.0));
 }
 
 test "Mat4.lookat" {
     const m = Mat4.lookat(.{ .x = 0.0, .y = 1.5, .z = 6.0 }, Vec3.zero(), Vec3.up());
 
-    assert(eq(m.m[0][0], 1.0));
-    assert(eq(m.m[0][1], 0.0));
-    assert(eq(m.m[0][2], 0.0));
-    assert(eq(m.m[0][3], 0.0));
+    std.debug.assert(eq(m.m[0][0], 1.0));
+    std.debug.assert(eq(m.m[0][1], 0.0));
+    std.debug.assert(eq(m.m[0][2], 0.0));
+    std.debug.assert(eq(m.m[0][3], 0.0));
 
-    assert(eq(m.m[1][0], 0.0));
-    assert(eq(m.m[1][1], 0.97014));
-    assert(eq(m.m[1][2], 0.24253));
-    assert(eq(m.m[1][3], 0.0));
+    std.debug.assert(eq(m.m[1][0], 0.0));
+    std.debug.assert(eq(m.m[1][1], 0.97014));
+    std.debug.assert(eq(m.m[1][2], 0.24253));
+    std.debug.assert(eq(m.m[1][3], 0.0));
 
-    assert(eq(m.m[2][0], 0.0));
-    assert(eq(m.m[2][1], -0.24253));
-    assert(eq(m.m[2][2], 0.97014));
-    assert(eq(m.m[2][3], 0.0));
+    std.debug.assert(eq(m.m[2][0], 0.0));
+    std.debug.assert(eq(m.m[2][1], -0.24253));
+    std.debug.assert(eq(m.m[2][2], 0.97014));
+    std.debug.assert(eq(m.m[2][3], 0.0));
 
-    assert(eq(m.m[3][0], 0.0));
-    assert(eq(m.m[3][1], 0.0));
-    assert(eq(m.m[3][2], -6.18465));
-    assert(eq(m.m[3][3], 1.0));
+    std.debug.assert(eq(m.m[3][0], 0.0));
+    std.debug.assert(eq(m.m[3][1], 0.0));
+    std.debug.assert(eq(m.m[3][2], -6.18465));
+    std.debug.assert(eq(m.m[3][3], 1.0));
 }
 
 test "Mat4.rotate" {
     const m = Mat4.rotate(2.0, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
 
-    assert(eq(m.m[0][0], 0.99939));
-    assert(eq(m.m[0][1], 0.0));
-    assert(eq(m.m[0][2], -0.03489));
-    assert(eq(m.m[0][3], 0.0));
+    std.debug.assert(eq(m.m[0][0], 0.99939));
+    std.debug.assert(eq(m.m[0][1], 0.0));
+    std.debug.assert(eq(m.m[0][2], -0.03489));
+    std.debug.assert(eq(m.m[0][3], 0.0));
 
-    assert(eq(m.m[1][0], 0.0));
-    assert(eq(m.m[1][1], 1.0));
-    assert(eq(m.m[1][2], 0.0));
-    assert(eq(m.m[1][3], 0.0));
+    std.debug.assert(eq(m.m[1][0], 0.0));
+    std.debug.assert(eq(m.m[1][1], 1.0));
+    std.debug.assert(eq(m.m[1][2], 0.0));
+    std.debug.assert(eq(m.m[1][3], 0.0));
 
-    assert(eq(m.m[2][0], 0.03489));
-    assert(eq(m.m[2][1], 0.0));
-    assert(eq(m.m[2][2], 0.99939));
-    assert(eq(m.m[2][3], 0.0));
+    std.debug.assert(eq(m.m[2][0], 0.03489));
+    std.debug.assert(eq(m.m[2][1], 0.0));
+    std.debug.assert(eq(m.m[2][2], 0.99939));
+    std.debug.assert(eq(m.m[2][3], 0.0));
 
-    assert(eq(m.m[3][0], 0.0));
-    assert(eq(m.m[3][1], 0.0));
-    assert(eq(m.m[3][2], 0.0));
-    assert(eq(m.m[3][3], 1.0));
+    std.debug.assert(eq(m.m[3][0], 0.0));
+    std.debug.assert(eq(m.m[3][1], 0.0));
+    std.debug.assert(eq(m.m[3][2], 0.0));
+    std.debug.assert(eq(m.m[3][3], 1.0));
 }
