@@ -45,7 +45,7 @@ jobs:
           cd docs
           python -m http.server 8080&
           cd ..
-          python ss.py 8080
+          python gen_html.py 8080
       # gh-pages
       - name: Setup Pages
         uses: actions/configure-pages@v3
