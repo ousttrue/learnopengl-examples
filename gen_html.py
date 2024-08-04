@@ -12,14 +12,6 @@ import dataclasses
 class Section:
     name: str
 
-    def __str__(self) -> str:
-        return f"""<figure class="col-15">
-    <figcaption><h4>rendering</h4></figcaption>
-    <div><img class="responsive" src="{self.name}.jpg" alt=""></div>
-    <a href="{self.name}.html">Read More</a>
-</figure>
-"""
-
 
 @dataclasses.dataclass
 class Article:
@@ -307,7 +299,15 @@ def main():
                         screen_shot(section.name, port, 400, 300)
                     except Exception:
                         pass
-                    f.write(str(section))
+                    f.write(
+                        f"""<figure class="col-15">
+    <figcaption><h4>rendering</h4></figcaption>
+    <div><img class="responsive" src="{section.name}.jpg" alt=""></div>
+    <a href="{section.name}.html">{section.name}</a>
+</figure>
+"""
+                    )
+
                 f.write("</section></article>\n")
         f.write(END_HTML)
 
