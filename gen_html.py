@@ -301,7 +301,7 @@ def main():
                         pass
                     f.write(
                         f"""<figure class="col-15">
-    <figcaption><h4>rendering</h4></figcaption>
+    <figcaption><h4>{section.name}</h4></figcaption>
     <div><img class="responsive" src="{section.name}.jpg" alt=""></div>
     <a href="{section.name}.html">{section.name}</a>
 </figure>
