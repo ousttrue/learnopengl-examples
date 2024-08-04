@@ -334,42 +334,46 @@ END_HTML = """
 """
 
 
+def screen_shot(name: str, port: int, width: int, height: int):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": height})
+        page.goto(f"http://localhost:{port}/{name}.html")
+        page.screenshot(path=f"docs/{name}.jpg")
+
+        browser.close()
+
+
 def main():
     port = 8080
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch()
-        page = browser.new_page(viewport={"width": 400, "height": 300})
-
-        with pathlib.Path("docs/index.html").open("w", encoding="utf-8") as f:
-            f.write(BEGIN_HTML)
-            for group, articles in EXAMPLE_MAP.items():
-                f.write(f"<h2>{group}</h2>\n")
-                for article in articles:
+    with pathlib.Path("docs/index.html").open("w", encoding="utf-8") as f:
+        f.write(BEGIN_HTML)
+        for group, articles in EXAMPLE_MAP.items():
+            f.write(f"<h2>{group}</h2>\n")
+            for article in articles:
+                f.write(
+                    f'<article><section class="header"><h3><a href="{article.url}">{article.name}<i class="icon-link-ext"></i></a></h3></section>\n'
+                )
+                f.write('<section class="group examples">\n')
+                for section in article.sections:
+                    try:
+                        screen_shot(section.name, port, 400, 300)
+                    except Exception:
+                        pass
                     f.write(
-                        f'<article><section class="header"><h3><a href="{article.url}">{article.name}<i class="icon-link-ext"></i></a></h3></section>\n'
+                        f"""<figure class="col-15">
+    <figcaption><h4>{section.name}</h4></figcaption>
+    <div><img class="responsive" src="{section.name}.jpg" alt=""></div>
+    <a href="{section.name}.html">{section.name}</a>
+</figure>
+"""
                     )
-                    f.write('<section class="group examples">\n')
-                    for section in article.sections:
-                        try:
-                            page.goto(f"http://localhost:{port}/{section.name}.html")
-                            page.screenshot(path=f"docs/{section.name}.jpg")
-                        except Exception:
-                            pass
-                        f.write(
-                            f"""<figure class="col-15">
-        <figcaption><h4>{section.name}</h4></figcaption>
-        <div><img class="responsive" src="{section.name}.jpg" alt=""></div>
-        <a href="{section.name}.html">{section.name}</a>
-    </figure>
-    """
-                        )
 
-                    f.write("</section></article>\n")
-            f.write(END_HTML)
-    browser.close()
+                f.write("</section></article>\n")
+        f.write(END_HTML)
 
 
 if __name__ == "__main__":
