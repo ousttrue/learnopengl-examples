@@ -9,6 +9,8 @@ const WASM_ARGS = [_][]const u8{
     "-sUSE_OFFSET_CONVERTER=1",
     "-sSTB_IMAGE=1",
     "-Wno-limited-postlink-optimizations",
+    // "-sDEFAULT_TO_CXX=1",
+    "-sEVAL_CTORS=1",
 };
 const WASM_ARGS_DEBUG = [_][]const u8{
     "-g",
@@ -21,6 +23,17 @@ pub fn build(b: *std.Build) void {
     var deps = Deps.init(b, target, optimize);
     inline for (examples.learnopengl_examples ++ examples.sokol_examples) |example| {
         const compile = if (target.result.isWasm()) wasm: {
+            const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
+            // need to inject the Emscripten system header include path into
+            // the cimgui C library otherwise the C/C++ code won't find
+            // C stdlib headers
+            const emsdk_incl_path = dep_emsdk.path(
+                "upstream/emscripten/cache/sysroot/include",
+            );
+            const emsdk_cpp_incl_path = dep_emsdk.path(
+                "upstream/emscripten/cache/sysroot/include/c++/v1",
+            );
+
             const lib = b.addStaticLibrary(.{
                 .target = target,
                 .optimize = optimize,
@@ -32,10 +45,15 @@ pub fn build(b: *std.Build) void {
             if (example.c_srcs) |srcs| {
                 lib.addCSourceFiles(.{
                     .files = srcs,
+                    .flags = &.{
+                        "-nostdinc",
+                        "-nostdinc++",
+                    },
                 });
+                // this order is important
+                lib.addSystemIncludePath(emsdk_incl_path);
+                lib.addSystemIncludePath(emsdk_cpp_incl_path);
             }
-
-            const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
 
             // create a build step which invokes the Emscripten linker
             const install = try sokol.emLinkStep(b, .{
@@ -53,10 +71,6 @@ pub fn build(b: *std.Build) void {
                     WASM_ARGS),
             });
 
-            // need to inject the Emscripten system header include path into
-            // the cimgui C library otherwise the C/C++ code won't find
-            // C stdlib headers
-            const emsdk_incl_path = dep_emsdk.path("upstream/emscripten/cache/sysroot/include");
             deps.dep_cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
 
             // all C libraries need to depend on the sokol library, when building for
