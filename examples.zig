@@ -2,13 +2,17 @@ pub const Example = struct {
     name: []const u8,
     root_source: []const u8,
     shader: ?[]const u8 = null,
+    c_srcs: ?[]const []const u8 = null,
 };
 
 pub const learnopengl_examples = [_]Example{
     .{
-        .name = "learnopengl-examples",
+        .name = "main",
         .root_source = "src/main.zig",
         .shader = "src/shaders/cube.glsl",
+        .c_srcs = &.{
+            "src/main.cpp",
+        },
     },
     .{
         .name = "sokol-zig-imgui-sample",

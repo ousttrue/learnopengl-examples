@@ -3,6 +3,7 @@
 //
 //  Shader with uniform data.
 //------------------------------------------------------------------------------
+const std = @import("std");
 const sokol = @import("sokol");
 const slog = sokol.log;
 const sg = sokol.gfx;
@@ -113,7 +114,11 @@ export fn cleanup() void {
     sg.shutdown();
 }
 
+extern fn str_len(p: ?[*:0]const u8) c_int;
+
 pub fn main() void {
+    std.debug.print("{}\n", .{str_len("hoge")});
+
     sapp.run(.{
         .init_cb = init,
         .frame_cb = frame,
@@ -135,4 +140,3 @@ fn computeVsParams(rx: f32, ry: f32) shd.VsParams {
     const proj = mat4.persp(60.0, aspect, 0.01, 10.0);
     return shd.VsParams{ .mvp = mat4.mul(mat4.mul(proj, state.view), model) };
 }
-

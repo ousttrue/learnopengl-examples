@@ -29,6 +29,11 @@ pub fn build(b: *std.Build) void {
             });
             deps.inject_dependencies(lib);
             // deps.inject_ozz_animation(b, lib);
+            if (example.c_srcs) |srcs| {
+                lib.addCSourceFiles(.{
+                    .files = srcs,
+                });
+            }
 
             const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
 
@@ -78,6 +83,12 @@ pub fn build(b: *std.Build) void {
             exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });
             deps.inject_dependencies(exe);
             deps.inject_ozz_animation(b, exe);
+            if (example.c_srcs) |srcs| {
+                exe.addCSourceFiles(.{
+                    .files = srcs,
+                });
+            }
+
             b.installArtifact(exe);
 
             // ...and a special run step to start the web build output via 'emrun'
