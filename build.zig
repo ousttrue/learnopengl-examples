@@ -16,14 +16,15 @@ const WASM_ARGS_DEBUG = [_][]const u8{
     "-g",
 };
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const deps = Deps.init(b, target, optimize);
 
     if (target.result.isWasm()) {
-        const side_wasm = sidemodule.buildWasm(b);
-        buildWasm(b, target, optimize, &deps, &examples.all_examples, side_wasm);
+        const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
+        const side_wasm = try sidemodule.buildWasm(b, dep_emsdk);
+        buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
     } else {
         const side_dll = sidemodule.buildNative(b);
         buildNative(b, target, optimize, &deps, &examples.all_examples, side_dll);
@@ -36,9 +37,9 @@ fn buildWasm(
     optimize: std.builtin.OptimizeMode,
     deps: *const Deps,
     comptime all_examples: []const examples.Example,
-    _: *std.Build.Step,
+    dep_emsdk: *std.Build.Dependency,
+    side_wasm: *std.Build.Step,
 ) void {
-    const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
     // need to inject the Emscripten system header include path into
     // the cimgui C library otherwise the C/C++ code won't find
     // C stdlib headers
@@ -63,6 +64,10 @@ fn buildWasm(
                 target,
                 shader,
             ));
+        }
+        if (example.sidemodule) {
+            lib.step.dependOn(side_wasm);
+            // emcc main.c -s MAIN_MODULE=1 -o main.html -s "RUNTIME_LINKED_LIBS=['sidemodule.wasm']"
         }
 
         deps.inject_dependencies(lib);
