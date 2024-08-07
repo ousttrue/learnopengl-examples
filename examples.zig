@@ -3,6 +3,7 @@ pub const Example = struct {
     root_source: []const u8,
     shader: ?[]const u8 = null,
     c_srcs: ?[]const []const u8 = null,
+    sidemodule: bool = false,
 };
 
 pub const learnopengl_examples = [_]Example{
@@ -181,8 +182,9 @@ pub const sokol_examples = [_]Example{
     //
     //
     //
-    // .{
-    //     .name = "ozz-anim",
-    //     .root_source = "sapp/ozz-anim-sapp.zig",
-    // },
+    .{
+        .name = "ozz-anim",
+        .root_source = "sapp/ozz-anim-sapp.zig",
+        .sidemodule = true,
+    },
 };

@@ -82,19 +82,4 @@ pub const Deps = struct {
         compile.root_module.addImport("util_camera", self.util_camera);
         // compile.linkLibC();
     }
-
-    pub fn inject_ozz_animation(_: @This(), b: *std.Build, compile: *std.Build.Step.Compile) void {
-        compile.addIncludePath(b.path("sapp/libs/ozzanim/include"));
-        compile.addCSourceFiles(.{
-            .files = &.{
-                "sapp/ozz_wrap.cpp",
-                "sapp/libs/ozzanim/src/ozz_animation.cc",
-                "sapp/libs/ozzanim/src/ozz_base.cc",
-            },
-            .flags = &.{
-                "-std=c++11",
-            },
-        });
-        // compile.linkLibCpp();
-    }
 };

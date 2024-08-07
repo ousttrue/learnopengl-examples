@@ -23,6 +23,9 @@ pub fn build(b: *std.Build) void {
     var deps = Deps.init(b, target, optimize);
     inline for (examples.learnopengl_examples ++ examples.sokol_examples) |example| {
         const compile = if (target.result.isWasm()) wasm: {
+            //
+            // wasm
+            //
             const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
             // need to inject the Emscripten system header include path into
             // the cimgui C library otherwise the C/C++ code won't find
@@ -88,6 +91,9 @@ pub fn build(b: *std.Build) void {
             b.step("run-" ++ example.name, "Run " ++ example.name).dependOn(&run.step);
             break :wasm lib;
         } else native: {
+            //
+            // native
+            //
             const exe = b.addExecutable(.{
                 .target = target,
                 .optimize = optimize,
@@ -96,7 +102,6 @@ pub fn build(b: *std.Build) void {
             });
             exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });
             deps.inject_dependencies(exe);
-            deps.inject_ozz_animation(b, exe);
             if (example.c_srcs) |srcs| {
                 exe.addCSourceFiles(.{
                     .files = srcs,
@@ -108,6 +113,10 @@ pub fn build(b: *std.Build) void {
             // ...and a special run step to start the web build output via 'emrun'
             const run = b.addRunArtifact(exe);
             b.step("run-" ++ example.name, "Run " ++ example.name).dependOn(&run.step);
+            if (example.sidemodule) {
+                exe.addLibraryPath(b.path("zig-out/lib"));
+                exe.linkSystemLibrary("sidemodule");
+            }
 
             break :native exe;
         };
