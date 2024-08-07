@@ -1,3 +1,5 @@
+#include "ozz_wrap.h"
+
 // ozz-animation headers
 #include "ozz/animation/runtime/animation.h"
 #include "ozz/animation/runtime/local_to_model_job.h"
@@ -24,19 +26,6 @@ struct ozz_t {
 ozz_t *OZZ_init() { return new ozz_t; }
 void OZZ_shutdown(void *p) { delete ((ozz_t *)p); }
 
-bool OZZ_load_animation(ozz_t *p, const void *ptr, size_t size) {
-  ozz::io::MemoryStream stream;
-  stream.Write(ptr, size);
-  stream.Seek(0, ozz::io::Stream::kSet);
-  ozz::io::IArchive archive(&stream);
-  if (archive.TestTag<ozz::animation::Animation>()) {
-    archive >> p->animation;
-    return true;
-  } else {
-    return false;
-  }
-}
-
 bool OZZ_load_skeleton(ozz_t *p, const void *ptr, size_t size) {
   // NOTE: if we derived our own ozz::io::Stream class we could
   // avoid the extra allocation and memory copy that happens
@@ -57,6 +46,21 @@ bool OZZ_load_skeleton(ozz_t *p, const void *ptr, size_t size) {
     return false;
   }
 }
+
+bool OZZ_load_animation(ozz_t *p, const void *ptr, size_t size) {
+  ozz::io::MemoryStream stream;
+  stream.Write(ptr, size);
+  stream.Seek(0, ozz::io::Stream::kSet);
+  ozz::io::IArchive archive(&stream);
+  if (archive.TestTag<ozz::animation::Animation>()) {
+    archive >> p->animation;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool OZZ_load_mesh(ozz_t *p, const void *ptr, size_t size) { return false; }
 
 void OZZ_eval_animation(ozz_t *p, float anim_ratio) {
   // sample animation
