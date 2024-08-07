@@ -3,12 +3,14 @@
 
 #ifdef __EMSCRIPTEN__
 #define DECLSPEC __attribute__((visibility("default")))
-#else
+#elif _MSC_VER
 #ifdef DLL_EXPORTS
 #define DECLSPEC __declspec(dllexport)
 #else
 #define DECLSPEC __declspec(dllimport)
 #endif
+#else
+#define DECLSPEC
 #endif
 
 #ifdef __cplusplus

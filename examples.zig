@@ -188,3 +188,5 @@ pub const sokol_examples = [_]Example{
         .sidemodule = true,
     },
 };
+
+pub const all_examples = learnopengl_examples ++ sokol_examples;
