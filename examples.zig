@@ -4,17 +4,18 @@ pub const Example = struct {
     shader: ?[]const u8 = null,
     c_srcs: ?[]const []const u8 = null,
     sidemodule: bool = false,
+    assets: []const []const u8 = &.{},
 };
 
 pub const learnopengl_examples = [_]Example{
-    .{
-        .name = "main",
-        .root_source = "src/main.zig",
-        .shader = "src/shaders/cube.glsl",
-        .c_srcs = &.{
-            "src/main.cpp",
-        },
-    },
+    // .{
+    //     .name = "main",
+    //     .root_source = "src/main.zig",
+    //     .shader = "src/shaders/cube.glsl",
+    //     // .c_srcs = &.{
+    //     //     "src/main.cpp",
+    //     // },
+    // },
     .{
         .name = "sokol-zig-imgui-sample",
         .root_source = "src/sokol-zig-imgui-sample/main.zig",
@@ -186,6 +187,10 @@ pub const sokol_examples = [_]Example{
         .name = "ozz-anim",
         .root_source = "sapp/ozz-anim-sapp.zig",
         .sidemodule = true,
+        .assets = &.{
+            "sapp/data/ozz/ozz_anim_skeleton.ozz",
+            "sapp/data/ozz/ozz_anim_animation.ozz",
+        },
     },
 };
 

@@ -35,17 +35,6 @@ pub fn build(b: *std.Build) !void {
     }
 }
 
-fn comptime_add_list(
-    comptime lhs: anytype,
-    comptime rhs: anytype,
-    condition: bool,
-) []const []const u8 {
-    return if (condition)
-        &(lhs ++ rhs)
-    else
-        &lhs;
-}
-
 fn buildWasm(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
@@ -85,6 +74,9 @@ fn buildWasm(
             lib.step.dependOn(side_wasm);
             // emcc main.c -s MAIN_MODULE=1 -o main.html -s "RUNTIME_LINKED_LIBS=['sidemodule.wasm']"
         }
+        inline for (example.assets) |asset| {
+            b.installFile(asset, "web/" ++ asset);
+        }
 
         deps.inject_dependencies(lib);
 
@@ -121,6 +113,10 @@ fn buildWasm(
                 &(WASM_ARGS ++ WASM_ARGS_DYNAMIC)
             else
                 &WASM_ARGS,
+            .extra_args2 = if (example.sidemodule)
+                &.{"zig-out/lib/libsidemodule.a"}
+            else
+                &.{},
         });
 
         deps.dep_cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
