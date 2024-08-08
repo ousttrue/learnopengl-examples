@@ -44,7 +44,7 @@ pub fn buildWasm(b: *std.Build, dep_emsdk: *std.Build.Dependency) !*std.Build.St
         builddir,
         "--prefix",
         prefix,
-        "--reconfigure",
+        // "--reconfigure",
         "--cross-file",
         "emsdk.ini",
     });
