@@ -26,8 +26,22 @@ pub fn build(b: *std.Build) !void {
     const deps = Deps.init(b, target, optimize);
 
     if (target.result.isWasm()) {
+        // build main setup emcc install
+        const main = b.addStaticLibrary(.{
+            .target = target,
+            .optimize = optimize,
+            .name = "main",
+            .root_source_file = b.path("src/main.zig"),
+        });
+        b.installArtifact(main);
+        const dep_sokol = b.dependency("sokol", .{
+            .target = target,
+            .optimize = optimize,
+        });
+        main.root_module.addImport("sokol", dep_sokol.module("sokol"));
+
         const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
-        const side_wasm = try sidemodule.buildWasm(b, dep_emsdk);
+        const side_wasm = try sidemodule.buildWasm(b, dep_emsdk, &main.step);
         buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
     } else {
         const side_dll = sidemodule.buildNative(b);

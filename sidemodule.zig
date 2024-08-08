@@ -1,6 +1,10 @@
 const std = @import("std");
 
-pub fn buildWasm(b: *std.Build, dep_emsdk: *std.Build.Dependency) !*std.Build.Step {
+pub fn buildWasm(
+    b: *std.Build,
+    dep_emsdk: *std.Build.Dependency,
+    dep: *std.Build.Step,
+) !*std.Build.Step {
     const builddir = "build_wasm";
     const prefix = b.path("zig-out").getPath(b);
 
@@ -38,6 +42,7 @@ pub fn buildWasm(b: *std.Build, dep_emsdk: *std.Build.Dependency) !*std.Build.St
 
     // meson setup --compilation emsdk.ini
     const meson_setup = b.addSystemCommand(&.{"meson"});
+    meson_setup.step.dependOn(dep);
     meson_setup.cwd = b.path("sidemodule");
     meson_setup.addArgs(&.{
         "setup",
