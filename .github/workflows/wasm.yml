@@ -28,16 +28,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # zig build
+      - uses: actions/setup-python@v5
       - uses: goto-bus-stop/setup-zig@v2
         with:
           version: 0.13.0
+      # zig build
       - name: build Wasm
         run: |
+          pip install meson
           zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall
           cp zig-out/web/* docs
       # playwright
-      - uses: actions/setup-python@v5
       - name: ss
         run: |
           pip install pytest-playwright
