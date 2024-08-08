@@ -76,7 +76,7 @@ fn mesonSetupNative(b: *std.Build, builddir: []const u8, prefix: []const u8) *st
         builddir,
         "--prefix",
         prefix,
-        "--reconfigure",
+        // "--reconfigure",
     });
     return &tool_run.step;
 }

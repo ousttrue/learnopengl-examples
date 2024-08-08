@@ -26,7 +26,7 @@ if cxx.get_id() == 'emscripten'
     )
 else
     # native
-    shared_library(
+    static_library(
         'sidemodule',
         srcs,
         include_directories: inc,
@@ -35,5 +35,6 @@ else
         ],
         install: true,
         # => prefix/bin/sidemodule.dll
+        # => prefix/lib/sidemodule.lib
     )
 endif

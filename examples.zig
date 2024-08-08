@@ -161,28 +161,76 @@ pub const sokol_examples = [_]Example{
         .root_source = "sapp/texcube-sapp.zig",
         .shader = "sapp/texcube-sapp.glsl",
     },
+    // - [ ] [vertexpull](sapp/vertexpull-sapp.zig)
+    // - [ ] [sbuftex](sapp/sbuftex-sapp.zig)
+    // - [ ] [shapes](sapp/shapes-sapp.zig)
     .{
-        .name = "sgl-lines",
-        .root_source = "sapp/sgl-lines-sapp.zig",
+        .name = "shapes-transform",
+        .root_source = "sapp/shapes-transform-sapp.zig",
+        .shader = "sapp/shapes-transform-sapp.glsl",
     },
     .{
         .name = "offscreen",
         .root_source = "sapp/offscreen-sapp.zig",
         .shader = "sapp/offscreen-sapp.glsl",
     },
-    // .{
-    //     .name = "ozz-skin",
-    //     .root_source = "sapp/ozz-skin-sapp.zig",
-    //     .shader = "sapp/ozz-skin-sapp.glsl",
-    // },
+    // - [ ] [offscreen-msaa](sapp/offscreen-msaa-sapp.zig)
+    // - [ ] [instancing](sapp/instancing-sapp.zig)
+    // - [ ] [instancing-pull](sapp/instancing-pull-sapp.zig)
+    // - [ ] [mrt](sapp/mrt-sapp.zig)
+    // - [ ] [mrt-pixelformats](sapp/mrt-pixelformats-sapp.zig)
+    // - [ ] [arraytex](sapp/arraytex-sapp.zig)
+    // - [ ] [tex3d](sapp/tex3d-sapp.zig)
+    // - [ ] [dyntex3d](sapp/dyntex3d-sapp.zig)
+    // - [ ] [dyntex](sapp/dyntex-sapp.zig)
+    // - [ ] [basisu](sapp/basisu-sapp.zig)
+    // - [ ] [cubemap-jpeg](sapp/cubemap-jpeg-sapp.zig)
+    // - [ ] [cubemaprt](sapp/cubemaprt-sapp.zig)
+    // - [ ] [miprender](sapp/miprender-sapp.zig)
+    // - [ ] [layerrender](sapp/layerrender-sapp.zig)
+    // - [ ] [primtypes](sapp/primtypes-sapp.zig)
+    // - [ ] [uvwrap](sapp/uvwrap-sapp.zig)
+    // - [ ] [mipmap](sapp/mipmap-sapp.zig)
+    // - [ ] [uniformtypes](sapp/uniformtypes-sapp.zig)
+    // - [ ] [blend](sapp/blend-sapp.zig)
+    // - [ ] [sdf](sapp/sdf-sapp.zig)
+    // - [ ] [shadows](sapp/shadows-sapp.zig)
+    // - [ ] [shadows-depthtex](sapp/shadows-depthtex-sapp.zig)
+    // - [ ] [imgui](sapp/imgui-sapp.zig)
+    // - [ ] [imgui-dock](sapp/imgui-dock-sapp.zig)
+    // - [ ] [imgui-highdpi](sapp/imgui-highdpi-sapp.zig)
+    // - [ ] [cimgui](sapp/cimgui-sapp.zig)
+    // - [ ] [imgui-images](sapp/imgui-images-sapp.zig)
+    // - [ ] [imgui-usercallback](sapp/imgui-usercallback-sapp.zig)
+    // - [ ] [nuklear](sapp/nuklear-sapp.zig)
+    // - [ ] [nuklear-images](sapp/nuklear-images-sapp.zig)
+    // - [ ] [sgl-microui](sapp/sgl-microui-sapp.zig)
+    // - [ ] [fontstash](sapp/fontstash-sapp.zig)
+    // - [ ] [fontstash-layers](sapp/fontstash-layers-sapp.zig)
+    // - [ ] [debugtext](sapp/debugtext-sapp.zig)
+    // - [ ] [debugtext-printf](sapp/debugtext-printf-sapp.zig)
+    // - [ ] [debugtext-userfont](sapp/debugtext-userfont-sapp.zig)
+    // - [ ] [debugtext-context](sapp/debugtext-context-sapp.zig)
+    // - [ ] [debugtext-layers](sapp/debugtext-layers-sapp.zig)
+    // - [ ] [events](sapp/events-sapp.zig)
+    // - [ ] [icon](sapp/icon-sapp.zig)
+    // - [ ] [droptest](sapp/droptest-sapp.zig)
+    // - [ ] [pixelformats](sapp/pixelformats-sapp.zig)
+    // - [ ] [drawcallperf](sapp/drawcallperf-sapp.zig)
+    // - [ ] [saudio](sapp/saudio-sapp.zig)
+    // - [ ] [modplay](sapp/modplay-sapp.zig)
+    // - [ ] [noentry](sapp/noentry-sapp.zig)
+    // - [ ] [restart](sapp/restart-sapp.zig)
+    // - [ ] [sgl](sapp/sgl-sapp.zig)
     .{
-        .name = "shapes-transform",
-        .root_source = "sapp/shapes-transform-sapp.zig",
-        .shader = "sapp/shapes-transform-sapp.glsl",
+        .name = "sgl-lines",
+        .root_source = "sapp/sgl-lines-sapp.zig",
     },
-    //
-    //
-    //
+    // - [ ] [sgl-points](sapp/sgl-points-sapp.zig)
+    // - [ ] [sgl-context](sapp/sgl-context-sapp.zig)
+    // - [ ] [loadpng](sapp/loadpng-sapp.zig)
+    // - [ ] [plmpeg](sapp/plmpeg-sapp.zig)
+    // - [ ] [cgltf](sapp/cgltf-sapp.zig)
     .{
         .name = "ozz-anim",
         .root_source = "sapp/ozz-anim-sapp.zig",
@@ -192,6 +240,19 @@ pub const sokol_examples = [_]Example{
             "sapp/data/ozz/ozz_anim_animation.ozz",
         },
     },
+    .{
+        .name = "ozz-skin",
+        .root_source = "sapp/ozz-skin-sapp.zig",
+        .sidemodule = true,
+        .shader = "sapp/ozz-skin-sapp.glsl",
+    },
+    // - [ ] [ozz-storagebuffer](sapp/ozz-storagebuffer-sapp.zig)
+    // - [ ] [shdfeatures](sapp/shdfeatures-sapp.zig)
+    // - [ ] [spine-simple](sapp/spine-simple-sapp.zig)
+    // - [ ] [spine-inspector](sapp/spine-inspector-sapp.zig)
+    // - [ ] [spine-layers](sapp/spine-layers-sapp.zig)
+    // - [ ] [spine-skinsets](sapp/spine-skinsets-sapp.zig)
+    // - [ ] [spine-switch-skinsets](sapp/spine-switch-skinsets-sapp.zig)
 };
 
 pub const all_examples = learnopengl_examples ++ sokol_examples;

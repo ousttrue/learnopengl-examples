@@ -190,6 +190,7 @@ fn buildNative(
 
         // ...and a special run step to start the web build output via 'emrun'
         const run = b.addRunArtifact(exe);
+        run.step.dependOn(b.getInstallStep());
         b.step("run-" ++ example.name, "Run " ++ example.name).dependOn(&run.step);
         if (example.sidemodule) {
             if (target.result.os.tag == .windows) {

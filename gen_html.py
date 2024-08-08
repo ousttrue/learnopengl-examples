@@ -2,6 +2,7 @@ from typing import List, Dict
 import pathlib
 import sys
 import datetime
+import time
 
 # pip install pytest-playwright
 from playwright.sync_api import sync_playwright
@@ -339,6 +340,7 @@ def screen_shot(name: str, port: int, width: int, height: int):
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": width, "height": height})
         page.goto(f"http://localhost:{port}/{name}.html")
+        time.sleep(0.3)
         page.screenshot(path=f"docs/{name}.jpg")
 
         browser.close()
