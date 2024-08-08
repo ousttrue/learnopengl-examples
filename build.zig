@@ -10,10 +10,14 @@ const WASM_ARGS = [_][]const u8{
     "-sUSE_OFFSET_CONVERTER=1",
     "-sSTB_IMAGE=1",
     "-Wno-limited-postlink-optimizations",
-    "-sEVAL_CTORS=1",
 };
 const WASM_ARGS_DEBUG = [_][]const u8{
     "-g",
+};
+const WASM_ARGS_DYNAMIC = [_][]const u8{
+    // "-sMAIN_MODULE=1",
+    // "zig-out/bin/sidemodule.wasm",
+    // "-sERROR_ON_UNDEFINED_SYMBOLS=0",
 };
 
 pub fn build(b: *std.Build) !void {
@@ -29,6 +33,17 @@ pub fn build(b: *std.Build) !void {
         const side_dll = sidemodule.buildNative(b);
         buildNative(b, target, optimize, &deps, &examples.all_examples, side_dll);
     }
+}
+
+fn comptime_add_list(
+    comptime lhs: anytype,
+    comptime rhs: anytype,
+    condition: bool,
+) []const []const u8 {
+    return if (condition)
+        &(lhs ++ rhs)
+    else
+        &lhs;
 }
 
 fn buildWasm(
@@ -56,6 +71,7 @@ fn buildWasm(
             .optimize = optimize,
             .name = example.name,
             .root_source_file = b.path(example.root_source),
+            .pic = true,
         });
         if (example.shader) |shader| {
             // glsl to glsl.zig
@@ -96,10 +112,15 @@ fn buildWasm(
             .use_emmalloc = true,
             .use_filesystem = false,
             .shell_file_path = deps.dep_sokol.path("src/sokol/web/shell.html").getPath(b),
-            .extra_args = &(if (optimize == .Debug)
-                WASM_ARGS ++ WASM_ARGS_DEBUG
+            .extra_args = if (optimize == .Debug)
+                if (example.sidemodule)
+                    &(WASM_ARGS ++ WASM_ARGS_DEBUG ++ WASM_ARGS_DYNAMIC)
+                else
+                    &(WASM_ARGS ++ WASM_ARGS_DEBUG)
+            else if (example.sidemodule)
+                &(WASM_ARGS ++ WASM_ARGS_DYNAMIC)
             else
-                WASM_ARGS),
+                &WASM_ARGS,
         });
 
         deps.dep_cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
