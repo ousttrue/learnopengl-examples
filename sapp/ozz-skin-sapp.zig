@@ -20,34 +20,9 @@ const sg = sokol.gfx;
 const simgui = sokol.imgui;
 const util_camera = @import("util_camera");
 
-// #include "imgui.h"
-// #define SOKOL_IMGUI_IMPL
-// #include "sokol_imgui.h"
-// #define SOKOL_GFX_IMGUI_IMPL
-// #include "sokol_gfx_imgui.h"
-//
-// #define HANDMADE_MATH_IMPLEMENTATION
-// #define HANDMADE_MATH_NO_SSE
-// #include "HandmadeMath.h"
-
 const fileutil = @import("fileutil");
 const shader = @import("ozz-skin-sapp.glsl.zig");
 const ozz_wrap = @import("ozz_wrap.zig");
-
-// ozz-animation headers
-// #include "ozz/animation/runtime/animation.h"
-// #include "ozz/animation/runtime/skeleton.h"
-// #include "ozz/animation/runtime/sampling_job.h"
-// #include "ozz/animation/runtime/local_to_model_job.h"
-// #include "ozz/base/io/stream.h"
-// #include "ozz/base/io/archive.h"
-// #include "ozz/base/containers/vector.h"
-// #include "ozz/base/maths/soa_transform.h"
-// #include "ozz/base/maths/vec_float.h"
-// #include "ozz/util/mesh.h"
-//
-// #include <memory>   // std::unique_ptr, std::make_unique
-// #include <cmath>    // fmodf
 
 // the upper limit for joint palette size is 256 (because the mesh joint indices
 // are stored in packed byte-size vertex formats), but the example mesh only needs less than 64
@@ -56,8 +31,55 @@ const MAX_JOINTS = 64;
 // this defines the size of the instance-buffer and height of the joint-texture
 const MAX_INSTANCES = 512;
 
-// // wrapper struct for managed ozz-animation C++ objects, must be deleted
-// // before shutdown, otherwise ozz-animation will report a memory leak
+const state = struct {
+    var ozz: ?*anyopaque = null;
+    var pass_action = sg.PassAction{};
+    var pip = sg.Pipeline{};
+    var joint_texture = sg.Image{};
+    var smp = sg.Sampler{};
+    var bind = sg.Bindings{};
+
+    // current number of character instances
+    var num_instances: u32 = 0;
+    var num_triangle_indices: u32 = 0;
+
+    // number of joints in the skeleton
+    // var num_skeleton_joints: i32 = 0;
+    // number of joints actually used by skinned mesh
+    // var num_skin_joints: i32 = 0;
+
+    // in number of pixels
+    var joint_texture_width: i32 = 0;
+    // in number of pixels
+    var joint_texture_height: i32 = 0;
+    // in number of floats
+    var joint_texture_pitch: i32 = 0;
+    var camera = util_camera.Camera{};
+    var draw_enabled = false;
+    const loaded = struct {
+        var skeleton = false;
+        var animation = false;
+        var mesh = false;
+        var failed = false;
+    };
+    const time = struct {
+        var frame_time_ms: f64 = 0;
+        var frame_time_sec: f64 = 0;
+        var abs_time_sec: f64 = 0;
+        var anim_eval_time: u64 = 0;
+        var factor: f32 = 0;
+        var paused = false;
+    };
+    const ui = struct {
+        //         sgimgui_t sgimgui;
+        var joint_texture_shown = false;
+        var joint_texture_scale: i32 = 0;
+        var joint_texture = simgui.Image{};
+    };
+};
+
+// wrapper struct for managed ozz-animation C++ objects, must be deleted
+// before shutdown, otherwise ozz-animation will report a memory leak
 // typedef struct {
 //     ozz::animation::Skeleton skeleton;
 //     ozz::animation::Animation animation;
@@ -91,50 +113,6 @@ const Instance = struct {
     joint_uv: [2]f32 = .{ 0, 0 },
 };
 
-const state = struct {
-    var ozz: ?*anyopaque = null;
-    var pass_action = sg.PassAction{};
-    var pip = sg.Pipeline{};
-    var joint_texture = sg.Image{};
-    var smp = sg.Sampler{};
-    var bind = sg.Bindings{};
-    // current number of character instances
-    var num_instances: u32 = 0;
-    var num_triangle_indices: u32 = 0;
-    // number of joints in the skeleton
-    var num_skeleton_joints: i32 = 0;
-    // number of joints actually used by skinned mesh
-    var num_skin_joints: i32 = 0;
-    // in number of pixels
-    var joint_texture_width: i32 = 0;
-    // in number of pixels
-    var joint_texture_height: i32 = 0;
-    // in number of floats
-    var joint_texture_pitch: i32 = 0;
-    var camera = util_camera.Camera{};
-    var draw_enabled = false;
-    const loaded = struct {
-        var skeleton = false;
-        var animation = false;
-        var mesh = false;
-        var failed = false;
-    };
-    const time = struct {
-        var frame_time_ms: f64 = 0;
-        var frame_time_sec: f64 = 0;
-        var abs_time_sec: f64 = 0;
-        var anim_eval_time: u64 = 0;
-        var factor: f32 = 0;
-        var paused = false;
-    };
-    const ui = struct {
-        //         sgimgui_t sgimgui;
-        var joint_texture_shown = false;
-        var joint_texture_scale: i32 = 0;
-        var joint_texture = simgui.Image{};
-    };
-};
-
 // IO buffers (we know the max file sizes upfront)
 var skel_io_buffer = [1]u8{0} ** (32 * 1024);
 var anim_io_buffer = [1]u8{0} ** (96 * 1024);
@@ -144,7 +122,7 @@ var mesh_io_buffer = [1]u8{0} ** (3 * 1024 * 1024);
 var instance_data = [1]Instance{.{}} ** MAX_INSTANCES;
 
 // joint-matrix upload buffer, each joint consists of transposed 4x3 matrix
-// static float joint_upload_buffer[MAX_INSTANCES][MAX_JOINTS][3][4];
+var joint_upload_buffer: [MAX_INSTANCES][MAX_JOINTS][3][4]f32 = undefined;
 
 export fn init() void {
     state.ozz = ozz_wrap.OZZ_init();
@@ -357,51 +335,18 @@ fn init_instance_data() void {
 
 // compute skinning matrices, and upload into joint texture
 fn update_joint_texture() void {
-    //
-    //     uint64_t start_time = stm_now();
-    //     const float anim_duration = state.ozz->animation.duration();
-    //     for (int instance = 0; instance < state.num_instances; instance++) {
-    //
-    //         // each character instance evaluates its own animation
-    //         const float anim_ratio = fmodf(((float)state.time.abs_time_sec + (instance*0.1f)) / anim_duration, 1.0f);
-    //
-    //         // sample animation
-    //         // NOTE: using one cache per instance versus one cache per animation
-    //         // makes a small difference, but not much
-    //         ozz::animation::SamplingJob sampling_job;
-    //         sampling_job.animation = &state.ozz->animation;
-    //         sampling_job.cache = &state.ozz->cache;
-    //         sampling_job.ratio = anim_ratio;
-    //         sampling_job.output = make_span(state.ozz->local_matrices);
-    //         sampling_job.Run();
-    //
-    //         // convert joint matrices from local to model space
-    //         ozz::animation::LocalToModelJob ltm_job;
-    //         ltm_job.skeleton = &state.ozz->skeleton;
-    //         ltm_job.input = make_span(state.ozz->local_matrices);
-    //         ltm_job.output = make_span(state.ozz->model_matrices);
-    //         ltm_job.Run();
-    //
-    //         // compute skinning matrices and write to joint texture upload buffer
-    //         for (int i = 0; i < state.num_skin_joints; i++) {
-    //             ozz::math::Float4x4 skin_matrix = state.ozz->model_matrices[state.ozz->joint_remaps[i]] * state.ozz->mesh_inverse_bindposes[i];
-    //             const ozz::math::SimdFloat4& c0 = skin_matrix.cols[0];
-    //             const ozz::math::SimdFloat4& c1 = skin_matrix.cols[1];
-    //             const ozz::math::SimdFloat4& c2 = skin_matrix.cols[2];
-    //             const ozz::math::SimdFloat4& c3 = skin_matrix.cols[3];
-    //
-    //             float* ptr = &joint_upload_buffer[instance][i][0][0];
-    //             *ptr++ = ozz::math::GetX(c0); *ptr++ = ozz::math::GetX(c1); *ptr++ = ozz::math::GetX(c2); *ptr++ = ozz::math::GetX(c3);
-    //             *ptr++ = ozz::math::GetY(c0); *ptr++ = ozz::math::GetY(c1); *ptr++ = ozz::math::GetY(c2); *ptr++ = ozz::math::GetY(c3);
-    //             *ptr++ = ozz::math::GetZ(c0); *ptr++ = ozz::math::GetZ(c1); *ptr++ = ozz::math::GetZ(c2); *ptr++ = ozz::math::GetZ(c3);
-    //         }
-    //     }
-    //     state.time.anim_eval_time = stm_since(start_time);
-    //
-    //     sg_image_data img_data = { };
-    //     // FIXME: upload partial texture? (needs sokol-gfx fixes)
-    //     img_data.subimage[0][0] = SG_RANGE(joint_upload_buffer);
-    //     sg_update_image(state.joint_texture, img_data);
+    const start_time = sokol.time.now();
+
+    if (state.ozz) |ozz| {
+        ozz_wrap.OZZ_update_joints(ozz);
+    }
+
+    state.time.anim_eval_time = sokol.time.since(start_time);
+
+    var img_data = sg.ImageData{};
+    // FIXME: upload partial texture? (needs sokol-gfx fixes)
+    img_data.subimage[0][0] = sg.asRange(&joint_upload_buffer);
+    sg.updateImage(state.joint_texture, img_data);
 }
 
 export fn frame() void {

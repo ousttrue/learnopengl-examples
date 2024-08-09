@@ -87,4 +87,47 @@ const short *OZZ_joint_parents(ozz_t *p) {
 const float *OZZ_model_matrices(ozz_t *ozz, size_t joint_index) {
   return (float *)&ozz->model_matrices[joint_index];
 }
+
+void OZZ_update_joints(ozz_t *p){
+
+    // const anim_duration = state.ozz.*.animation.duration();
+    //     for (int instance = 0; instance < state.num_instances; instance++) {
+    //
+    //         // each character instance evaluates its own animation
+    //         const float anim_ratio = fmodf(((float)state.time.abs_time_sec + (instance*0.1f)) / anim_duration, 1.0f);
+    //
+    //         // sample animation
+    //         // NOTE: using one cache per instance versus one cache per animation
+    //         // makes a small difference, but not much
+    //         ozz::animation::SamplingJob sampling_job;
+    //         sampling_job.animation = &state.ozz->animation;
+    //         sampling_job.cache = &state.ozz->cache;
+    //         sampling_job.ratio = anim_ratio;
+    //         sampling_job.output = make_span(state.ozz->local_matrices);
+    //         sampling_job.Run();
+    //
+    //         // convert joint matrices from local to model space
+    //         ozz::animation::LocalToModelJob ltm_job;
+    //         ltm_job.skeleton = &state.ozz->skeleton;
+    //         ltm_job.input = make_span(state.ozz->local_matrices);
+    //         ltm_job.output = make_span(state.ozz->model_matrices);
+    //         ltm_job.Run();
+    //
+    //         // compute skinning matrices and write to joint texture upload buffer
+    //         for (int i = 0; i < state.num_skin_joints; i++) {
+    //             ozz::math::Float4x4 skin_matrix = state.ozz->model_matrices[state.ozz->joint_remaps[i]] * state.ozz->mesh_inverse_bindposes[i];
+    //             const ozz::math::SimdFloat4& c0 = skin_matrix.cols[0];
+    //             const ozz::math::SimdFloat4& c1 = skin_matrix.cols[1];
+    //             const ozz::math::SimdFloat4& c2 = skin_matrix.cols[2];
+    //             const ozz::math::SimdFloat4& c3 = skin_matrix.cols[3];
+    //
+    //             float* ptr = &joint_upload_buffer[instance][i][0][0];
+    //             *ptr++ = ozz::math::GetX(c0); *ptr++ = ozz::math::GetX(c1); *ptr++ = ozz::math::GetX(c2); *ptr++ = ozz::math::GetX(c3);
+    //             *ptr++ = ozz::math::GetY(c0); *ptr++ = ozz::math::GetY(c1); *ptr++ = ozz::math::GetY(c2); *ptr++ = ozz::math::GetY(c3);
+    //             *ptr++ = ozz::math::GetZ(c0); *ptr++ = ozz::math::GetZ(c1); *ptr++ = ozz::math::GetZ(c2); *ptr++ = ozz::math::GetZ(c3);
+    //         }
+    //     }
+
+}
+
 } // extern "C"

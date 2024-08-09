@@ -26,7 +26,7 @@ if cxx.get_id() == 'emscripten'
     )
 else
     # native
-    static_library(
+    shared_library(
         'sidemodule',
         srcs,
         include_directories: inc,

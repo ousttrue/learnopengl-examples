@@ -195,10 +195,11 @@ fn buildNative(
         if (example.sidemodule) {
             if (target.result.os.tag == .windows) {
                 exe.addLibraryPath(b.path("zig-out/lib"));
-                run.addPathDir("zig-out/bin");
+                // run.addPathDir("zig-out/bin");
             } else {
                 exe.addLibraryPath(b.path("zig-out/lib/x86_64-linux-gnu"));
             }
+            exe.linkLibCpp();
             exe.linkSystemLibrary("sidemodule");
         }
     }

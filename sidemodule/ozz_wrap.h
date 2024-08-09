@@ -29,6 +29,7 @@ DECLSPEC float OZZ_duration(ozz_t *p);
 DECLSPEC size_t OZZ_num_joints(ozz_t *p);
 DECLSPEC const short *OZZ_joint_parents(ozz_t *p);
 DECLSPEC const float *OZZ_model_matrices(ozz_t *ozz, size_t joint_index);
+DECLSPEC void OZZ_update_joints(ozz_t *ozz);
 
 #ifdef __cplusplus
 } // extern "C"
