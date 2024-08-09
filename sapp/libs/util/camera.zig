@@ -86,7 +86,8 @@ pub const Camera = struct {
         cam.eye_pos = cam.center.add(_cam_euclidean(cam.latitude, cam.longitude).mul(cam.distance));
         cam.view = szmath.Mat4.lookat(cam.eye_pos, cam.center, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
         cam.proj = szmath.Mat4.persp(cam.aspect, w / h, cam.nearz, cam.farz);
-        cam.view_proj = cam.proj.mul(cam.view);
+        // cam.view_proj = cam.proj.mul(cam.view);
+        cam.view_proj = cam.view.mul(cam.proj);
     }
 
     // handle sokol-app input events
