@@ -6,12 +6,15 @@ pub extern fn OZZ_load_skeleton(p: *anyopaque, buf: ?*const anyopaque, size: usi
 pub extern fn OZZ_load_animation(p: *anyopaque, buf: ?*const anyopaque, size: usize) bool;
 pub extern fn OZZ_load_mesh(
     p: *anyopaque,
+    // input
     buf: ?*const anyopaque,
     size: usize,
+    // output
+    vertices: **anyopaque,
     num_vertices: *u32,
-    num_triangle_indices: *u32,
     indices: **anyopaque,
-) ?*anyopaque;
+    num_triangle_indices: *u32,
+) bool;
 
 pub extern fn OZZ_eval_animation(ozz: *anyopaque, anim_ratio: f32) void;
 pub extern fn OZZ_duration(ozz: *anyopaque) f32;

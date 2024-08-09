@@ -28,6 +28,7 @@ struct vertex_t {
   uint32_t joint_indices;
   uint32_t joint_weights;
 };
+static_assert(sizeof(vertex_t) == 24, "vertex_t");
 
 // wrapper struct for managed ozz-animation C++ objects, must be deleted
 // before shutdown, otherwise ozz-animation will report a memory leak
@@ -39,7 +40,8 @@ struct ozz_t {
   ozz::vector<ozz::math::Float4x4> model_matrices;
   // skinning
   int num_instances;
-  int num_skin_joints;
+  //     int num_skeleton_joints;    // number of joints in the skeleton
+  int num_skin_joints; // number of joints actually used by skinned mesh
   ozz::vector<uint16_t> joint_remaps;
   ozz::vector<ozz::math::Float4x4> mesh_inverse_bindposes;
 };
@@ -102,9 +104,9 @@ static uint32_t pack_f4_ubyte4n(float x, float y, float z, float w) {
   return pack_u32(x8, y8, z8, w8);
 }
 
-void *OZZ_load_mesh(ozz_t *p, const void *ptr, size_t size, int *num_vertices,
-                    int *num_triangle_indices, void **indices) {
-
+bool OZZ_load_mesh(ozz_t *p, const void *ptr, size_t size, void **_vertices,
+                   int *num_vertices, void **indices,
+                   int *num_triangle_indices) {
   ozz::io::MemoryStream stream;
   stream.Write(ptr, size);
   stream.Seek(0, ozz::io::Stream::kSet);
@@ -118,10 +120,9 @@ void *OZZ_load_mesh(ozz_t *p, const void *ptr, size_t size, int *num_vertices,
   // assume one mesh and one submesh
   assert((meshes.size() == 1) && (meshes[0].parts.size() == 1));
 
-  *indices = &meshes[0].triangle_indices[0];
+  *num_triangle_indices = (int)meshes[0].triangle_index_count();
 
   p->num_skin_joints = meshes[0].num_joints();
-  *num_triangle_indices = (int)meshes[0].triangle_index_count();
   p->joint_remaps = std::move(meshes[0].joint_remaps);
   p->mesh_inverse_bindposes = std::move(meshes[0].inverse_bind_poses);
 
@@ -134,9 +135,9 @@ void *OZZ_load_mesh(ozz_t *p, const void *ptr, size_t size, int *num_vertices,
   const float *normals = &meshes[0].parts[0].normals[0];
   const uint16_t *joint_indices = &meshes[0].parts[0].joint_indices[0];
   const float *joint_weights = &meshes[0].parts[0].joint_weights[0];
-  vertex_t *vertices = (vertex_t *)calloc(*num_vertices, sizeof(vertex_t));
+  auto vertices = (vertex_t *)calloc(*num_vertices, sizeof(vertex_t));
   for (int i = 0; i < (int)*num_vertices; i++) {
-    vertex_t *v = &vertices[i];
+    vertex_t *v = &(vertices)[i];
     v->position[0] = positions[i * 3 + 0];
     v->position[1] = positions[i * 3 + 1];
     v->position[2] = positions[i * 3 + 2];
@@ -156,7 +157,12 @@ void *OZZ_load_mesh(ozz_t *p, const void *ptr, size_t size, int *num_vertices,
     v->joint_weights = pack_f4_ubyte4n(jw0, jw1, jw2, jw3);
   }
 
-  return vertices;
+  *_vertices = vertices;
+  *indices = malloc(sizeof(uint16_t) * *num_triangle_indices);
+  memcpy(*indices, &meshes[0].triangle_indices[0],
+         sizeof(uint16_t) * *num_triangle_indices);
+
+  return true;
 }
 
 void OZZ_eval_animation(ozz_t *p, float anim_ratio) {
@@ -213,6 +219,7 @@ void OZZ_update_joints(ozz_t *p, float abs_time_sec, float *joint_upload_buffer,
     ltm_job.Run();
 
     // compute skinning matrices and write to joint texture upload buffer
+    auto ptr = &joint_upload_buffer[instance * max_joints * 12];
     for (int i = 0; i < p->num_skin_joints; i++) {
       ozz::math::Float4x4 skin_matrix =
           p->model_matrices[p->joint_remaps[i]] * p->mesh_inverse_bindposes[i];
@@ -221,7 +228,7 @@ void OZZ_update_joints(ozz_t *p, float abs_time_sec, float *joint_upload_buffer,
       const ozz::math::SimdFloat4 &c2 = skin_matrix.cols[2];
       const ozz::math::SimdFloat4 &c3 = skin_matrix.cols[3];
 
-      float *ptr = &joint_upload_buffer[instance * (i * max_joints) * 12];
+      // float *ptr = &joint_upload_buffer[instance * (i * max_joints) * 12];
       *ptr++ = ozz::math::GetX(c0);
       *ptr++ = ozz::math::GetX(c1);
       *ptr++ = ozz::math::GetX(c2);

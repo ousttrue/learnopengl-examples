@@ -23,7 +23,9 @@ DECLSPEC ozz_t *OZZ_init();
 DECLSPEC void OZZ_shutdown(void *p);
 DECLSPEC bool OZZ_load_skeleton(ozz_t *p, const void *ptr, size_t size);
 DECLSPEC bool OZZ_load_animation(ozz_t *p, const void *ptr, size_t size);
-DECLSPEC void *OZZ_load_mesh(ozz_t *p, const void *ptr, size_t size, int *num_vertices, int *num_triangle_indices, void **indices);
+DECLSPEC bool OZZ_load_mesh(ozz_t *p, const void *ptr, size_t size,
+                             void **vertices, int *num_vertices, void **indices,
+                             int *num_triangle_indices);
 DECLSPEC void OZZ_eval_animation(ozz_t *p, float anim_ratio);
 DECLSPEC float OZZ_duration(ozz_t *p);
 DECLSPEC size_t OZZ_num_joints(ozz_t *p);
