@@ -245,6 +245,11 @@ pub const sokol_examples = [_]Example{
         .root_source = "sapp/ozz-skin-sapp.zig",
         .sidemodule = true,
         .shader = "sapp/ozz-skin-sapp.glsl",
+        .assets = &.{
+            "sapp/data/ozz/ozz_skin_skeleton.ozz",
+            "sapp/data/ozz/ozz_skin_animation.ozz",
+            "sapp/data/ozz/ozz_skin_mesh.ozz",
+        },
     },
     // - [ ] [ozz-storagebuffer](sapp/ozz-storagebuffer-sapp.zig)
     // - [ ] [shdfeatures](sapp/shdfeatures-sapp.zig)
