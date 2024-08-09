@@ -45,7 +45,7 @@ const Instance = struct {
 };
 
 const state = struct {
-    var ozz: ?*anyopaque = null;
+    var ozz: *anyopaque = undefined;
 
     var pass_action = sg.PassAction{};
     var pip = sg.Pipeline{};
@@ -62,19 +62,19 @@ const state = struct {
     var joint_texture_pitch: c_int = 0; // in number of floats
     //     camera_t camera;
     var draw_enabled: bool = false;
-    //     struct {
-    //         bool skeleton;
-    //         bool animation;
-    //         bool mesh;
-    //         bool failed;
-    //     } loaded;
+    const loaded = struct {
+        var skeleton = false;
+        var animation = false;
+        var mesh = false;
+        var failed = false;
+    };
     const time = struct {
-        //         double frame_time_ms;
-        //         double frame_time_sec;
-        //         double abs_time_sec;
+        var frame_time_ms: f64 = 0;
+        var frame_time_sec: f64 = 0;
+        var abs_time_sec: f64 = 0;
         //         uint64_t anim_eval_time;
         var factor: f32 = 1.0;
-        //         bool paused;
+        var paused = false;
     };
     const ui = struct {
         //         sgimgui_t sgimgui;
@@ -351,39 +351,40 @@ fn update_joint_texture() void {
 }
 
 export fn frame() void {
-    //     sfetch_dowork();
-    //
-    //     const int fb_width = sapp_width();
-    //     const int fb_height = sapp_height();
-    //     state.time.frame_time_sec = sapp_frame_duration();
-    //     state.time.frame_time_ms = sapp_frame_duration() * 1000.0;
-    //     if (!state.time.paused) {
-    //         state.time.abs_time_sec += state.time.frame_time_sec * state.time.factor;
-    //     }
+    sokol.fetch.dowork();
+
+    // const fb_width = sokol.app.width();
+    // const fb_height = sokol.app.height();
+    state.time.frame_time_sec = sokol.app.frameDuration();
+    state.time.frame_time_ms = sokol.app.frameDuration() * 1000.0;
+    if (!state.time.paused) {
+        state.time.abs_time_sec += state.time.frame_time_sec * state.time.factor;
+    }
     //     cam_update(&state.camera, fb_width, fb_height);
     //     simgui_new_frame({ fb_width, fb_height, state.time.frame_time_sec, sapp_dpi_scale() });
     //     draw_ui();
-    //
-    //     sg_pass pass = {};
-    //     pass.action = state.pass_action;
-    //     pass.swapchain = sglue_swapchain();
-    //     sg_begin_pass(&pass);
-    //     if (state.loaded.animation && state.loaded.skeleton && state.loaded.mesh) {
-    //         update_joint_texture();
-    //
-    //         vs_params_t vs_params = { };
-    //         vs_params.view_proj = state.camera.view_proj;
-    //         vs_params.joint_pixel_width = 1.0f / (float)state.joint_texture_width;
-    //         sg_apply_pipeline(state.pip);
-    //         sg_apply_bindings(&state.bind);
-    //         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
-    //         if (state.draw_enabled) {
-    //             sg_draw(0, state.num_triangle_indices, state.num_instances);
-    //         }
-    //     }
+
+    sg.beginPass(.{
+        .action = state.pass_action,
+        .swapchain = sokol.glue.swapchain(),
+    });
+
+    if (state.loaded.animation and state.loaded.skeleton and state.loaded.mesh) {
+        //         update_joint_texture();
+        //
+        //         vs_params_t vs_params = { };
+        //         vs_params.view_proj = state.camera.view_proj;
+        //         vs_params.joint_pixel_width = 1.0f / (float)state.joint_texture_width;
+        //         sg_apply_pipeline(state.pip);
+        //         sg_apply_bindings(&state.bind);
+        //         sg_apply_uniforms(SG_SHADERSTAGE_VS, SLOT_vs_params, SG_RANGE_REF(vs_params));
+        //         if (state.draw_enabled) {
+        //             sg_draw(0, state.num_triangle_indices, state.num_instances);
+        //         }
+    }
     //     simgui_render();
-    //     sg_end_pass();
-    //     sg_commit();
+    sg.endPass();
+    sg.commit();
 }
 
 export fn input(_: [*c]const sokol.app.Event) void {
@@ -396,11 +397,11 @@ export fn input(_: [*c]const sokol.app.Event) void {
 export fn cleanup() void {
     //     sgimgui_discard(&state.ui.sgimgui);
     //     simgui_shutdown();
-    //     sfetch_shutdown();
-    //     sg_shutdown();
-    //
-    //     // free C++ objects early, otherwise ozz-animation complains about memory leaks
-    //     state.ozz = nullptr;
+    sokol.fetch.shutdown();
+    sg.shutdown();
+
+    // free C++ objects early, otherwise ozz-animation complains about memory leaks
+    ozz_wrap.OZZ_shutdown(state.ozz);
 }
 
 // static void draw_ui(void) {
