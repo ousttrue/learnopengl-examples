@@ -70,7 +70,7 @@ pub const Camera = struct {
         if (cam.longitude > 360.0) {
             cam.longitude -= 360.0;
         }
-        cam.latitude = std.math.clamp(cam.min_lat, cam.latitude + dy, cam.max_lat);
+        cam.latitude = std.math.clamp(cam.latitude + dy, cam.min_lat, cam.max_lat);
     }
 
     // feed zoom (mouse wheel) input

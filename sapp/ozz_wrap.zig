@@ -24,6 +24,7 @@ pub extern fn OZZ_model_matrices(ozz: *anyopaque, joint_index: usize) *const szm
 
 pub extern fn OZZ_update_joints(
     ozz: *anyopaque,
+    num_instances: u32,
     abs_time_sec: f32,
     joint_upload_buffer: *f32,
     max_joints: c_int,

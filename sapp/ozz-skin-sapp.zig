@@ -62,7 +62,7 @@ const state = struct {
     var joint_texture_height: c_int = 0; // in number of pixels
     var joint_texture_pitch: c_int = 0; // in number of floats
     var camera: util_camera.Camera = .{};
-    var draw_enabled: bool = false;
+    // var draw_enabled: bool = false;
     const loaded = struct {
         var skeleton = false;
         var animation = false;
@@ -73,7 +73,7 @@ const state = struct {
         var frame_time_ms: f64 = 0;
         var frame_time_sec: f64 = 0;
         var abs_time_sec: f64 = 0;
-        //         uint64_t anim_eval_time;
+        var anim_eval_time: u64 = 0;
         var factor: f32 = 1.0;
         var paused = false;
     };
@@ -94,7 +94,7 @@ var mesh_io_buffer: [3 * 1024 * 1024]u8 = undefined;
 var instance_data: [MAX_INSTANCES]Instance = undefined;
 
 // joint-matrix upload buffer, each joint consists of transposed 4x3 matrix
-// static float joint_upload_buffer[MAX_INSTANCES][MAX_JOINTS][3][4];
+var joint_upload_buffer: [MAX_INSTANCES][MAX_JOINTS][3][4]f32 = undefined;
 
 export fn init() void {
     state.ozz = ozz_wrap.OZZ_init();
@@ -297,51 +297,20 @@ fn init_instance_data() void {
 
 // compute skinning matrices, and upload into joint texture
 fn update_joint_texture() void {
-    //
-    //     uint64_t start_time = stm_now();
-    //     const float anim_duration = state.ozz->animation.duration();
-    //     for (int instance = 0; instance < state.num_instances; instance++) {
-    //
-    //         // each character instance evaluates its own animation
-    //         const float anim_ratio = fmodf(((float)state.time.abs_time_sec + (instance*0.1f)) / anim_duration, 1.0f);
-    //
-    //         // sample animation
-    //         // NOTE: using one cache per instance versus one cache per animation
-    //         // makes a small difference, but not much
-    //         ozz::animation::SamplingJob sampling_job;
-    //         sampling_job.animation = &state.ozz->animation;
-    //         sampling_job.cache = &state.ozz->cache;
-    //         sampling_job.ratio = anim_ratio;
-    //         sampling_job.output = make_span(state.ozz->local_matrices);
-    //         sampling_job.Run();
-    //
-    //         // convert joint matrices from local to model space
-    //         ozz::animation::LocalToModelJob ltm_job;
-    //         ltm_job.skeleton = &state.ozz->skeleton;
-    //         ltm_job.input = make_span(state.ozz->local_matrices);
-    //         ltm_job.output = make_span(state.ozz->model_matrices);
-    //         ltm_job.Run();
-    //
-    //         // compute skinning matrices and write to joint texture upload buffer
-    //         for (int i = 0; i < state.num_skin_joints; i++) {
-    //             ozz::math::Float4x4 skin_matrix = state.ozz->model_matrices[state.ozz->joint_remaps[i]] * state.ozz->mesh_inverse_bindposes[i];
-    //             const ozz::math::SimdFloat4& c0 = skin_matrix.cols[0];
-    //             const ozz::math::SimdFloat4& c1 = skin_matrix.cols[1];
-    //             const ozz::math::SimdFloat4& c2 = skin_matrix.cols[2];
-    //             const ozz::math::SimdFloat4& c3 = skin_matrix.cols[3];
-    //
-    //             float* ptr = &joint_upload_buffer[instance][i][0][0];
-    //             *ptr++ = ozz::math::GetX(c0); *ptr++ = ozz::math::GetX(c1); *ptr++ = ozz::math::GetX(c2); *ptr++ = ozz::math::GetX(c3);
-    //             *ptr++ = ozz::math::GetY(c0); *ptr++ = ozz::math::GetY(c1); *ptr++ = ozz::math::GetY(c2); *ptr++ = ozz::math::GetY(c3);
-    //             *ptr++ = ozz::math::GetZ(c0); *ptr++ = ozz::math::GetZ(c1); *ptr++ = ozz::math::GetZ(c2); *ptr++ = ozz::math::GetZ(c3);
-    //         }
-    //     }
-    //     state.time.anim_eval_time = stm_since(start_time);
-    //
-    //     sg_image_data img_data = { };
-    //     // FIXME: upload partial texture? (needs sokol-gfx fixes)
-    //     img_data.subimage[0][0] = SG_RANGE(joint_upload_buffer);
-    //     sg_update_image(state.joint_texture, img_data);
+    const start_time = sokol.time.now();
+    ozz_wrap.OZZ_update_joints(
+        state.ozz,
+        state.num_instances,
+        @floatCast(state.time.abs_time_sec),
+        &joint_upload_buffer[0][0][0][0],
+        MAX_JOINTS,
+    );
+    state.time.anim_eval_time = sokol.time.since(start_time);
+
+    var img_data = sg.ImageData{};
+    // FIXME: upload partial texture? (needs sokol-gfx fixes)
+    img_data.subimage[0][0] = sg.asRange(&joint_upload_buffer);
+    sg.updateImage(state.joint_texture, img_data);
 }
 
 export fn frame() void {
@@ -373,7 +342,8 @@ export fn frame() void {
         sg.applyPipeline(state.pip);
         sg.applyBindings(state.bind);
         sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
-        if (state.draw_enabled) {
+        // if (state.draw_enabled)
+        {
             sg.draw(0, state.num_triangle_indices, state.num_instances);
         }
     }

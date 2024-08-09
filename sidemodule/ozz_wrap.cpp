@@ -38,8 +38,6 @@ struct ozz_t {
   ozz::animation::SamplingCache cache;
   ozz::vector<ozz::math::SoaTransform> local_matrices;
   ozz::vector<ozz::math::Float4x4> model_matrices;
-  // skinning
-  int num_instances;
   //     int num_skeleton_joints;    // number of joints in the skeleton
   int num_skin_joints; // number of joints actually used by skinned mesh
   ozz::vector<uint16_t> joint_remaps;
@@ -191,11 +189,11 @@ const float *OZZ_model_matrices(ozz_t *ozz, size_t joint_index) {
   return (float *)&ozz->model_matrices[joint_index];
 }
 
-void OZZ_update_joints(ozz_t *p, float abs_time_sec, float *joint_upload_buffer,
-                       int max_joints) {
+void OZZ_update_joints(ozz_t *p, int num_instances, float abs_time_sec,
+                       float *joint_upload_buffer, int max_joints) {
 
   auto anim_duration = p->animation.duration();
-  for (int instance = 0; instance < p->num_instances; instance++) {
+  for (int instance = 0; instance < num_instances; instance++) {
 
     // each character instance evaluates its own animation
     const float anim_ratio =
