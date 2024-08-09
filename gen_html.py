@@ -12,6 +12,7 @@ import dataclasses
 @dataclasses.dataclass
 class Section:
     name: str
+    wait: float = 0
 
 
 @dataclasses.dataclass
@@ -276,8 +277,8 @@ EXAMPLE_MAP: Dict[str, List[Article]] = {
                 Section("loadpng"),
                 Section("plmpeg"),
                 Section("cgltf"),
-                Section("ozz-anim"),
-                Section("ozz-skin"),
+                Section("ozz-anim", 1),
+                Section("ozz-skin", 1),
                 Section("ozz-storagebuffer"),
                 Section("shdfeatures"),
                 Section("spine-simple"),
@@ -335,12 +336,13 @@ END_HTML = """
 """
 
 
-def screen_shot(name: str, port: int, width: int, height: int):
+def screen_shot(name: str, port: int, width: int, height: int, wait: float):
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page(viewport={"width": width, "height": height})
         page.goto(f"http://localhost:{port}/{name}.html")
-        time.sleep(0.3)
+        if wait > 0:
+            time.sleep(wait)
         page.screenshot(path=f"docs/{name}.jpg")
 
         browser.close()
@@ -362,7 +364,7 @@ def main():
                 f.write('<section class="group examples">\n')
                 for section in article.sections:
                     try:
-                        screen_shot(section.name, port, 400, 300)
+                        screen_shot(section.name, port, 400, 300, section.wait)
                     except Exception:
                         pass
                     f.write(
