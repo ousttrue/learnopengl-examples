@@ -23,13 +23,15 @@ DECLSPEC ozz_t *OZZ_init();
 DECLSPEC void OZZ_shutdown(void *p);
 DECLSPEC bool OZZ_load_skeleton(ozz_t *p, const void *ptr, size_t size);
 DECLSPEC bool OZZ_load_animation(ozz_t *p, const void *ptr, size_t size);
-DECLSPEC bool OZZ_load_mesh(ozz_t *p, const void *ptr, size_t size);
+DECLSPEC void *OZZ_load_mesh(ozz_t *p, const void *ptr, size_t size, int *num_vertices, int *num_triangle_indices, void **indices);
 DECLSPEC void OZZ_eval_animation(ozz_t *p, float anim_ratio);
 DECLSPEC float OZZ_duration(ozz_t *p);
 DECLSPEC size_t OZZ_num_joints(ozz_t *p);
 DECLSPEC const short *OZZ_joint_parents(ozz_t *p);
 DECLSPEC const float *OZZ_model_matrices(ozz_t *ozz, size_t joint_index);
-DECLSPEC void OZZ_update_joints(ozz_t *ozz);
+DECLSPEC void OZZ_update_joints(ozz_t *ozz, float abs_time_sec,
+                                float *joint_upload_buffer, int max_joints);
+DECLSPEC void OZZ_free(void *p);
 
 #ifdef __cplusplus
 } // extern "C"
