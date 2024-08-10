@@ -41,7 +41,7 @@ pub fn build(b: *std.Build) !void {
         main.root_module.addImport("sokol", dep_sokol.module("sokol"));
 
         const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
-        const side_wasm = try sidemodule.buildWasm(b, dep_emsdk, &main.step);
+        const side_wasm = try sidemodule.buildWasm(b, optimize, dep_emsdk, &main.step);
         buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
     } else {
         const side_dll = sidemodule.buildNative(b);
@@ -118,6 +118,7 @@ fn buildWasm(
             .use_emmalloc = true,
             .use_filesystem = true,
             .shell_file_path = deps.dep_sokol.path("src/sokol/web/shell.html").getPath(b),
+            .release_use_closure = false,
             .extra_args = if (optimize == .Debug)
                 if (example.sidemodule)
                     &(WASM_ARGS ++ WASM_ARGS_DEBUG ++ WASM_ARGS_DYNAMIC)

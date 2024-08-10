@@ -2,6 +2,7 @@ const std = @import("std");
 
 pub fn buildWasm(
     b: *std.Build,
+    optimize: std.builtin.OptimizeMode,
     dep_emsdk: *std.Build.Dependency,
     dep: *std.Build.Step,
 ) !*std.Build.Step {
@@ -47,6 +48,7 @@ pub fn buildWasm(
     meson_setup.addArgs(&.{
         "setup",
         builddir,
+        if (optimize == .Debug) "-Dbuildtype=debug" else "-Dbuildtype=release",
         "--prefix",
         prefix,
         // "--reconfigure",
