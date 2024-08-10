@@ -16,7 +16,7 @@ const util_camera = @import("util_camera");
 const ozz_wrap = @import("ozz_wrap.zig");
 
 const state = struct {
-    var ozz: ?*anyopaque = null;
+    var ozz: *anyopaque = undefined;
     const loaded = struct {
         var skeleton = false;
         var animation = false;
@@ -83,20 +83,17 @@ export fn init() void {
     });
 
     // start loading the skeleton and animation files
-    {
-        _ = sokol.fetch.send(.{
-            .path = "sapp/data/ozz/ozz_anim_skeleton.ozz",
-            .callback = skeleton_data_loaded,
-            .buffer = sokol.fetch.asRange(&skel_data_buffer),
-        });
-    }
-    {
-        _ = sokol.fetch.send(.{
-            .path = "sapp/data/ozz/ozz_anim_animation.ozz",
-            .callback = animation_data_loaded,
-            .buffer = sokol.fetch.asRange(&anim_data_buffer),
-        });
-    }
+    _ = sokol.fetch.send(.{
+        .path = "sapp/data/ozz/ozz_anim_skeleton.ozz",
+        .callback = skeleton_data_loaded,
+        .buffer = sokol.fetch.asRange(&skel_data_buffer),
+    });
+
+    _ = sokol.fetch.send(.{
+        .path = "sapp/data/ozz/ozz_anim_animation.ozz",
+        .callback = animation_data_loaded,
+        .buffer = sokol.fetch.asRange(&anim_data_buffer),
+    });
 }
 
 export fn frame() void {
@@ -115,13 +112,13 @@ export fn frame() void {
     });
     draw_ui();
 
-    if (state.ozz) |ozz| {
+    if (state.loaded.skeleton and state.loaded.animation) {
         if (!state.time.paused) {
             state.time.absolute += state.time.frame * state.time.factor;
         }
 
         // convert current time to animation ration (0.0 .. 1.0)
-        const anim_duration = ozz_wrap.OZZ_duration(ozz);
+        const anim_duration = ozz_wrap.OZZ_duration(state.ozz);
         if (!state.time.anim_ratio_ui_override) {
             state.time.anim_ratio = std.math.mod(
                 f32,
@@ -130,8 +127,8 @@ export fn frame() void {
             ) catch unreachable;
         }
 
-        ozz_wrap.OZZ_eval_animation(ozz, state.time.anim_ratio);
-        draw_skeleton(ozz);
+        ozz_wrap.OZZ_eval_animation(state.ozz, state.time.anim_ratio);
+        draw_skeleton(state.ozz);
     }
 
     sg.beginPass(.{
@@ -158,9 +155,7 @@ export fn cleanup() void {
     sg.shutdown();
 
     // free C++ objects early, otherwise ozz-animation complains about memory leaks
-    if (state.ozz) |ozz| {
-        ozz_wrap.OZZ_shutdown(ozz);
-    }
+    ozz_wrap.OZZ_shutdown(state.ozz);
 }
 
 fn draw_vec(vec: szmath.Vec3) void {
@@ -272,30 +267,34 @@ fn draw_ui() void {
 }
 
 export fn skeleton_data_loaded(response: [*c]const sokol.fetch.Response) void {
-    if (state.ozz) |ozz| {
-        if (response.*.fetched) {
-            if (ozz_wrap.OZZ_load_skeleton(ozz, response.*.data.ptr, response.*.data.size)) {
-                state.loaded.skeleton = true;
-            } else {
-                state.loaded.failed = true;
-            }
-        } else if (response.*.failed) {
+    if (response.*.fetched) {
+        if (ozz_wrap.OZZ_load_skeleton(
+            state.ozz,
+            response.*.data.ptr,
+            response.*.data.size,
+        )) {
+            state.loaded.skeleton = true;
+        } else {
             state.loaded.failed = true;
         }
+    } else if (response.*.failed) {
+        state.loaded.failed = true;
     }
 }
 
 export fn animation_data_loaded(response: [*c]const sokol.fetch.Response) void {
-    if (state.ozz) |ozz| {
-        if (response.*.fetched) {
-            if (ozz_wrap.OZZ_load_animation(ozz, response.*.data.ptr, response.*.data.size)) {
-                state.loaded.animation = true;
-            } else {
-                state.loaded.failed = true;
-            }
-        } else if (response.*.failed) {
+    if (response.*.fetched) {
+        if (ozz_wrap.OZZ_load_animation(
+            state.ozz,
+            response.*.data.ptr,
+            response.*.data.size,
+        )) {
+            state.loaded.animation = true;
+        } else {
             state.loaded.failed = true;
         }
+    } else if (response.*.failed) {
+        state.loaded.failed = true;
     }
 }
 
