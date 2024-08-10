@@ -10,8 +10,8 @@
             .hash = "12200f5129c997728160ab584adcc939b9dbca6f802d7273f386dad777de85e80421",
         },
         .sokol = .{
-            .url = "git+https://github.com/ousttrue/sokol-zig.git#a880cf3124b45b5f63dc6b1d59f3acdbf4183208",
-            .hash = "1220ca524beb012ffc14142602a4146b27d1c3b9f06f7aee1f5dc63f9b3ddc602892",
+            .url = "git+https://github.com/ousttrue/sokol-zig.git#38014bc673fd3c82f44612f02573d5af00dfc66f",
+            .hash = "12205b36041f858db146628cd3b25fae4cda5f161a6a52d48fa22cde0c03b689ccb8",
         },
     },
     .paths = .{

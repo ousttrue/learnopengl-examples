@@ -116,7 +116,7 @@ fn buildWasm(
             .emsdk = dep_emsdk,
             .use_webgl2 = true,
             .use_emmalloc = true,
-            .use_filesystem = false,
+            .use_filesystem = true,
             .shell_file_path = deps.dep_sokol.path("src/sokol/web/shell.html").getPath(b),
             .extra_args = if (optimize == .Debug)
                 if (example.sidemodule)
@@ -128,7 +128,12 @@ fn buildWasm(
             else
                 &WASM_ARGS,
             .extra_args2 = if (example.sidemodule)
-                &.{"zig-out/lib/libsidemodule.a"}
+                // &.{"zig-out/lib/libsidemodule.a"}
+                &.{
+                    "-sMAIN_MODULE",
+                    "zig-out/web/sidemodule.wasm",
+                    "-sERROR_ON_UNDEFINED_SYMBOLS=0",
+                }
             else
                 &.{},
         });
@@ -188,7 +193,6 @@ fn buildNative(
 
         b.installArtifact(exe);
 
-        // ...and a special run step to start the web build output via 'emrun'
         const run = b.addRunArtifact(exe);
         run.step.dependOn(b.getInstallStep());
         b.step("run-" ++ example.name, "Run " ++ example.name).dependOn(&run.step);

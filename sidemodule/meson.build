@@ -11,16 +11,23 @@ inc = include_directories('include')
 cxx = meson.get_compiler('cpp')
 if cxx.get_id() == 'emscripten'
     # wasm
-    static_library(
+    executable(
         'sidemodule',
         srcs,
         include_directories: inc,
         cpp_args: [
+          '-DEMSCRIPTEN=1',
+          '-sSIDE_MODULE',
         ],
         link_args: [
+          '-sEXPORT_ALL=1',
+          '-sWASM=1',
+          '-sSIDE_MODULE',
         ],
-        pic: true,
+        # pic: true,
         install: true,
+        name_suffix: 'wasm',
+        install_dir: 'web',
         # => prefix/lib/sidemodule.js
         # => prefix/lib/sidemodule.wasm
     )

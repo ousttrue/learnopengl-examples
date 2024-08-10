@@ -1,7 +1,7 @@
 #pragma once
 #include <stddef.h>
 
-#ifdef __EMSCRIPTEN__
+#ifdef EMSCRIPTEN
 #define DECLSPEC __attribute__((visibility("default")))
 #elif _MSC_VER
 #ifdef DLL_EXPORTS
