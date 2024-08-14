@@ -9,11 +9,6 @@ pub const Example = struct {
 
 pub const learnopengl_examples = [_]Example{
     .{
-        .name = "orbit-camera",
-        .root_source = "src/main.zig",
-        .shader = "src/shaders/cube.glsl",
-    },
-    .{
         .name = "sokol-zig-imgui-sample",
         .root_source = "src/sokol-zig-imgui-sample/main.zig",
     },

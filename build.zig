@@ -30,9 +30,10 @@ pub fn build(b: *std.Build) !void {
         const main = b.addStaticLibrary(.{
             .target = target,
             .optimize = optimize,
-            .name = "main",
+            .name = "orbit-camera",
             .root_source_file = b.path("src/main.zig"),
         });
+        deps.inject_dependencies(main);
         b.installArtifact(main);
         const dep_sokol = b.dependency("sokol", .{
             .target = target,
