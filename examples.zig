@@ -163,7 +163,11 @@ pub const sokol_examples = [_]Example{
     },
     // - [ ] [vertexpull](sapp/vertexpull-sapp.zig)
     // - [ ] [sbuftex](sapp/sbuftex-sapp.zig)
-    // - [ ] [shapes](sapp/shapes-sapp.zig)
+    .{
+        .name = "shapes",
+        .root_source = "sapp/shapes-sapp.zig",
+        .shader = "sapp/shapes-sapp.glsl",
+    },
     .{
         .name = "shapes-transform",
         .root_source = "sapp/shapes-transform-sapp.zig",
