@@ -290,6 +290,16 @@ EXAMPLE_MAP: Dict[str, List[Article]] = {
             ],
         ),
     ],
+    "sokol-sample-other": [
+        Article(
+            "sokol-zig sample",
+            "https://github.com/ousttrue/learnopengl-examples/tree/master/src",
+            [
+                Section("orbit-camera"),
+                Section("sokol-zig-imgui-sample"),
+            ],
+        )
+    ],
 }
 
 BEGIN_HTML = f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">

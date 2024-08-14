@@ -1,10 +1,11 @@
 //------------------------------------------------------------------------------
-//  math.zig
+//  szmath
 //
-//  minimal vector math helper functions, just the stuff needed for
-//  the sokol-samples
+//  - memory layout: row major
+//  - mul order: [row vec4] * model * view * projection
 //
-//  Ported from HandmadeMath.h
+//  based on math.zig in sokol-zig
+//
 //------------------------------------------------------------------------------
 const std = @import("std");
 
