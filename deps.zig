@@ -34,7 +34,7 @@ pub const Deps = struct {
             .szmath = b.createModule(.{
                 .target = target,
                 .optimize = optimize,
-                .root_source_file = b.path("src/math.zig"),
+                .root_source_file = b.path("szmath/math.zig"),
             }),
             .stb_image = b.createModule(.{
                 .target = target,

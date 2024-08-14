@@ -47,6 +47,12 @@ pub const Vec3 = extern struct {
     y: f32,
     z: f32,
 
+    pub const ONE = Vec3{ .x = 1, .y = 1, .z = 1 };
+    pub const ZERO = Vec3{ .x = 0.0, .y = 0.0, .z = 0.0 };
+    pub const RIGHT: Vec3 = .{ .x = 1, .y = 0, .z = 0 };
+    pub const UP: Vec3 = .{ .x = 0, .y = 1, .z = 0 };
+    pub const FORWARD: Vec3 = .{ .x = 0, .y = 0, .z = 1 };
+
     pub fn zero() Vec3 {
         return Vec3{ .x = 0.0, .y = 0.0, .z = 0.0 };
     }
@@ -57,6 +63,10 @@ pub const Vec3 = extern struct {
 
     pub fn up() Vec3 {
         return Vec3{ .x = 0.0, .y = 1.0, .z = 0.0 };
+    }
+
+    pub fn negate(self: @This()) @This() {
+        return .{ .x = -self.x, .y = -self.y, .z = -self.z };
     }
 
     pub fn len(v: Vec3) f32 {
@@ -197,7 +207,7 @@ pub const Mat4 = extern struct {
 
     pub fn persp(fov: f32, aspect: f32, near: f32, far: f32) Mat4 {
         var res = Mat4.identity();
-        const t = std.math.tan(fov * (std.math.pi / 360.0));
+        const t = std.math.tan(fov);
         res.m[0] = 1.0 / t;
         res.m[5] = aspect / t;
         res.m[11] = -1.0;
@@ -378,3 +388,103 @@ test "Mat4.rotate" {
     std.debug.assert(eq(m.m[3][2], 0.0));
     std.debug.assert(eq(m.m[3][3], 1.0));
 }
+
+pub const Quat = struct {
+    x: f32,
+    y: f32,
+    z: f32,
+    w: f32,
+
+    pub const IDENTITY: Quat = .{
+        .x = 0,
+        .y = 0,
+        .z = 0,
+        .w = 1,
+    };
+
+    pub fn axisAngle(axis: Vec3, angle: f32) Quat {
+        const s = std.math.sin(angle / 2);
+        return .{
+            .x = axis.x * s,
+            .y = axis.y * s,
+            .z = axis.z * s,
+            .w = std.math.cos(angle / 2),
+        };
+    }
+
+    pub fn conj(q: @This()) @This() {
+        return .{
+            .x = -q.x,
+            .y = -q.y,
+            .z = -q.z,
+            .w = q.w,
+        };
+    }
+
+    pub fn length2(q: @This()) f32 {
+        return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+    }
+
+    pub fn inverse(q: @This()) @This() {
+        const sqlen = q.length2();
+        const c = q.conj();
+        return .{
+            .x = c.x / sqlen,
+            .y = c.y / sqlen,
+            .z = c.z / sqlen,
+            .w = c.w / sqlen,
+        };
+    }
+
+    pub fn mul(a: @This(), b: @This()) @This() {
+        return .{
+            .x = a.x * b.w + a.w * b.x + a.y * b.z - a.z * b.y,
+            .y = a.y * b.w + a.w * b.y + a.z * b.x - a.x * b.z,
+            .z = a.z * b.w + a.w * b.z + a.x * b.y - a.y * b.x,
+            .w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+        };
+    }
+
+    pub fn dirX(q: @This()) Vec3 {
+        return .{
+            .x = q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z,
+            .y = (q.x * q.y + q.z * q.w) * 2,
+            .z = (q.z * q.x - q.y * q.w) * 2,
+        };
+    }
+
+    pub fn dirY(q: @This()) Vec3 {
+        return .{
+            .x = (q.x * q.y - q.z * q.w) * 2,
+            .y = q.w * q.w - q.x * q.x + q.y * q.y - q.z * q.z,
+            .z = (q.y * q.z + q.x * q.w) * 2,
+        };
+    }
+
+    pub fn dirZ(q: @This()) Vec3 {
+        return .{
+            .x = (q.z * q.x + q.y * q.w) * 2,
+            .y = (q.y * q.z - q.x * q.w) * 2,
+            .z = q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z,
+        };
+    }
+
+    fn f4(v: Vec3, w: f32) [4]f32 {
+        return .{ v.x, v.y, v.z, w };
+    }
+
+    pub fn matrix(q: @This()) Mat4 {
+        return .{
+            .m = f4(q.dirX(), 0) ++
+                f4(q.dirY(), 0) ++
+                f4(q.dirZ(), 0) ++
+                [4]f32{ 0, 0, 0, 1 },
+        };
+    }
+
+    pub fn qrot(q: @This(), v: Vec3) Vec3 {
+        return (q.dirX().scale(v.x)).add(q.dirY().scale(v.y)).add(q.dirZ().scale(v.z));
+    }
+};
+
+pub usingnamespace @import("camera.zig");
