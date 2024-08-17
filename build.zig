@@ -210,7 +210,9 @@ fn buildNative(
                 exe.addLibraryPath(b.path("zig-out/lib"));
                 // run.addPathDir("zig-out/bin");
             } else {
-                // exe.addLibraryPath(b.path("zig-out/lib/x86_64-linux-gnu"));
+                // ubuntu
+                exe.addLibraryPath(b.path("zig-out/lib/x86_64-linux-gnu"));
+                // arch
                 exe.addLibraryPath(b.path("zig-out/lib"));
             }
             exe.linkLibCpp();
