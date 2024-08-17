@@ -28,10 +28,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # - uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.10'
       # build wasm
       - uses: goto-bus-stop/setup-zig@v2
       - name: build Wasm
         run: |
+          sudo apt install meson ninja
           zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall
           find zig-out
           cp -rp zig-out/web docs/static/wasm
