@@ -39,12 +39,14 @@ jobs:
         run: |
           pip install meson ninja
           zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall
+          mkdir -p docs
           cp -r zig-out/web/* docs
       # playwright
       - name: ss
         run: |
           pip install pytest-playwright
           playwright install
+          mkdir -p docs
           cd docs
           python -m http.server 8080&
           cd ..

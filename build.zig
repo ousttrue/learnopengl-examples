@@ -136,12 +136,12 @@ fn buildWasm(
             else
                 &.{},
         });
-        inline for (example.assets) |asset| {
-            const install_asset = b.addInstallFileWithDir(b.path(asset), .prefix, "web/" ++ asset);
-            // b.getInstallStep().dependOn(&.step);
-            install.step.dependOn(&install_asset.step);
-            // b.installFile(asset, "web/" ++ asset);
-        }
+        // inline for (example.assets) |asset| {
+        //     const install_asset = b.addInstallFileWithDir(b.path(asset), .prefix, "web/" ++ asset);
+        //     // b.getInstallStep().dependOn(&.step);
+        //     install.step.dependOn(&install_asset.step);
+        //     // b.installFile(asset, "web/" ++ asset);
+        // }
 
         deps.dep_cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
 
@@ -196,10 +196,16 @@ fn buildNative(
             });
         }
 
-        b.installArtifact(exe);
+        const install = b.addInstallArtifact(exe, .{});
+        b.getInstallStep().dependOn(&install.step);
+        inline for (example.assets) |asset| {
+            const install_asset = b.addInstallFileWithDir(b.path(asset.from), .prefix, "bin/" ++ asset.to);
+            install.step.dependOn(&install_asset.step);
+        }
 
         const run = b.addRunArtifact(exe);
-        run.step.dependOn(b.getInstallStep());
+        run.setCwd(b.path("zig-out/bin"));
+        run.step.dependOn(&install.step);
         b.step("run-" ++ example.name, "Run " ++ example.name).dependOn(&run.step);
         if (example.sidemodule) {
             if (target.result.os.tag == .windows) {

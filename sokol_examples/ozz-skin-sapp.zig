@@ -203,17 +203,17 @@ export fn init() void {
 
     // start loading data
     _ = sokol.fetch.send(.{
-        .path = "sapp/data/ozz/ozz_skin_skeleton.ozz",
+        .path = "ozz_skin_skeleton.ozz",
         .callback = skel_data_loaded,
         .buffer = sokol.fetch.asRange(&skel_io_buffer),
     });
     _ = sokol.fetch.send(.{
-        .path = "sapp/data/ozz/ozz_skin_animation.ozz",
+        .path = "ozz_skin_animation.ozz",
         .callback = anim_data_loaded,
         .buffer = sokol.fetch.asRange(&anim_io_buffer),
     });
     _ = sokol.fetch.send(.{
-        .path = "sapp/data/ozz/ozz_skin_mesh.ozz",
+        .path = "ozz_skin_mesh.ozz",
         .callback = mesh_data_loaded,
         .buffer = sokol.fetch.asRange(&mesh_io_buffer),
     });

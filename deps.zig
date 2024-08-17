@@ -29,7 +29,7 @@ pub const Deps = struct {
             .helper = b.createModule(.{
                 .target = target,
                 .optimize = optimize,
-                .root_source_file = b.path("src/sokol_helper/main.zig"),
+                .root_source_file = b.path("learn_opengl/sokol_helper/main.zig"),
             }),
             .szmath = b.createModule(.{
                 .target = target,
@@ -44,17 +44,17 @@ pub const Deps = struct {
             .lopgl = b.createModule(.{
                 .target = target,
                 .optimize = optimize,
-                .root_source_file = b.path("src/lopgl_app.zig"),
+                .root_source_file = b.path("learn_opengl/lopgl_app.zig"),
             }),
             .dbgui = b.createModule(.{
                 .target = target,
                 .optimize = optimize,
-                .root_source_file = b.path("sapp/libs/dbgui/dbgui.zig"),
+                .root_source_file = b.path("sokol_examples/libs/dbgui/dbgui.zig"),
             }),
             .util_camera = b.createModule(.{
                 .target = target,
                 .optimize = optimize,
-                .root_source_file = b.path("sapp/libs/util/camera.zig"),
+                .root_source_file = b.path("sokol_examples/libs/util/camera.zig"),
             }),
         };
 

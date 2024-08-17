@@ -9,6 +9,9 @@ from playwright.sync_api import sync_playwright
 import dataclasses
 
 
+HERE = pathlib.Path(__file__).absolute().parent
+
+
 @dataclasses.dataclass
 class Section:
     name: str
@@ -302,6 +305,7 @@ EXAMPLE_MAP: Dict[str, List[Article]] = {
     ],
 }
 
+STYLE = (HERE / "style.css").read_text()
 BEGIN_HTML = f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
@@ -309,7 +313,9 @@ BEGIN_HTML = f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Learn OpenGL Examples(⚡zig⚡)</title>
 <link rel="icon" type="image/png" href="favicon.png"/>
-<link href="style.css" rel="stylesheet" />
+<style>
+{STYLE}
+</style>
 </head>
 <body>
 <header>
@@ -363,7 +369,10 @@ def main():
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
 
-    with pathlib.Path("docs/index.html").open("w", encoding="utf-8") as f:
+    docs = pathlib.Path("docs/index.html")
+    docs.parent.mkdir(exist_ok=True)
+
+    with docs.open("w", encoding="utf-8") as f:
         f.write(BEGIN_HTML)
         for group, articles in EXAMPLE_MAP.items():
             f.write(f"<h2>{group}</h2>\n")
