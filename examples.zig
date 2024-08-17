@@ -158,14 +158,13 @@ pub const learnopengl_examples = [_]Example{
             .{ .from = "learn_opengl/assets/container.jpg", .to = "container.jpg" },
         },
     },
-    //
-    .{
-        .name = "sokol-zig-imgui-sample",
-        .root_source = "learn_opengl/sokol-zig-imgui-sample/main.zig",
-    },
 };
 
 pub const sokol_examples = [_]Example{
+    .{
+        .name = "sokol-zig-imgui-sample",
+        .root_source = "src/sokol-zig-imgui-sample/main.zig",
+    },
     .{
         .name = "clear",
         .root_source = "sokol_examples/clear-sapp.zig",
