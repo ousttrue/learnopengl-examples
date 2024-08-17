@@ -203,7 +203,8 @@ fn buildNative(
                 exe.addLibraryPath(b.path("zig-out/lib"));
                 // run.addPathDir("zig-out/bin");
             } else {
-                exe.addLibraryPath(b.path("zig-out/lib/x86_64-linux-gnu"));
+                // exe.addLibraryPath(b.path("zig-out/lib/x86_64-linux-gnu"));
+                exe.addLibraryPath(b.path("zig-out/lib"));
             }
             exe.linkLibCpp();
             exe.linkSystemLibrary("sidemodule");

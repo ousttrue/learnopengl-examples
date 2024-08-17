@@ -1,4 +1,8 @@
-project('sidemodule', 'cpp')
+project(
+    'sidemodule',
+    'cpp',
+    default_options: ['cpp_std=c++11'],
+)
 
 srcs = [
     'ozz_wrap.cpp',
@@ -16,13 +20,13 @@ if cxx.get_id() == 'emscripten'
         srcs,
         include_directories: inc,
         cpp_args: [
-          '-DEMSCRIPTEN=1',
-          '-sSIDE_MODULE',
+            '-DEMSCRIPTEN=1',
+            '-sSIDE_MODULE',
         ],
         link_args: [
-          '-sEXPORT_ALL=1',
-          '-sWASM=1',
-          '-sSIDE_MODULE',
+            '-sEXPORT_ALL=1',
+            '-sWASM=1',
+            '-sSIDE_MODULE',
         ],
         # pic: true,
         install: true,

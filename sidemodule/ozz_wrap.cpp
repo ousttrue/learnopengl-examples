@@ -1,4 +1,5 @@
 #include "ozz_wrap.h"
+#include <string.h>
 
 // ozz-animation headers
 #include "ozz/animation/runtime/animation.h"
