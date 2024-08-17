@@ -25,39 +25,35 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10' 
+      # build wasm
       - uses: goto-bus-stop/setup-zig@v2
-        with:
-          version: 0.13.0
-      # zig build
       - name: build Wasm
         run: |
-          pip install meson ninja
           zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall
-          mkdir -p docs
-          cp -r zig-out/web/* docs
-      # playwright
-      - name: ss
+          find zig-out
+          cp -rp zig-out/web docs/static/wasm
+      # docusaurus
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install dependencies
         run: |
-          pip install pytest-playwright
-          playwright install
-          mkdir -p docs
           cd docs
-          python -m http.server 8080&
-          cd ..
-          python gen_html.py 8080
-      # gh-pages
+          npm install
+          npx playwright install --with-deps chromium
+          npm start&
+          npm run ss
+          npm run build
+      # deploy
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: './docs'
+          path: './docs/build'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2
