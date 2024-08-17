@@ -136,12 +136,10 @@ fn buildWasm(
             else
                 &.{},
         });
-        // inline for (example.assets) |asset| {
-        //     const install_asset = b.addInstallFileWithDir(b.path(asset), .prefix, "web/" ++ asset);
-        //     // b.getInstallStep().dependOn(&.step);
-        //     install.step.dependOn(&install_asset.step);
-        //     // b.installFile(asset, "web/" ++ asset);
-        // }
+        inline for (example.assets) |asset| {
+            const install_asset = b.addInstallFileWithDir(b.path(asset.from), .prefix, "web/" ++ asset.to);
+            install.step.dependOn(&install_asset.step);
+        }
 
         deps.dep_cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
 
