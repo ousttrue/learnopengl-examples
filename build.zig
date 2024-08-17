@@ -89,9 +89,6 @@ fn buildWasm(
             lib.step.dependOn(side_wasm);
             // emcc main.c -s MAIN_MODULE=1 -o main.html -s "RUNTIME_LINKED_LIBS=['sidemodule.wasm']"
         }
-        inline for (example.assets) |asset| {
-            b.installFile(asset, "web/" ++ asset);
-        }
 
         deps.inject_dependencies(lib);
 
@@ -139,6 +136,12 @@ fn buildWasm(
             else
                 &.{},
         });
+        inline for (example.assets) |asset| {
+            const install_asset = b.addInstallFileWithDir(b.path(asset), .prefix, "web/" ++ asset);
+            // b.getInstallStep().dependOn(&.step);
+            install.step.dependOn(&install_asset.step);
+            // b.installFile(asset, "web/" ++ asset);
+        }
 
         deps.dep_cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
 
@@ -154,7 +157,7 @@ fn buildWasm(
             .emsdk = dep_emsdk,
         });
         run.step.dependOn(&install.step);
-        b.step("run-" ++ example.name, "Run " ++ example.name).dependOn(&run.step);
+        b.step("emrun-" ++ example.name, "EmRun " ++ example.name).dependOn(&run.step);
     }
 }
 
