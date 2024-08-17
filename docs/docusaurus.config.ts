@@ -11,12 +11,12 @@ const config: Config = {
   url: 'https://ousttrue.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/learnopengl_examples/',
+  baseUrl: '/learnopengl-examples/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'ousttrue', // Usually your GitHub org/user name.
-  projectName: 'learnopengl_examples', // Usually your repo name.
+  projectName: 'learnopengl-examples', // Usually your repo name.
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
@@ -75,7 +75,7 @@ const config: Config = {
         // },
         // {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/ousttrue/learnopengl_examples',
+          href: 'https://github.com/ousttrue/learnopengl-examples',
           label: 'GitHub',
           position: 'right',
         },
@@ -119,12 +119,12 @@ const config: Config = {
             // },
             {
               label: 'GitHub',
-              href: 'https://github.com/ousttrue/learnopengl_examples',
+              href: 'https://github.com/ousttrue/learnopengl-examples',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} learnopengl_examples. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} learnopengl-examples. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

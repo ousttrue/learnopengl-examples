@@ -12,7 +12,7 @@ const examples = require('./src/components/HomepageFeatures/examples.json');
   for (const group of examples) {
     for (const article of group.list) {
       for (const name of article.sections) {
-        const url = `http://localhost:3000/learnopengl_examples/wasm/${name}.html`
+        const url = `http://localhost:3000/learnopengl-examples/wasm/${name}.html`
         console.log(i, url);
         await page.goto(url);
         await page.waitForLoadState('networkidle')
