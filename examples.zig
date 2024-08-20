@@ -265,7 +265,10 @@ pub const sokol_examples = [_]Example{
     // - [ ] [debugtext-layers](sokol_examples/debugtext-layers-sapp.zig)
     // - [ ] [events](sokol_examples/events-sapp.zig)
     // - [ ] [icon](sokol_examples/icon-sapp.zig)
-    // - [ ] [droptest](sokol_examples/droptest-sapp.zig)
+    .{
+        .name = "droptest",
+        .root_source = "sokol_examples/droptest-sapp.zig",
+    },
     // - [ ] [pixelformats](sokol_examples/pixelformats-sapp.zig)
     // - [ ] [drawcallperf](sokol_examples/drawcallperf-sapp.zig)
     // - [ ] [saudio](sokol_examples/saudio-sapp.zig)
