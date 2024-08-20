@@ -26,25 +26,27 @@ pub fn build(b: *std.Build) !void {
     const deps = Deps.init(b, target, optimize);
 
     if (target.result.isWasm()) {
-        // build main setup emcc install
-        const main = b.addStaticLibrary(.{
+        // dummy for early emsdk setup
+        const dummy = b.addStaticLibrary(.{
             .target = target,
             .optimize = optimize,
-            .name = "orbit-camera",
-            .root_source_file = b.path("src/main.zig"),
+            .name = "dummy",
+            .root_source_file = b.path("src/dummy.zig"),
         });
-        deps.inject_dependencies(main);
-        b.installArtifact(main);
+        deps.inject_dependencies(dummy);
+        b.installArtifact(dummy);
         const dep_sokol = b.dependency("sokol", .{
             .target = target,
             .optimize = optimize,
         });
-        main.root_module.addImport("sokol", dep_sokol.module("sokol"));
+        dummy.root_module.addImport("sokol", dep_sokol.module("sokol"));
 
+        // build examples
         const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
-        const side_wasm = try sidemodule.buildWasm(b, optimize, dep_emsdk, &main.step);
+        const side_wasm = try sidemodule.buildWasm(b, optimize, dep_emsdk, &dummy.step);
         buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
     } else {
+        // build examples
         const side_dll = sidemodule.buildNative(b);
         buildNative(b, target, optimize, &deps, &examples.all_examples, side_dll);
     }
@@ -155,7 +157,7 @@ fn buildWasm(
             .emsdk = dep_emsdk,
         });
         run.step.dependOn(&install.step);
-        b.step("emrun-" ++ example.name, "EmRun " ++ example.name).dependOn(&run.step);
+        b.step("run-" ++ example.name, "EmRun " ++ example.name).dependOn(&run.step);
     }
 }
 
