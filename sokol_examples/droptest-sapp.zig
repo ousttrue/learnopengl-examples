@@ -142,12 +142,12 @@ export fn input(ev: [*c]const sokol.app.Event) void {
             const is_wasm = struct {
                 // the async-loading callback for sapp_html5_fetch_dropped_file
                 export fn emsc_load_callback(
-                    response: [*c]const sokol.app.html5FetchResponse,
+                    response: [*c]const sokol.app.Html5FetchResponse,
                 ) void {
                     if (response.*.succeeded) {
                         state.load_state = .SUCCESS;
-                        state.size = response.*.data.size;
-                    } else if (response.*.error_code == .BUFFER_TOO_SMALL) {
+                        state.size = @intCast(response.*.data.size);
+                    } else if (response.*.error_code == .FETCH_ERROR_BUFFER_TOO_SMALL) {
                         state.load_state = .FILE_TOO_BIG;
                     } else {
                         state.load_state = .FAILED;
@@ -159,7 +159,10 @@ export fn input(ev: [*c]const sokol.app.Event) void {
             sokol.app.html5FetchDroppedFile(.{
                 .dropped_file_index = 0,
                 .callback = is_wasm.emsc_load_callback,
-                .buffer = sokol.app.Range(state.buffer),
+                .buffer = .{
+                    .ptr = &state.buffer,
+                    .size = @sizeOf(@TypeOf(state.buffer)),
+                },
             });
         } else {
             const not_wasm = struct {
