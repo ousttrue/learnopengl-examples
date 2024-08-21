@@ -1,6 +1,6 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const sokol = @import("sokol");
+const emzig = @import("emsdk-zig");
 const examples = @import("examples.zig");
 const Deps = @import("deps.zig").Deps;
 const sidemodule = @import("sidemodule.zig");
@@ -27,24 +27,11 @@ pub fn build(b: *std.Build) !void {
     const deps = Deps.init(b, target, optimize);
 
     if (target.result.isWasm()) {
-        // dummy for early emsdk setup
-        const dummy = b.addStaticLibrary(.{
-            .target = target,
-            .optimize = optimize,
-            .name = "dummy",
-            .root_source_file = b.path("src/dummy.zig"),
-        });
-        deps.inject_dependencies(dummy);
-        b.installArtifact(dummy);
-        const dep_sokol = b.dependency("sokol", .{
-            .target = target,
-            .optimize = optimize,
-        });
-        dummy.root_module.addImport("sokol", dep_sokol.module("sokol"));
 
         // build examples
         const dep_emsdk = b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{});
-        const side_wasm = try sidemodule.buildWasm(b, optimize, dep_emsdk, &dummy.step);
+        const wait_emsdk = try emzig.emSdkSetupStep(b, dep_emsdk);
+        const side_wasm = try sidemodule.buildWasm(b, optimize, dep_emsdk, if (wait_emsdk) |x| &x.step else null);
         buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
     } else {
         // build examples
@@ -119,7 +106,6 @@ fn buildWasm(
         }
 
         // create a build step which invokes the Emscripten linker
-        const emzig = @import("emsdk-zig");
         const install = try emzig.emLinkStep(b, b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{}), .{
             .lib_main = lib,
             .target = target,
@@ -148,16 +134,15 @@ fn buildWasm(
             else
                 &.{},
         });
+        b.getInstallStep().dependOn(&install.step);
+
         inline for (example.assets) |asset| {
             const install_asset = b.addInstallFileWithDir(b.path(asset.from), .prefix, "web/" ++ asset.to);
             install.step.dependOn(&install_asset.step);
         }
 
         // ...and a special run step to start the web build output via 'emrun'
-        const run = sokol.emRunStep(b, .{
-            .name = example.name,
-            .emsdk = dep_emsdk,
-        });
+        const run = emzig.emRunStep(b, dep_emsdk, .{ .name = example.name });
         run.step.dependOn(&install.step);
         b.step("run-" ++ example.name, "EmRun " ++ example.name).dependOn(&run.step);
     }

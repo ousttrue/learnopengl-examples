@@ -1,16 +1,18 @@
 const std = @import("std");
+const builtin = @import("builtin");
 
 pub fn buildWasm(
     b: *std.Build,
     optimize: std.builtin.OptimizeMode,
     dep_emsdk: *std.Build.Dependency,
-    dep: *std.Build.Step,
+    dep: ?*std.Build.Step,
 ) !*std.Build.Step {
     const builddir = "build_wasm";
     const prefix = b.path("zig-out").getPath(b);
 
     var output_file = try std.fs.cwd().createFile(b.path("sidemodule/emsdk.ini").getPath(b), .{});
     defer output_file.close();
+    const ext: []const u8 = if (builtin.os.tag == .windows) ".bat" else "";
     try output_file.writeAll(b.fmt(
         \\# wasm.ini
         \\[constants]
@@ -35,15 +37,17 @@ pub fn buildWasm(
         \\cpu = 'wasm'
         \\endian = 'little'
     , .{
-        dep_emsdk.path("upstream/emscripten/emcc").getPath(b),
-        dep_emsdk.path("upstream/emscripten/em++").getPath(b),
-        dep_emsdk.path("upstream/emscripten/emar").getPath(b),
-        dep_emsdk.path("upstream/emscripten/emstrip").getPath(b),
+        dep_emsdk.path(b.fmt("upstream/emscripten/emcc{s}", .{ext})).getPath(b),
+        dep_emsdk.path(b.fmt("upstream/emscripten/em++{s}", .{ext})).getPath(b),
+        dep_emsdk.path(b.fmt("upstream/emscripten/emar{s}", .{ext})).getPath(b),
+        dep_emsdk.path(b.fmt("upstream/emscripten/emstrip{s}", .{ext})).getPath(b),
     }));
 
     // meson setup --compilation emsdk.ini
     const meson_setup = b.addSystemCommand(&.{"meson"});
-    meson_setup.step.dependOn(dep);
+    if (dep) |d| {
+        meson_setup.step.dependOn(d);
+    }
     meson_setup.cwd = b.path("sidemodule");
     meson_setup.addArgs(&.{
         "setup",
