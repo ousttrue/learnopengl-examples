@@ -14,11 +14,11 @@
             .hash = "12205b36041f858db146628cd3b25fae4cda5f161a6a52d48fa22cde0c03b689ccb8",
         },
         // .rowmath = .{
-        //     .url = "git+https://github.com/ousttrue/rowmath.git#72b3e905ff9ca1c03a549aa7b57e30f1e08b2ed7",
-        //     .hash = "1220ee9e1b7b983e44b3edadcd68880e31095f7adb43c885ace70223e1b76eaeb36c",
+        //     .path = "../rowmath",
         // },
         .rowmath = .{
-            .path = "../rowmath",
+            .url = "git+https://github.com/ousttrue/rowmath.git#1770ea3174bd3f8b5c6be52c1332087e89af914d",
+            .hash = "12205bd5497a18a474bc58eabeaf5a207f93805866a530032d3a36bf106de38da2b7",
         },
     },
     .paths = .{
