@@ -13,6 +13,7 @@ const WASM_ARGS = [_][]const u8{
 };
 const WASM_ARGS_DEBUG = [_][]const u8{
     "-g",
+    "-sASSERTIONS",
 };
 const WASM_ARGS_DYNAMIC = [_][]const u8{
     // "-sMAIN_MODULE=1",
@@ -42,7 +43,7 @@ pub fn build(b: *std.Build) !void {
         dummy.root_module.addImport("sokol", dep_sokol.module("sokol"));
 
         // build examples
-        const dep_emsdk = deps.dep_sokol.builder.dependency("emsdk", .{});
+        const dep_emsdk = b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{});
         const side_wasm = try sidemodule.buildWasm(b, optimize, dep_emsdk, &dummy.step);
         buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
     } else {
@@ -70,6 +71,15 @@ fn buildWasm(
     const emsdk_cpp_incl_path = dep_emsdk.path(
         "upstream/emscripten/cache/sysroot/include/c++/v1",
     );
+
+    const cimgui_clib_artifact = deps.dep_cimgui.artifact("cimgui_clib");
+    cimgui_clib_artifact.addSystemIncludePath(emsdk_incl_path);
+
+    // all C libraries need to depend on the sokol library, when building for
+    // WASM this makes sure that the Emscripten SDK has been setup before
+    // C compilation is attempted (since the sokol C library depends on the
+    // Emscripten SDK setup step)
+    cimgui_clib_artifact.step.dependOn(&deps.dep_sokol.artifact("sokol_clib").step);
 
     inline for (all_examples) |example| {
         const lib = b.addStaticLibrary(.{
@@ -109,17 +119,17 @@ fn buildWasm(
         }
 
         // create a build step which invokes the Emscripten linker
-        const install = try sokol.emLinkStep(b, .{
+        const emzig = @import("emsdk-zig");
+        const install = try emzig.emLinkStep(b, b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{}), .{
             .lib_main = lib,
             .target = target,
             .optimize = optimize,
-            .emsdk = dep_emsdk,
             .use_webgl2 = true,
             .use_emmalloc = true,
             .use_filesystem = true,
             .shell_file_path = deps.dep_sokol.path("src/sokol/web/shell.html").getPath(b),
             .release_use_closure = false,
-            .extra_args = if (optimize == .Debug)
+            .extra_before = if (optimize == .Debug)
                 if (example.sidemodule)
                     &(WASM_ARGS ++ WASM_ARGS_DEBUG ++ WASM_ARGS_DYNAMIC)
                 else
@@ -128,7 +138,7 @@ fn buildWasm(
                 &(WASM_ARGS ++ WASM_ARGS_DYNAMIC)
             else
                 &WASM_ARGS,
-            .extra_args2 = if (example.sidemodule)
+            .extra_after = if (example.sidemodule)
                 // &.{"zig-out/lib/libsidemodule.a"}
                 &.{
                     "-sMAIN_MODULE",
@@ -142,14 +152,6 @@ fn buildWasm(
             const install_asset = b.addInstallFileWithDir(b.path(asset.from), .prefix, "web/" ++ asset.to);
             install.step.dependOn(&install_asset.step);
         }
-
-        deps.dep_cimgui.artifact("cimgui_clib").addSystemIncludePath(emsdk_incl_path);
-
-        // all C libraries need to depend on the sokol library, when building for
-        // WASM this makes sure that the Emscripten SDK has been setup before
-        // C compilation is attempted (since the sokol C library depends on the
-        // Emscripten SDK setup step)
-        deps.dep_cimgui.artifact("cimgui_clib").step.dependOn(&deps.dep_sokol.artifact("sokol_clib").step);
 
         // ...and a special run step to start the web build output via 'emrun'
         const run = sokol.emRunStep(b, .{
