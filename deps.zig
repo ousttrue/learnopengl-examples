@@ -10,13 +10,15 @@ pub const Deps = struct {
     lopgl: *std.Build.Module,
     dbgui: *std.Build.Module,
     util_camera: *std.Build.Module,
+    rowmath: *std.Build.Module,
 
     pub fn init(
         b: *std.Build,
         target: std.Build.ResolvedTarget,
         optimize: std.builtin.OptimizeMode,
     ) @This() {
-        var deps = @This(){
+        var deps = .{
+            .rowmath = b.dependency("rowmath", .{}).module("rowmath"),
             .dep_sokol = b.dependency("sokol", .{
                 .target = target,
                 .optimize = optimize,
@@ -80,6 +82,6 @@ pub const Deps = struct {
         compile.root_module.addImport("lopgl", self.lopgl);
         compile.root_module.addImport("dbgui", self.dbgui);
         compile.root_module.addImport("util_camera", self.util_camera);
-        // compile.linkLibC();
+        compile.root_module.addImport("rowmath", self.rowmath);
     }
 };

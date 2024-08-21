@@ -4,9 +4,9 @@
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const lopgl = @import("lopgl");
-const szmath = @import("szmath");
-const Vec3 = szmath.Vec3;
-const Mat4 = szmath.Mat4;
+const rowmath = @import("rowmath");
+const Vec3 = rowmath.Vec3;
+const Mat4 = rowmath.Mat4;
 const shd = @import("shaders.glsl.zig");
 
 // application state
@@ -131,8 +131,8 @@ export fn frame() void {
     });
 
     const view = lopgl.viewMatrix();
-    const projection = Mat4.persp(
-        lopgl.fov(),
+    const projection = Mat4.perspective(
+        lopgl.fovRadians(),
         sokol.app.widthf() / sokol.app.heightf(),
         0.1,
         100.0,
@@ -147,7 +147,7 @@ export fn frame() void {
     sg.applyPipeline(state.pip_object);
     sg.applyBindings(state.bind);
 
-    vs_params.model = Mat4.identity().m;
+    vs_params.model = Mat4.identity.m;
     sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));
 
     const fs_params = shd.FsParams{

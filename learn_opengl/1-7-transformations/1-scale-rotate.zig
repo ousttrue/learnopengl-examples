@@ -5,7 +5,9 @@ const std = @import("std");
 const stb_image = @import("stb_image");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
-const math = @import("szmath");
+const rowmath = @import("rowmath");
+const Vec3 = rowmath.Vec3;
+const Mat4 = rowmath.Mat4;
 const sokol_helper = @import("sokol_helper");
 const shader = @import("transformations.glsl.zig");
 
@@ -148,11 +150,11 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
 
 export fn frame() void {
     sokol.fetch.dowork();
-    const rotate = math.Mat4.rotate(
+    const rotate = Mat4.rotate(
         std.math.degreesToRadians(90.0),
-        math.Vec3{ .x = 0.0, .y = 0.0, .z = 1.0 },
+        Vec3{ .x = 0.0, .y = 0.0, .z = 1.0 },
     );
-    const scale = math.Mat4.scale(.{ .x = 0.5, .y = 0.5, .z = 0.5 });
+    const scale = Mat4.scale(.{ .x = 0.5, .y = 0.5, .z = 0.5 });
     const trans = rotate.mul(scale);
 
     sg.beginPass(.{

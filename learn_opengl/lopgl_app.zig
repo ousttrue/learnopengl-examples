@@ -172,10 +172,12 @@ pub fn viewMatrix() Mat4 {
     }
 }
 
-pub fn fov() f32 {
+pub fn fovDegree() f32 {
     return 45.0;
 }
-
+pub fn fovRadians() f32 {
+    return std.math.degreesToRadians(45.0);
+}
 pub fn cameraPosition() Vec3 {
     if (state.fp_enabled) {
         return state.fp_cam.position;

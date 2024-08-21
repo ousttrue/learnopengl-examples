@@ -5,7 +5,9 @@ const stb_image = @import("stb_image");
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
-const math = @import("szmath");
+const rowmath = @import("rowmath");
+const Vec3 = rowmath.Vec3;
+const Mat4 = rowmath.Mat4;
 const shader = @import("transformations.glsl.zig");
 const sokol_helper = @import("sokol_helper");
 
@@ -153,11 +155,11 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
 export fn frame() void {
     sokol.fetch.dowork();
 
-    const translate = math.Mat4.translate(.{ .x = 0.5, .y = -0.5, .z = 0.0 });
+    const translate = Mat4.translate(.{ .x = 0.5, .y = -0.5, .z = 0.0 });
     // 强制声明为 rad 类型的角度
-    const rotate = math.Mat4.rotate(
+    const rotate = Mat4.rotate(
         @floatCast(std.math.degreesToRadians(sokol.time.sec(sokol.time.now()))),
-        math.Vec3{ .x = 0.0, .y = 0.0, .z = 1.0 },
+        Vec3{ .x = 0.0, .y = 0.0, .z = 1.0 },
     );
     const trans = translate.mul(rotate);
 

@@ -13,6 +13,13 @@
             .url = "git+https://github.com/ousttrue/sokol-zig.git#38014bc673fd3c82f44612f02573d5af00dfc66f",
             .hash = "12205b36041f858db146628cd3b25fae4cda5f161a6a52d48fa22cde0c03b689ccb8",
         },
+        // .rowmath = .{
+        //     .url = "git+https://github.com/ousttrue/rowmath.git#72b3e905ff9ca1c03a549aa7b57e30f1e08b2ed7",
+        //     .hash = "1220ee9e1b7b983e44b3edadcd68880e31095f7adb43c885ace70223e1b76eaeb36c",
+        // },
+        .rowmath = .{
+            .path = "../rowmath",
+        },
     },
     .paths = .{
         "build.zig",

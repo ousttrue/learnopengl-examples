@@ -6,7 +6,8 @@ const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const shader = @import("shaders.glsl.zig");
-const math = @import("szmath");
+const rowmath = @import("rowmath");
+const Mat4 = rowmath.Mat4;
 const sokol_helper = @import("sokol_helper");
 
 // application state
@@ -189,16 +190,16 @@ export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
 export fn frame() void {
     sokol.fetch.dowork();
 
-    const model = math.Mat4.rotate(
+    const model = Mat4.rotate(
         @floatCast(std.math.degreesToRadians(sokol.time.sec(sokol.time.now()))),
         .{ .x = 0.5, .y = 1.0, .z = 0.0 },
     );
 
     // note that we're translating the scene in the reverse direction of where we want to move
-    const view = math.Mat4.translate(.{ .x = 0.0, .y = 0.0, .z = -3.0 });
+    const view = Mat4.translate(.{ .x = 0.0, .y = 0.0, .z = -3.0 });
 
-    const projection = math.Mat4.persp(
-        45.0,
+    const projection = Mat4.perspective(
+        std.math.degreesToRadians(45.0),
         @as(f32, @floatFromInt(sokol.app.width())) / @as(f32, @floatFromInt(sokol.app.height())),
         0.1,
         100.0,

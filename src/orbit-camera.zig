@@ -1,15 +1,15 @@
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
-const szmath = @import("szmath");
+const rowmath = @import("rowmath");
 
 const state = struct {
     var pass_action = sg.PassAction{};
-    var input = szmath.InputState{
+    var input = rowmath.InputState{
         .screen_width = 1,
         .screen_height = 1,
     };
-    var camera = szmath.Camera{
+    var camera = rowmath.Camera{
         // .yFov = 60,
         // .near_clip = 0.5,
         // .far_clip = 15,

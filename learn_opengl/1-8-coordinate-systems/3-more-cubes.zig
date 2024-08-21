@@ -6,7 +6,9 @@ const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const shader = @import("shaders.glsl.zig");
-const math = @import("szmath");
+const rowmath = @import("rowmath");
+const Mat4 = rowmath.Mat4;
+const Vec3 = rowmath.Vec3;
 const sokol_helper = @import("sokol_helper");
 
 // application state
@@ -15,7 +17,7 @@ const state = struct {
     var bind = sg.Bindings{};
     var pass_action = sg.PassAction{};
     var file_buffer = [1]u8{0} ** (256 * 1024);
-    var cube_positions = [1]math.Vec3{.{ .x = 0, .y = 0, .z = 0 }} ** 10;
+    var cube_positions = [1]Vec3{.{ .x = 0, .y = 0, .z = 0 }} ** 10;
 };
 
 export fn init() void {
@@ -199,10 +201,10 @@ export fn frame() void {
     sokol.fetch.dowork();
 
     // note that we're translating the scene in the reverse direction of where we want to move
-    const view = math.Mat4.translate(.{ .x = 0.0, .y = 0.0, .z = -3.0 });
+    const view = Mat4.translate(.{ .x = 0.0, .y = 0.0, .z = -3.0 });
 
-    const projection = math.Mat4.persp(
-        45.0,
+    const projection = Mat4.perspective(
+        std.math.degreesToRadians(45.0),
         @as(f32, @floatFromInt(sokol.app.width())) / @as(f32, @floatFromInt(sokol.app.height())),
         0.1,
         100.0,
@@ -222,9 +224,9 @@ export fn frame() void {
     };
 
     for (0..10) |i| {
-        var model = math.Mat4.translate(state.cube_positions[i]);
+        var model = Mat4.translate(state.cube_positions[i]);
         const angle = 20.0 * @as(f32, @floatFromInt(i));
-        model = model.mul(math.Mat4.rotate(
+        model = model.mul(Mat4.rotate(
             std.math.degreesToRadians(angle),
             .{ .x = 1.0, .y = 0.3, .z = 0.5 },
         ));

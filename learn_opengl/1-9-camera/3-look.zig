@@ -7,7 +7,12 @@ const sokol = @import("sokol");
 const sg = sokol.gfx;
 const shader = @import("shaders.glsl.zig");
 const sokol_helper = @import("sokol_helper");
-const math = @import("szmath");
+const rowmath = @import("rowmath");
+const Vec3 = rowmath.Vec3;
+const Mat4 = rowmath.Mat4;
+
+const MIN_FOV = std.math.degreesToRadians(1);
+const MAX_FOV = std.math.degreesToRadians(45.0);
 
 // application state
 const state = struct {
@@ -15,10 +20,10 @@ const state = struct {
     var bind = sg.Bindings{};
     var pass_action = sg.PassAction{};
     var file_buffer = [1]u8{0} ** (256 * 1024);
-    var cube_positions = [1]math.Vec3{math.Vec3.zero()} ** 10;
-    var camera_pos = math.Vec3.zero();
-    var camera_front = math.Vec3.zero();
-    var camera_up = math.Vec3.zero();
+    var cube_positions = [1]Vec3{Vec3.zero} ** 10;
+    var camera_pos = Vec3.zero;
+    var camera_front = Vec3.zero;
+    var camera_up = Vec3.zero;
     var last_time: u64 = 0;
     var delta_time: u64 = 0;
     var mouse_btn = false;
@@ -27,7 +32,7 @@ const state = struct {
     var last_y: f32 = 0;
     var yaw: f32 = 0;
     var pitch: f32 = 0;
-    var fov: f32 = 0;
+    var fov_radians: f32 = 0;
 };
 
 export fn init() void {
@@ -71,7 +76,7 @@ export fn init() void {
     state.camera_front = .{ .x = 0.0, .y = 0.0, .z = -1.0 };
     state.camera_up = .{ .x = 0.0, .y = 1.0, .z = 0.0 };
     state.first_mouse = true;
-    state.fov = 45.0;
+    state.fov_radians = std.math.degreesToRadians(45.0);
     state.yaw = -90.0;
 
     state.cube_positions[0] = .{ .x = 0.0, .y = 0.0, .z = 0.0 };
@@ -225,13 +230,13 @@ export fn frame() void {
     state.delta_time = sokol.time.laptime(&state.last_time);
     sokol.fetch.dowork();
 
-    const view = math.Mat4.lookat(
+    const view = Mat4.lookAt(
         state.camera_pos,
         state.camera_pos.add(state.camera_front),
         state.camera_up,
     );
-    const projection = math.Mat4.persp(
-        state.fov,
+    const projection = Mat4.perspective(
+        state.fov_radians,
         @as(f32, @floatFromInt(sokol.app.width())) / @as(f32, @floatFromInt(sokol.app.height())),
         0.1,
         100.0,
@@ -251,9 +256,9 @@ export fn frame() void {
     };
 
     for (0..10) |i| {
-        var model = math.Mat4.translate(state.cube_positions[i]);
+        var model = Mat4.translate(state.cube_positions[i]);
         const angle = 20.0 * @as(f32, @floatFromInt(i));
-        model = model.mul(math.Mat4.rotate(
+        model = model.mul(Mat4.rotate(
             std.math.degreesToRadians(angle),
             .{ .x = 1.0, .y = 0.3, .z = 0.5 },
         ));
@@ -284,19 +289,19 @@ export fn event(e: [*c]const sokol.app.Event) void {
 
         const camera_speed: f32 = @floatCast(5.0 * sokol.time.sec(state.delta_time));
         if (e.*.key_code == .W) {
-            const offset = state.camera_front.mul(camera_speed);
+            const offset = state.camera_front.scale(camera_speed);
             state.camera_pos = state.camera_pos.add(offset);
         }
         if (e.*.key_code == .S) {
-            const offset = state.camera_front.mul(camera_speed);
+            const offset = state.camera_front.scale(camera_speed);
             state.camera_pos = state.camera_pos.sub(offset);
         }
         if (e.*.key_code == .A) {
-            const offset = state.camera_front.cross(state.camera_up).norm().mul(camera_speed);
+            const offset = state.camera_front.cross(state.camera_up).normalize().scale(camera_speed);
             state.camera_pos = state.camera_pos.sub(offset);
         }
         if (e.*.key_code == .D) {
-            const offset = state.camera_front.cross(state.camera_up).norm().mul(camera_speed);
+            const offset = state.camera_front.cross(state.camera_up).normalize().scale(camera_speed);
             state.camera_pos = state.camera_pos.add(offset);
         }
     } else if (e.*.type == .MOUSE_MOVE and state.mouse_btn) {
@@ -325,19 +330,19 @@ export fn event(e: [*c]const sokol.app.Event) void {
             state.pitch = -89.0;
         }
 
-        var direction = math.Vec3.zero();
+        var direction = Vec3.zero;
         direction.x = std.math.cos(std.math.degreesToRadians(state.yaw)) * std.math.cos(std.math.degreesToRadians(state.pitch));
         direction.y = std.math.sin(std.math.degreesToRadians(state.pitch));
         direction.z = std.math.sin(std.math.degreesToRadians(state.yaw)) * std.math.cos(std.math.degreesToRadians(state.pitch));
-        state.camera_front = direction.norm();
+        state.camera_front = direction.normalize();
     } else if (e.*.type == .MOUSE_SCROLL) {
-        if (state.fov >= 1.0 and state.fov <= 45.0) {
-            state.fov -= e.*.scroll_y;
+        if (state.fov_radians >= MIN_FOV and state.fov_radians <= MAX_FOV) {
+            state.fov_radians -= e.*.scroll_y;
         }
-        if (state.fov <= 1.0) {
-            state.fov = 1.0;
-        } else if (state.fov >= 45.0) {
-            state.fov = 45.0;
+        if (state.fov_radians <= MIN_FOV) {
+            state.fov_radians = MIN_FOV;
+        } else if (state.fov_radians >= MAX_FOV) {
+            state.fov_radians = MAX_FOV;
         }
     }
 }

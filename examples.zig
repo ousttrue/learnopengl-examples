@@ -150,6 +150,11 @@ pub const learnopengl_examples = [_]Example{
         .shader = "learn_opengl/2-1-colors/shaders.glsl",
     },
     .{
+        .name = "2-2-1",
+        .root_source = "learn_opengl/2-2-basic-lighting/1-ambient.zig",
+        .shader = "learn_opengl/2-2-basic-lighting/1-ambient.glsl",
+    },
+    .{
         .name = "4-5-1",
         .root_source = "learn_opengl/4-5-framebuffers/1-render-to-texture.zig",
         .shader = "learn_opengl/4-5-framebuffers/1-render-to-texture.glsl",
