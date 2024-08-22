@@ -19,7 +19,8 @@ const sokol = @import("sokol");
 const sg = sokol.gfx;
 const shader = @import("ozz-skin-sapp.glsl.zig");
 const ozz_wrap = @import("ozz_wrap.zig");
-// const simgui = sokol.imgui;
+const simgui = sokol.imgui;
+const ig = @import("cimgui");
 const SokolCamera = @import("SokolCamera");
 
 // the upper limit for joint palette size is 256 (because the mesh joint indices
@@ -62,7 +63,7 @@ const state = struct {
     var joint_texture_height: c_int = 0; // in number of pixels
     var joint_texture_pitch: c_int = 0; // in number of floats
     var camera: SokolCamera = .{};
-    // var draw_enabled: bool = false;
+    var draw_enabled: bool = true;
     const loaded = struct {
         var skeleton = false;
         var animation = false;
@@ -78,10 +79,10 @@ const state = struct {
         var paused = false;
     };
     const ui = struct {
-        //         sgimgui_t sgimgui;
-        //         bool joint_texture_shown;
+        // sgimgui_t sgimgui;
+        var joint_texture_shown = false;
         var joint_texture_scale: i32 = 4;
-        //         simgui_image_t joint_texture;
+        var joint_texture = simgui.Image{};
     };
 };
 
@@ -116,9 +117,9 @@ export fn init() void {
     });
 
     // setup sokol-imgui
-    // var imdesc = simgui.Desc{};
-    // imdesc.logger.func = sokol.log.func;
-    // simgui.setup(&imdesc);
+    simgui.setup(.{
+        .logger = .{ .func = sokol.log.func },
+    });
     //     sgimgui_desc_t sgimgui_desc = { };
     //     sgimgui_init(&state.ui.sgimgui, &sgimgui_desc);
 
@@ -180,10 +181,10 @@ export fn init() void {
     state.bind.vs.samplers[shader.SLOT_smp] = state.smp;
 
     // create an sokol-imgui wrapper for the joint texture
-    // simgui_image_desc_t simgui_img_desc = { };
-    // simgui_img_desc.image = state.joint_texture;
-    // simgui_img_desc.sampler = state.smp;
-    // state.ui.joint_texture = simgui_make_image(&simgui_img_desc);
+    state.ui.joint_texture = simgui.makeImage(.{
+        .image = state.joint_texture,
+        .sampler = state.smp,
+    });
 
     // create a static instance-data buffer, in this demo, character instances
     // don't move around and also are not clipped against the view volume,
@@ -315,8 +316,13 @@ export fn frame() void {
         state.time.abs_time_sec += state.time.frame_time_sec * state.time.factor;
     }
     state.camera.frame();
-    //     simgui_new_frame({ fb_width, fb_height, state.time.frame_time_sec, sapp_dpi_scale() });
-    //     draw_ui();
+    simgui.newFrame(.{
+        .width = sokol.app.width(),
+        .height = sokol.app.height(),
+        .delta_time = state.time.frame_time_sec,
+        .dpi_scale = sokol.app.dpiScale(),
+    });
+    draw_ui();
 
     sg.beginPass(.{
         .action = state.pass_action,
@@ -333,26 +339,25 @@ export fn frame() void {
         sg.applyPipeline(state.pip);
         sg.applyBindings(state.bind);
         sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
-        // if (state.draw_enabled)
-        {
+        if (state.draw_enabled) {
             sg.draw(0, state.num_triangle_indices, state.num_instances);
         }
     }
-    //     simgui_render();
+    simgui.render();
     sg.endPass();
     sg.commit();
 }
 
 export fn input(ev: [*c]const sokol.app.Event) void {
-    // if (simgui_handle_event(ev)) {
-    //     return;
-    // }
+    if (simgui.handleEvent(ev.*)) {
+        return;
+    }
     state.camera.handleEvent(ev);
 }
 
 export fn cleanup() void {
     //     sgimgui_discard(&state.ui.sgimgui);
-    //     simgui_shutdown();
+    simgui.shutdown();
     sokol.fetch.shutdown();
     sg.shutdown();
 
@@ -366,62 +371,131 @@ fn draw_ui() void {
     //         ImGui::EndMainMenuBar();
     //     }
     //     sgimgui_draw(&state.ui.sgimgui);
-    //     ImGui::SetNextWindowPos({ 20, 20 }, ImGuiCond_Once);
-    //     ImGui::SetNextWindowSize({ 220, 150 }, ImGuiCond_Once);
-    //     ImGui::SetNextWindowBgAlpha(0.35f);
-    //     if (ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
-    //         if (state.loaded.failed) {
-    //             ImGui::Text("Failed loading character data!");
-    //         }
-    //         else {
-    //             if (ImGui::SliderInt("Num Instances", &state.num_instances, 1, MAX_INSTANCES)) {
-    //                 float dist_step = (state.camera.max_dist - state.camera.min_dist) / MAX_INSTANCES;
-    //                 state.camera.distance = state.camera.min_dist + dist_step * state.num_instances;
-    //             }
-    //             ImGui::Checkbox("Enable Mesh Drawing", &state.draw_enabled);
-    //             ImGui::Text("Frame Time: %.3fms\n", state.time.frame_time_ms);
-    //             ImGui::Text("Anim Eval Time: %.3fms\n", stm_ms(state.time.anim_eval_time));
-    //             ImGui::Text("Num Triangles: %d\n", (state.num_triangle_indices/3) * state.num_instances);
-    //             ImGui::Text("Num Animated Joints: %d\n", state.num_skeleton_joints * state.num_instances);
-    //             ImGui::Text("Num Skinning Joints: %d\n", state.num_skin_joints * state.num_instances);
-    //             ImGui::Separator();
-    //             ImGui::Text("Camera Controls:");
-    //             ImGui::Text("  LMB + Mouse Move: Look");
-    //             ImGui::Text("  Mouse Wheel: Zoom");
-    //             ImGui::SliderFloat("Distance", &state.camera.distance, state.camera.min_dist, state.camera.max_dist, "%.1f", 1.0f);
-    //             ImGui::SliderFloat("Latitude", &state.camera.latitude, state.camera.min_lat, state.camera.max_lat, "%.1f", 1.0f);
-    //             ImGui::SliderFloat("Longitude", &state.camera.longitude, 0.0f, 360.0f, "%.1f", 1.0f);
-    //             ImGui::Separator();
-    //             ImGui::Text("Time Controls:");
-    //             ImGui::Checkbox("Paused", &state.time.paused);
-    //             ImGui::SliderFloat("Factor", &state.time.factor, 0.0f, 10.0f, "%.1f", 1.0f);
-    //             ImGui::Separator();
-    //             if (ImGui::Button("Toggle Joint Texture")) {
-    //                 state.ui.joint_texture_shown = !state.ui.joint_texture_shown;
-    //             }
-    //         }
-    //     }
-    //     if (state.ui.joint_texture_shown) {
-    //         ImGui::SetNextWindowPos({ 20, 300 }, ImGuiCond_Once);
-    //         ImGui::SetNextWindowSize({ 600, 300 }, ImGuiCond_Once);
-    //         if (ImGui::Begin("Joint Texture", &state.ui.joint_texture_shown)) {
-    //             ImGui::InputInt("##scale", &state.ui.joint_texture_scale);
-    //             ImGui::SameLine();
-    //             if (ImGui::Button("1x")) { state.ui.joint_texture_scale = 1; }
-    //             ImGui::SameLine();
-    //             if (ImGui::Button("2x")) { state.ui.joint_texture_scale = 2; }
-    //             ImGui::SameLine();
-    //             if (ImGui::Button("4x")) { state.ui.joint_texture_scale = 4; }
-    //             ImGui::BeginChild("##frame", {0,0}, true, ImGuiWindowFlags_HorizontalScrollbar);
-    //             ImGui::Image(simgui_imtextureid(state.ui.joint_texture),
-    //                 { (float)(state.joint_texture_width * state.ui.joint_texture_scale), (float)(state.joint_texture_height * state.ui.joint_texture_scale) },
-    //                 { 0.0f, 0.0f },
-    //                 { 1.0f, 1.0f });
-    //             ImGui::EndChild();
-    //         }
-    //         ImGui::End();
-    //     }
-    //     ImGui::End();
+    ig.igSetNextWindowPos(.{ .x = 20, .y = 20 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
+    ig.igSetNextWindowSize(.{ .x = 220, .y = 150 }, ig.ImGuiCond_Once);
+    ig.igSetNextWindowBgAlpha(0.35);
+    if (ig.igBegin(
+        "Controls",
+        null,
+        ig.ImGuiWindowFlags_NoDecoration | ig.ImGuiWindowFlags_AlwaysAutoResize,
+    )) {
+        if (state.loaded.failed) {
+            ig.igText("Failed loading character data!");
+        } else {
+            // if (ig.igSliderInt(
+            //     "Num Instances",
+            //     &state.num_instances,
+            //     1,
+            //     MAX_INSTANCES,
+            //     null,
+            //     0,
+            // )) {
+            //     const dist_step = (state.camera.max_dist - state.camera.min_dist) / MAX_INSTANCES;
+            //     state.camera.distance = state.camera.min_dist + dist_step * state.num_instances;
+            // }
+            _ = ig.igCheckbox("Enable Mesh Drawing", &state.draw_enabled);
+            ig.igText("Frame Time: %.3fms\n", state.time.frame_time_ms);
+            ig.igText("Anim Eval Time: %.3fms\n", sokol.time.ms(state.time.anim_eval_time));
+            ig.igText(
+                "Num Triangles: %d\n",
+                (state.num_triangle_indices / 3) * state.num_instances,
+            );
+            // ig.igText(
+            //     "Num Animated Joints: %d\n",
+            //     state.num_skeleton_joints * state.num_instances,
+            // );
+            // ig.igText(
+            //     "Num Skinning Joints: %d\n",
+            //     state.num_skin_joints * state.num_instances,
+            // );
+            ig.igSeparator();
+            ig.igText("Camera Controls:");
+            ig.igText("  LMB + Mouse Move: Look");
+            ig.igText("  Mouse Wheel: Zoom");
+            // ig.igSliderFloat(
+            //     "Distance",
+            //     &state.camera.distance,
+            //     state.camera.min_dist,
+            //     state.camera.max_dist,
+            //     "%.1f",
+            //     1.0,
+            // );
+            // ig.igSliderFloat(
+            //     "Latitude",
+            //     &state.camera.latitude,
+            //     state.camera.min_lat,
+            //     state.camera.max_lat,
+            //     "%.1f",
+            //     1.0,
+            // );
+            // ig.igSliderFloat(
+            //     "Longitude",
+            //     &state.camera.longitude,
+            //     0.0,
+            //     360.0,
+            //     "%.1f",
+            //     1.0,
+            // );
+            ig.igSeparator();
+            ig.igText("Time Controls:");
+            _ = ig.igCheckbox("Paused", &state.time.paused);
+            _ = ig.igSliderFloat(
+                "Factor",
+                &state.time.factor,
+                0.0,
+                10.0,
+                "%.1f",
+                1.0,
+            );
+            ig.igSeparator();
+            if (ig.igButton("Toggle Joint Texture", .{ .x = 0, .y = 0 })) {
+                state.ui.joint_texture_shown = !state.ui.joint_texture_shown;
+            }
+        }
+    }
+    if (state.ui.joint_texture_shown) {
+        ig.igSetNextWindowPos(
+            .{ .x = 20, .y = 300 },
+            ig.ImGuiCond_Once,
+            .{ .x = 0, .y = 0 },
+        );
+        ig.igSetNextWindowSize(.{ .x = 600, .y = 300 }, ig.ImGuiCond_Once);
+        if (ig.igBegin("Joint Texture", &state.ui.joint_texture_shown, 0)) {
+            _ = ig.igInputInt("##scale", &state.ui.joint_texture_scale, 0, 0, 0);
+            ig.igSameLine(0, 0);
+            if (ig.igButton("1x", .{ .x = 0, .y = 0 })) {
+                state.ui.joint_texture_scale = 1;
+            }
+            ig.igSameLine(0, 0);
+            if (ig.igButton("2x", .{ .x = 0, .y = 0 })) {
+                state.ui.joint_texture_scale = 2;
+            }
+            ig.igSameLine(0, 0);
+            if (ig.igButton("4x", .{ .x = 0, .y = 0 })) {
+                state.ui.joint_texture_scale = 4;
+            }
+            // ig.igBeginChild(
+            //     "##frame",
+            //     .{ 0, 0 },
+            //     true,
+            //     ig.ImGuiWindowFlags_HorizontalScrollbar,
+            // );
+            ig.igImage(
+                simgui.imtextureid(state.ui.joint_texture),
+                .{
+                    .x = @floatFromInt(state.joint_texture_width * state.ui.joint_texture_scale),
+                    .y = @floatFromInt(state.joint_texture_height * state.ui.joint_texture_scale),
+                },
+                .{ .x = 0.0, .y = 0.0 },
+                .{ .x = 1.0, .y = 1.0 },
+                .{ .x = 1, .y = 1, .z = 1, .w = 1 },
+                .{ .x = 0, .y = 0, .z = 0, .w = 0 },
+            );
+            // ig.igEndChild();
+        }
+        ig.igEnd();
+    }
+    ig.igEnd();
 }
 
 // FIXME: all loading code is much less efficient than it should be!

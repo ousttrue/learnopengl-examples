@@ -12,6 +12,7 @@ const Vec3 = rowmath.Vec3;
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const simgui = sokol.imgui;
+const ig = @import("cimgui");
 
 const SokolCamera = @import("SokolCamera");
 const ozz_wrap = @import("ozz_wrap.zig");
@@ -226,33 +227,64 @@ fn draw_skeleton(ozz: *anyopaque) void {
 }
 
 fn draw_ui() void {
-    //     ImGui::SetNextWindowPos({ 20, 20 }, ImGuiCond_Once);
-    //     ImGui::SetNextWindowSize({ 220, 150 }, ImGuiCond_Once);
-    //     ImGui::SetNextWindowBgAlpha(0.35f);
-    //     if (ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize)) {
-    //         if (state.loaded.failed) {
-    //             ImGui::Text("Failed loading character data!");
-    //         }
-    //         else {
-    //             ImGui::Text("Camera Controls:");
-    //             ImGui::Text("  LMB + Mouse Move: Look");
-    //             ImGui::Text("  Mouse Wheel: Zoom");
-    //             ImGui::SliderFloat("Distance", &state.camera.distance, state.camera.min_dist, state.camera.max_dist, "%.1f", 1.0f);
-    //             ImGui::SliderFloat("Latitude", &state.camera.latitude, state.camera.min_lat, state.camera.max_lat, "%.1f", 1.0f);
-    //             ImGui::SliderFloat("Longitude", &state.camera.longitude, 0.0f, 360.0f, "%.1f", 1.0f);
-    //             ImGui::Separator();
-    //             ImGui::Text("Time Controls:");
-    //             ImGui::Checkbox("Paused", &state.time.paused);
-    //             ImGui::SliderFloat("Factor", &state.time.factor, 0.0f, 10.0f, "%.1f", 1.0f);
-    //             if (ImGui::SliderFloat("Ratio", &state.time.anim_ratio, 0.0f, 1.0f)) {
-    //                 state.time.anim_ratio_ui_override = true;
-    //             }
-    //             if (ImGui::IsItemDeactivatedAfterEdit()) {
-    //                 state.time.anim_ratio_ui_override = false;
-    //             }
-    //         }
-    //     }
-    //     ImGui::End();
+    ig.igSetNextWindowPos(.{ .x = 20, .y = 20 }, ig.ImGuiCond_Once, .{ .x = 0, .y = 0 });
+    ig.igSetNextWindowSize(.{ .x = 220, .y = 150 }, ig.ImGuiCond_Once);
+    ig.igSetNextWindowBgAlpha(0.35);
+    if (ig.igBegin(
+        "Controls",
+        null,
+        ig.ImGuiWindowFlags_NoDecoration | ig.ImGuiWindowFlags_AlwaysAutoResize,
+    )) {
+        if (state.loaded.failed) {
+            ig.igText("Failed loading character data!");
+        } else {
+            ig.igText("Camera Controls:");
+            ig.igText("  LMB + Mouse Move: Look");
+            ig.igText("  Mouse Wheel: Zoom");
+            // ig.igSliderFloat(
+            //     "Distance",
+            //     &state.camera.distance,
+            //     state.camera.min_dist,
+            //     state.camera.max_dist,
+            //     "%.1f",
+            //     1.0,
+            // );
+            // ig.igSliderFloat(
+            //     "Latitude",
+            //     &state.camera.latitude,
+            //     state.camera.min_lat,
+            //     state.camera.max_lat,
+            //     "%.1f",
+            //     1.0,
+            // );
+            // ig.igSliderFloat(
+            //     "Longitude",
+            //     &state.camera.longitude,
+            //     0.0,
+            //     360.0,
+            //     "%.1f",
+            //     1.0,
+            // );
+            ig.igSeparator();
+            ig.igText("Time Controls:");
+            _ = ig.igCheckbox("Paused", &state.time.paused);
+            _ = ig.igSliderFloat("Factor", &state.time.factor, 0.0, 10.0, "%.1f", 1.0);
+            if (ig.igSliderFloat(
+                "Ratio",
+                &state.time.anim_ratio,
+                0.0,
+                1.0,
+                null,
+                0,
+            )) {
+                state.time.anim_ratio_ui_override = true;
+            }
+            if (ig.igIsItemDeactivatedAfterEdit()) {
+                state.time.anim_ratio_ui_override = false;
+            }
+        }
+    }
+    ig.igEnd();
 }
 
 export fn skeleton_data_loaded(response: [*c]const sokol.fetch.Response) void {
