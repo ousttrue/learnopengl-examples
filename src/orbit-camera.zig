@@ -1,26 +1,11 @@
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
-const rowmath = @import("rowmath");
+const SokolCamera = @import("SokolCamera");
 
 const state = struct {
     var pass_action = sg.PassAction{};
-    var input = rowmath.InputState{
-        .screen_width = 1,
-        .screen_height = 1,
-    };
-    var camera = rowmath.Camera{
-        // .yFov = 60,
-        // .near_clip = 0.5,
-        // .far_clip = 15,
-        .transform = .{
-            .translation = .{
-                .x = 0,
-                .y = 0.5,
-                .z = 5,
-            },
-        },
-    };
+    var camera = SokolCamera{};
 };
 
 fn grid() void {
@@ -56,12 +41,11 @@ export fn init() void {
     sokol.gl.setup(.{
         .logger = .{ .func = sokol.log.func },
     });
-    state.input.screen_width = sokol.app.widthf();
-    state.input.screen_height = sokol.app.heightf();
+    state.camera.init();
 }
 
 export fn frame() void {
-    _ = state.camera.update(state.input);
+    state.camera.frame();
     // std.debug.print("{any}\n", .{state.camera.transform.worldToLocal()});
 
     sg.beginPass(.{
@@ -70,10 +54,9 @@ export fn frame() void {
     });
     sokol.gl.setContext(sokol.gl.defaultContext());
     sokol.gl.defaults();
-    sokol.gl.matrixModeProjection();
-    sokol.gl.loadMatrix(&state.camera.projection.m[0]);
-    sokol.gl.matrixModeModelview();
-    sokol.gl.loadMatrix(&state.camera.transform.worldToLocal().m[0]);
+
+    state.camera.glSetupMatrix();
+
     grid();
     sokol.gl.contextDraw(sokol.gl.defaultContext());
 
@@ -82,46 +65,7 @@ export fn frame() void {
 }
 
 export fn event(e: [*c]const sokol.app.Event) void {
-    switch (e.*.type) {
-        .RESIZED => {
-            state.input.screen_width = @floatFromInt(e.*.window_width);
-            state.input.screen_height = @floatFromInt(e.*.window_height);
-        },
-        .MOUSE_DOWN => {
-            switch (e.*.mouse_button) {
-                .LEFT => {
-                    state.input.mouse_left = true;
-                },
-                .RIGHT => {
-                    state.input.mouse_right = true;
-                },
-                .MIDDLE => {
-                    state.input.mouse_middle = true;
-                },
-                .INVALID => {},
-            }
-        },
-        .MOUSE_UP => {
-            switch (e.*.mouse_button) {
-                .LEFT => {
-                    state.input.mouse_left = false;
-                },
-                .RIGHT => {
-                    state.input.mouse_right = false;
-                },
-                .MIDDLE => {
-                    state.input.mouse_middle = false;
-                },
-                .INVALID => {},
-            }
-        },
-        .MOUSE_MOVE => {
-            state.input.mouse_x = e.*.mouse_x;
-            state.input.mouse_y = e.*.mouse_y;
-        },
-        .MOUSE_SCROLL => {},
-        else => {},
-    }
+    state.camera.handleEvent(e);
 }
 
 export fn cleanup() void {

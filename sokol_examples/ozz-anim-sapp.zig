@@ -13,7 +13,7 @@ const sokol = @import("sokol");
 const sg = sokol.gfx;
 const simgui = sokol.imgui;
 
-const util_camera = @import("util_camera");
+const SokolCamera = @import("SokolCamera");
 const ozz_wrap = @import("ozz_wrap.zig");
 
 const state = struct {
@@ -24,7 +24,7 @@ const state = struct {
         var failed = false;
     };
     var pass_action = sg.PassAction{};
-    var camera: util_camera.Camera = .{};
+    var camera: SokolCamera = .{};
 
     const time = struct {
         var frame: f64 = 0;
@@ -74,14 +74,7 @@ export fn init() void {
     state.pass_action.colors[0].clear_value = .{ .r = 0.0, .g = 0.1, .b = 0.2, .a = 1.0 };
 
     // initialize camera helper
-    state.camera = util_camera.Camera.init(.{
-        .min_dist = 1.0,
-        .max_dist = 10.0,
-        .center = .{ .x = 0, .y = 1.0, .z = 0 },
-        .distance = 3.0,
-        .latitude = 10.0,
-        .longitude = 20.0,
-    });
+    state.camera.init();
 
     // start loading the skeleton and animation files
     _ = sokol.fetch.send(.{
@@ -100,14 +93,12 @@ export fn init() void {
 export fn frame() void {
     sokol.fetch.dowork();
 
-    const fb_width = sokol.app.width();
-    const fb_height = sokol.app.height();
     state.time.frame = sokol.app.frameDuration();
-    state.camera.update(fb_width, fb_height);
+    state.camera.frame();
 
     simgui.newFrame(.{
-        .width = fb_width,
-        .height = fb_height,
+        .width = sokol.app.width(),
+        .height = sokol.app.height(),
         .delta_time = state.time.frame,
         .dpi_scale = sokol.app.dpiScale(),
     });
@@ -209,10 +200,7 @@ fn draw_skeleton(ozz: *anyopaque) void {
         return;
     }
     sokol.gl.defaults();
-    sokol.gl.matrixModeProjection();
-    sokol.gl.loadMatrix(&state.camera.proj.m[0]);
-    sokol.gl.matrixModeModelview();
-    sokol.gl.loadMatrix(&state.camera.view.m[0]);
+    state.camera.glSetupMatrix();
 
     const num_joints = ozz_wrap.OZZ_num_joints(ozz);
     const joint_parents = ozz_wrap.OZZ_joint_parents(ozz);

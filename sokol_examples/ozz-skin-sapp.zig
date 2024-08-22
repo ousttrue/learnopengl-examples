@@ -20,7 +20,7 @@ const sg = sokol.gfx;
 const shader = @import("ozz-skin-sapp.glsl.zig");
 const ozz_wrap = @import("ozz_wrap.zig");
 // const simgui = sokol.imgui;
-const util_camera = @import("util_camera");
+const SokolCamera = @import("SokolCamera");
 
 // the upper limit for joint palette size is 256 (because the mesh joint indices
 // are stored in packed byte-size vertex formats), but the example mesh only needs less than 64
@@ -61,7 +61,7 @@ const state = struct {
     var joint_texture_width: c_int = 0; // in number of pixels
     var joint_texture_height: c_int = 0; // in number of pixels
     var joint_texture_pitch: c_int = 0; // in number of floats
-    var camera: util_camera.Camera = .{};
+    var camera: SokolCamera = .{};
     // var draw_enabled: bool = false;
     const loaded = struct {
         var skeleton = false;
@@ -129,14 +129,7 @@ export fn init() void {
     };
 
     // initialize camera controller
-    state.camera = util_camera.Camera.init(.{
-        .min_dist = 2.0,
-        .max_dist = 40.0,
-        .center = .{ .x = 0, .y = 1.0, .z = 0 },
-        .distance = 3.0,
-        .latitude = 20.0,
-        .longitude = 20.0,
-    });
+    state.camera.init();
 
     // vertex-skinning shader and pipeline object for 3d rendering, note the hardware-instanced vertex layout
     var pip_desc = sg.PipelineDesc{
@@ -316,14 +309,12 @@ fn update_joint_texture() void {
 export fn frame() void {
     sokol.fetch.dowork();
 
-    const fb_width = sokol.app.width();
-    const fb_height = sokol.app.height();
     state.time.frame_time_sec = sokol.app.frameDuration();
     state.time.frame_time_ms = sokol.app.frameDuration() * 1000.0;
     if (!state.time.paused) {
         state.time.abs_time_sec += state.time.frame_time_sec * state.time.factor;
     }
-    state.camera.update(fb_width, fb_height);
+    state.camera.frame();
     //     simgui_new_frame({ fb_width, fb_height, state.time.frame_time_sec, sapp_dpi_scale() });
     //     draw_ui();
 
@@ -336,7 +327,7 @@ export fn frame() void {
         update_joint_texture();
 
         const vs_params = shader.VsParams{
-            .view_proj = state.camera.view_proj.m,
+            .view_proj = state.camera.viewProjectionMatrix().m,
             .joint_pixel_width = 1.0 / @as(f32, @floatFromInt(state.joint_texture_width)),
         };
         sg.applyPipeline(state.pip);
