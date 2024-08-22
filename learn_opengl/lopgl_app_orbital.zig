@@ -1,13 +1,13 @@
 const std = @import("std");
 const sokol = @import("sokol");
-const szmath = @import("szmath");
-const Vec3 = szmath.Vec3;
-const Vec2 = szmath.Vec2;
-const Mat4 = szmath.Mat4;
+const rowmath = @import("rowmath");
+const Vec3 = rowmath.Vec3;
+const Vec2 = rowmath.Vec2;
+const Mat4 = rowmath.Mat4;
 
 pub const OrbitalCameraDesc = struct {
-    target: Vec3 = Vec3.zero(),
-    up: Vec3 = Vec3.zero(),
+    target: Vec3 = Vec3.zero,
+    up: Vec3 = Vec3.zero,
     pitch: f32 = 0,
     heading: f32 = 0,
     distance: f32 = 0,
@@ -46,11 +46,11 @@ pub const OrbitalCamera = struct {
     desc: OrbitalCameraDesc = .{},
     enable_rotate: bool = false,
     // internal state
-    position: Vec3 = Vec3.zero(),
+    position: Vec3 = Vec3.zero,
     last_touch: [sokol.app.max_touchpoints]Vec2 = undefined,
 
     pub fn view_matrix(self: @This()) Mat4 {
-        return Mat4.lookat(self.position, self.desc.target, self.desc.up);
+        return Mat4.lookAt(self.position, self.desc.target, self.desc.up);
     }
 
     pub fn handle_input(
@@ -103,8 +103,8 @@ pub const OrbitalCamera = struct {
                 const prev_v0 = &camera.last_touch[touch0.identifier];
                 const prev_v1 = &camera.last_touch[touch1.identifier];
 
-                const length0 = v1.distance(v0);
-                const length1 = prev_v1.distance(prev_v0.*);
+                const length0 = v1.sub(v0).norm();
+                const length1 = prev_v1.sub(prev_v0.*).norm();
 
                 var diff = length0 - length1;
                 // reduce speed of touch controls

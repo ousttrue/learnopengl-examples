@@ -65,7 +65,7 @@ pub const Deps = struct {
         deps.dep_sokol.artifact("sokol_clib").addIncludePath(cimgui_root);
         deps.helper.addImport("sokol", deps.dep_sokol.module("sokol"));
         deps.lopgl.addImport("sokol", deps.dep_sokol.module("sokol"));
-        deps.lopgl.addImport("szmath", deps.szmath);
+        deps.lopgl.addImport("rowmath", deps.rowmath);
         deps.dbgui.addImport("sokol", deps.dep_sokol.module("sokol"));
         deps.util_camera.addImport("sokol", deps.dep_sokol.module("sokol"));
         deps.util_camera.addImport("szmath", deps.szmath);

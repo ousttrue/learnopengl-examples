@@ -2,10 +2,10 @@ const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const OrbitalCamera = @import("lopgl_app_orbital.zig").OrbitalCamera;
-const szmath = @import("szmath");
-const Vec2 = szmath.Vec2;
-const Vec3 = szmath.Vec3;
-const Mat4 = szmath.Mat4;
+const rowmath = @import("rowmath");
+const Vec2 = rowmath.Vec2;
+const Vec3 = rowmath.Vec3;
+const Mat4 = rowmath.Mat4;
 
 //     TODO:
 //         - add asserts to check setup has been called
