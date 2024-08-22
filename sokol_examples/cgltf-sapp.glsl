@@ -3,9 +3,9 @@
 
     https://github.com/KhronosGroup/glTF-Sample-Viewer/tree/master/src/shaders
  */
-@ctype mat4 hmm_mat4
-@ctype vec4 hmm_vec4
-@ctype vec3 hmm_vec3
+// @ctype mat4 hmm_mat4
+// @ctype vec4 hmm_vec4
+// @ctype vec3 hmm_vec3
 
 @vs vs
 uniform vs_params {

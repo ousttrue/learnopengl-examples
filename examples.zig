@@ -8,6 +8,7 @@ pub const Example = struct {
     root_source: []const u8,
     shader: ?[]const u8 = null,
     c_srcs: ?[]const []const u8 = null,
+    c_includes: []const []const u8 = &.{},
     sidemodule: bool = false,
     assets: []const Asset = &.{},
 };
@@ -294,7 +295,20 @@ pub const sokol_examples = [_]Example{
     // - [ ] [sgl-context](sokol_examples/sgl-context-sapp.zig)
     // - [ ] [loadpng](sokol_examples/loadpng-sapp.zig)
     // - [ ] [plmpeg](sokol_examples/plmpeg-sapp.zig)
-    // - [ ] [cgltf](sokol_examples/cgltf-sapp.zig)
+    .{
+        .name = "cgltf",
+        .root_source = "sokol_examples/cgltf-sapp.zig",
+        .shader = "sokol_examples/cgltf-sapp.glsl",
+        .c_includes = &.{
+            "sokol_examples/libs/cgltf",
+        },
+        .assets = &.{
+            .{
+                .from = "sokol_examples/data/gltf/DamagedHelmet/DamagedHelmet.gltf",
+                .to = "DamagedHelmet.gltf",
+            },
+        },
+    },
     .{
         .name = "ozz-anim",
         .root_source = "sokol_examples/ozz-anim-sapp.zig",

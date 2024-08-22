@@ -182,6 +182,9 @@ fn buildNative(
                 .files = srcs,
             });
         }
+        for (example.c_includes) |include| {
+            exe.addIncludePath(b.path(include));
+        }
 
         const install = b.addInstallArtifact(exe, .{});
         b.getInstallStep().dependOn(&install.step);

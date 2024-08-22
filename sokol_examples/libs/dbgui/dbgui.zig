@@ -39,7 +39,7 @@ pub export fn event(e: [*c]const sokol.app.Event) void {
     _ = simgui.handleEvent(e.*);
 }
 
-// pub fn event_with_retval(e: [*c]const sokol.app.Event) bool {
-//     _ = e;
-//     return false;
-// }
+pub fn eventWithRetval(e: [*c]const sokol.app.Event) bool {
+    _ = e;
+    return false;
+}
