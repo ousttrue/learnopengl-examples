@@ -7,7 +7,8 @@
 //  for debug-rendering the animated character skeleton (no skinning).
 //------------------------------------------------------------------------------
 const std = @import("std");
-const szmath = @import("szmath");
+const rowmath = @import("rowmath");
+const Vec3 = rowmath.Vec3;
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const simgui = sokol.imgui;
@@ -158,11 +159,11 @@ export fn cleanup() void {
     ozz_wrap.OZZ_shutdown(state.ozz);
 }
 
-fn draw_vec(vec: szmath.Vec3) void {
+fn draw_vec(vec: Vec3) void {
     sokol.gl.v3f(vec.x, vec.y, vec.z);
 }
 
-fn draw_line(v0: szmath.Vec3, v1: szmath.Vec3) void {
+fn draw_line(v0: Vec3, v1: Vec3) void {
     draw_vec(v0);
     draw_vec(v1);
 }
@@ -181,12 +182,12 @@ fn draw_joint(ozz: *anyopaque, joint_index: usize, parent_joint_index: u16) void
     const ny = m1.row1().toVec3();
     const nz = m1.row2().toVec3();
 
-    const len = p1.sub(p0).len() * 0.1;
-    const pmid = p0.add((p1.sub(p0)).mul(0.66));
-    const p2 = pmid.add(ny.mul(len));
-    const p3 = pmid.add(nz.mul(len));
-    const p4 = pmid.sub(ny.mul(len));
-    const p5 = pmid.sub(nz.mul(len));
+    const len = p1.sub(p0).norm() * 0.1;
+    const pmid = p0.add((p1.sub(p0)).scale(0.66));
+    const p2 = pmid.add(ny.scale(len));
+    const p3 = pmid.add(nz.scale(len));
+    const p4 = pmid.sub(ny.scale(len));
+    const p5 = pmid.sub(nz.scale(len));
 
     sokol.gl.c3f(1.0, 1.0, 0.0);
     draw_line(p0, p2);

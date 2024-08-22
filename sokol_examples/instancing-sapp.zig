@@ -8,9 +8,9 @@ const sokol = @import("sokol");
 const sg = sokol.gfx;
 const shader = @import("instancing-sapp.glsl.zig");
 const dbgui = @import("dbgui");
-const szmath = @import("szmath");
-const Vec3 = szmath.Vec3;
-const Mat4 = szmath.Mat4;
+const rowmath = @import("rowmath");
+const Vec3 = rowmath.Vec3;
+const Mat4 = rowmath.Mat4;
 
 const MAX_PARTICLES = 512 * 1024;
 const NUM_PARTICLES_EMITTED_PER_FRAME = 10;
@@ -143,13 +143,13 @@ export fn frame() void {
     });
 
     // model-view-projection matrix
-    const proj = Mat4.persp(
-        60.0,
+    const proj = Mat4.perspective(
+        std.math.degreesToRadians(60.0),
         sokol.app.widthf() / sokol.app.heightf(),
         0.01,
         50.0,
     );
-    const view = Mat4.lookat(
+    const view = Mat4.lookAt(
         .{ .x = 0.0, .y = 1.5, .z = 12.0 },
         .{ .x = 0.0, .y = 0.0, .z = 0.0 },
         .{ .x = 0.0, .y = 1.0, .z = 0.0 },

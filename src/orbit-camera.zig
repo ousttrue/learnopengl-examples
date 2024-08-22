@@ -56,6 +56,8 @@ export fn init() void {
     sokol.gl.setup(.{
         .logger = .{ .func = sokol.log.func },
     });
+    state.input.screen_width = sokol.app.widthf();
+    state.input.screen_height = sokol.app.heightf();
 }
 
 export fn frame() void {
@@ -69,9 +71,9 @@ export fn frame() void {
     sokol.gl.setContext(sokol.gl.defaultContext());
     sokol.gl.defaults();
     sokol.gl.matrixModeProjection();
-    sokol.gl.multMatrix(&state.camera.projection.m[0]);
+    sokol.gl.loadMatrix(&state.camera.projection.m[0]);
     sokol.gl.matrixModeModelview();
-    sokol.gl.multMatrix(&state.camera.transform.worldToLocal().m[0]);
+    sokol.gl.loadMatrix(&state.camera.transform.worldToLocal().m[0]);
     grid();
     sokol.gl.contextDraw(sokol.gl.defaultContext());
 

@@ -5,7 +5,6 @@ pub const Deps = struct {
     dep_sokol: *std.Build.Dependency,
     dep_cimgui: *std.Build.Dependency,
     helper: *std.Build.Module,
-    szmath: *std.Build.Module,
     stb_image: *std.Build.Module,
     lopgl: *std.Build.Module,
     dbgui: *std.Build.Module,
@@ -32,11 +31,6 @@ pub const Deps = struct {
                 .target = target,
                 .optimize = optimize,
                 .root_source_file = b.path("learn_opengl/sokol_helper/main.zig"),
-            }),
-            .szmath = b.createModule(.{
-                .target = target,
-                .optimize = optimize,
-                .root_source_file = b.path("szmath/math.zig"),
             }),
             .stb_image = b.createModule(.{
                 .target = target,
@@ -68,7 +62,7 @@ pub const Deps = struct {
         deps.lopgl.addImport("rowmath", deps.rowmath);
         deps.dbgui.addImport("sokol", deps.dep_sokol.module("sokol"));
         deps.util_camera.addImport("sokol", deps.dep_sokol.module("sokol"));
-        deps.util_camera.addImport("szmath", deps.szmath);
+        deps.util_camera.addImport("rowmath", deps.rowmath);
 
         return deps;
     }
@@ -76,7 +70,6 @@ pub const Deps = struct {
     pub fn inject_dependencies(self: @This(), compile: *std.Build.Step.Compile) void {
         compile.root_module.addImport("sokol", self.dep_sokol.module("sokol"));
         compile.root_module.addImport("sokol_helper", self.helper);
-        compile.root_module.addImport("szmath", self.szmath);
         compile.root_module.addImport("stb_image", self.stb_image);
         compile.root_module.addImport("cimgui", self.dep_cimgui.module("cimgui"));
         compile.root_module.addImport("lopgl", self.lopgl);

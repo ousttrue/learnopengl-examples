@@ -6,11 +6,13 @@
 //  are 4 vertex buffer bind slots in sg_bindings, but you can keep
 //  several related vertex components interleaved in the same chunk.
 //------------------------------------------------------------------------------
+const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const dbgui = @import("dbgui");
 const shader = @import("noninterleaved-sapp.glsl.zig");
-const szmath = @import("szmath");
+const rowmath = @import("rowmath");
+const Mat4 = rowmath.Mat4;
 
 const state = struct {
     var pass_action = sg.PassAction{};
@@ -98,8 +100,8 @@ export fn init() void {
 export fn frame() void {
     // compute model-view-projection matrix for vertex shader
     const t: f32 = @as(f32, @floatCast(sokol.app.frameDuration())) * 60.0;
-    const proj = szmath.Mat4.persp(60.0, sokol.app.widthf() / sokol.app.heightf(), 0.01, 10.0);
-    const view = szmath.Mat4.lookat(
+    const proj = Mat4.perspective(std.math.degreesToRadians(60.0), sokol.app.widthf() / sokol.app.heightf(), 0.01, 10.0);
+    const view = Mat4.lookAt(
         .{ .x = 0.0, .y = 1.5, .z = 6.0 },
         .{ .x = 0.0, .y = 0.0, .z = 0.0 },
         .{ .x = 0.0, .y = 1.0, .z = 0.0 },
@@ -107,8 +109,8 @@ export fn frame() void {
     const view_proj = view.mul(proj);
     state.rx += 1.0 * t;
     state.ry += 2.0 * t;
-    const rxm = szmath.Mat4.rotate(state.rx, .{ .x = 1.0, .y = 0.0, .z = 0.0 });
-    const rym = szmath.Mat4.rotate(state.ry, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
+    const rxm = Mat4.rotate(state.rx, .{ .x = 1.0, .y = 0.0, .z = 0.0 });
+    const rym = Mat4.rotate(state.ry, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
     const model = rxm.mul(rym);
     var vs_params = shader.VsParams{
         .mvp = model.mul(view_proj).m,

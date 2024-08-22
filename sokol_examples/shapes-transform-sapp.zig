@@ -9,7 +9,7 @@ const sokol = @import("sokol");
 const sg = sokol.gfx;
 const dbgui = @import("dbgui");
 const shd = @import("shapes-transform-sapp.glsl.zig");
-const szmath = @import("szmath");
+const rowmath = @import("rowmath");
 // const zshape = @import("zshape.zig");
 const zshape = sokol.shape;
 
@@ -68,10 +68,10 @@ export fn init() void {
     buf.indices.buffer = sokol.shape.asRange(&indices);
 
     // transform matrices for the shapes
-    const box_transform = szmath.Mat4.translate(.{ .x = -1.0, .y = 0.0, .z = 1.0 });
-    // const sphere_transform = szmath.Mat4.translate(.{ .x = 1.0, .y = 0.0, .z = 1.0 });
-    // const cylinder_transform = szmath.Mat4.translate(.{ .x = -1.0, .y = 0.0, .z = -1.0 });
-    // const torus_transform = szmath.Mat4.translate(.{ .x = 1.0, .y = 0.0, .z = -1.0 });
+    const box_transform = rowmath.Mat4.translate(.{ .x = -1.0, .y = 0.0, .z = 1.0 });
+    // const sphere_transform = rowmath.Mat4.translate(.{ .x = 1.0, .y = 0.0, .z = 1.0 });
+    // const cylinder_transform = rowmath.Mat4.translate(.{ .x = -1.0, .y = 0.0, .z = -1.0 });
+    // const torus_transform = rowmath.Mat4.translate(.{ .x = 1.0, .y = 0.0, .z = -1.0 });
 
     // build the shapes...
     buf = zshape.buildBox(buf, .{
@@ -136,20 +136,20 @@ export fn frame() void {
     const t = (sokol.app.frameDuration() * 60.0);
     state.rx += 1.0 * @as(f32, @floatCast(t));
     state.ry += 2.0 * @as(f32, @floatCast(t));
-    const proj = szmath.Mat4.persp(
-        60.0,
+    const proj = rowmath.Mat4.perspective(
+        std.math.degreesToRadians(60.0),
         sokol.app.widthf() / sokol.app.heightf(),
         0.01,
         10.0,
     );
-    const view = szmath.Mat4.lookat(
+    const view = rowmath.Mat4.lookAt(
         .{ .x = 0.0, .y = 1.5, .z = 6.0 },
         .{ .x = 0.0, .y = 0.0, .z = 0.0 },
         .{ .x = 0.0, .y = 1.0, .z = 0.0 },
     );
     const view_proj = view.mul(proj);
-    const rxm = szmath.Mat4.rotate(state.rx, .{ .x = 1.0, .y = 0.0, .z = 0.0 });
-    const rym = szmath.Mat4.rotate(state.ry, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
+    const rxm = rowmath.Mat4.rotate(state.rx, .{ .x = 1.0, .y = 0.0, .z = 0.0 });
+    const rym = rowmath.Mat4.rotate(state.ry, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
     const model = rxm.mul(rym);
     state.vs_params.mvp = model.mul(view_proj).m;
 

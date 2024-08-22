@@ -3,9 +3,11 @@
 //  Render to a offscreen rendertarget texture without multisampling, and
 //  use this texture for rendering to the display (with multisampling).
 //------------------------------------------------------------------------------
+const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
-const szmath = @import("szmath");
+const rowmath = @import("rowmath");
+const Mat4 = rowmath.Mat4;
 const dbgui = @import("dbgui");
 const shader = @import("offscreen-sapp.glsl.zig");
 
@@ -160,16 +162,16 @@ export fn init() void {
 }
 
 // helper function to compute model-view-projection matrix
-fn compute_mvp(rx: f32, ry: f32, aspect: f32, eye_dist: f32) szmath.Mat4 {
-    const proj = szmath.Mat4.persp(45.0, aspect, 0.01, 10.0);
-    const view = szmath.Mat4.lookat(
+fn compute_mvp(rx: f32, ry: f32, aspect: f32, eye_dist: f32) Mat4 {
+    const proj = Mat4.perspective(std.math.degreesToRadians(45.0), aspect, 0.01, 10.0);
+    const view = Mat4.lookAt(
         .{ .x = 0.0, .y = 0.0, .z = eye_dist },
         .{ .x = 0.0, .y = 0.0, .z = 0.0 },
         .{ .x = 0.0, .y = 1.0, .z = 0.0 },
     );
     const view_proj = view.mul(proj);
-    const rxm = szmath.Mat4.rotate(rx, .{ .x = 1.0, .y = 0.0, .z = 0.0 });
-    const rym = szmath.Mat4.rotate(ry, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
+    const rxm = Mat4.rotate(rx, .{ .x = 1.0, .y = 0.0, .z = 0.0 });
+    const rym = Mat4.rotate(ry, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
     const model = rym.mul(rxm);
     const mvp = model.mul(view_proj);
     return mvp;

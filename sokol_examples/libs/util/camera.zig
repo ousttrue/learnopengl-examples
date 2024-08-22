@@ -2,14 +2,16 @@
 //  and sokol_app.h
 const std = @import("std");
 const sokol = @import("sokol");
-const szmath = @import("szmath");
+const rowmath = @import("rowmath");
+const Vec3 = rowmath.Vec3;
+const Mat4 = rowmath.Mat4;
 
 const CAMERA_DEFAULT_MIN_DIST = 2.0;
 const CAMERA_DEFAULT_MAX_DIST = 30.0;
 const CAMERA_DEFAULT_MIN_LAT = -85.0;
 const CAMERA_DEFAULT_MAX_LAT = 85.0;
 const CAMERA_DEFAULT_DIST = 5.0;
-const CAMERA_DEFAULT_ASPECT = 60.0;
+const CAMERA_DEFAULT_FOVY_DEGREE = 60.0;
 const CAMERA_DEFAULT_NEARZ = 0.01;
 const CAMERA_DEFAULT_FARZ = 100.0;
 
@@ -21,10 +23,10 @@ pub const Desc = struct {
     distance: f32 = 0,
     latitude: f32 = 0,
     longitude: f32 = 0,
-    aspect: f32 = 0,
+    fov_y_degree: f32 = 60,
     nearz: f32 = 0,
     farz: f32 = 0,
-    center: szmath.Vec3 = szmath.Vec3.zero(),
+    center: Vec3 = Vec3.zero,
 };
 
 pub const Camera = struct {
@@ -32,17 +34,20 @@ pub const Camera = struct {
     max_dist: f32 = 0,
     min_lat: f32 = 0,
     max_lat: f32 = 0,
+    //
     distance: f32 = 0,
     latitude: f32 = 0,
     longitude: f32 = 0,
-    aspect: f32 = 0,
+    center: Vec3 = Vec3.zero,
+    eye_pos: Vec3 = Vec3.zero,
+    //
+    fov_y_degree: f32 = 0,
     nearz: f32 = 0,
     farz: f32 = 0,
-    center: szmath.Vec3 = szmath.Vec3.zero(),
-    eye_pos: szmath.Vec3 = szmath.Vec3.zero(),
-    view: szmath.Mat4 = szmath.Mat4.identity(),
-    proj: szmath.Mat4 = szmath.Mat4.identity(),
-    view_proj: szmath.Mat4 = szmath.Mat4.identity(),
+
+    view: Mat4 = Mat4.identity,
+    proj: Mat4 = Mat4.identity,
+    view_proj: Mat4 = Mat4.identity,
 
     // initialize to default parameters
     pub fn init(desc: Desc) @This() {
@@ -55,7 +60,7 @@ pub const Camera = struct {
             .center = desc.center,
             .latitude = desc.latitude,
             .longitude = desc.longitude,
-            .aspect = _cam_def(desc.aspect, CAMERA_DEFAULT_ASPECT),
+            .fov_y_degree = _cam_def(desc.fov_y_degree, CAMERA_DEFAULT_FOVY_DEGREE),
             .nearz = _cam_def(desc.nearz, CAMERA_DEFAULT_NEARZ),
             .farz = _cam_def(desc.farz, CAMERA_DEFAULT_FARZ),
         };
@@ -83,9 +88,21 @@ pub const Camera = struct {
         // assert((fb_width > 0) && (fb_height > 0));
         const w: f32 = @floatFromInt(fb_width);
         const h: f32 = @floatFromInt(fb_height);
-        cam.eye_pos = cam.center.add(_cam_euclidean(cam.latitude, cam.longitude).mul(cam.distance));
-        cam.view = szmath.Mat4.lookat(cam.eye_pos, cam.center, .{ .x = 0.0, .y = 1.0, .z = 0.0 });
-        cam.proj = szmath.Mat4.persp(cam.aspect, w / h, cam.nearz, cam.farz);
+        cam.eye_pos = cam.center.add(_cam_euclidean(
+            cam.latitude,
+            cam.longitude,
+        ).scale(cam.distance));
+        cam.view = Mat4.lookAt(
+            cam.eye_pos,
+            cam.center,
+            .{ .x = 0.0, .y = 1.0, .z = 0.0 },
+        );
+        cam.proj = Mat4.perspective(
+            std.math.degreesToRadians(cam.fov_y_degree),
+            w / h,
+            cam.nearz,
+            cam.farz,
+        );
         // cam.view_proj = cam.proj.mul(cam.view);
         cam.view_proj = cam.view.mul(cam.proj);
     }
@@ -120,7 +137,7 @@ fn _cam_def(val: f32, def: f32) f32 {
     return if (val == 0.0) def else val;
 }
 
-fn _cam_euclidean(latitude: f32, longitude: f32) szmath.Vec3 {
+fn _cam_euclidean(latitude: f32, longitude: f32) Vec3 {
     const lat = std.math.degreesToRadians(latitude);
     const lng = std.math.degreesToRadians(longitude);
     return .{
