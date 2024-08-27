@@ -9,7 +9,6 @@ pub const Deps = struct {
     lopgl: *std.Build.Module,
     dbgui: *std.Build.Module,
     rowmath: *std.Build.Module,
-    SokolCamera: *std.Build.Module,
 
     pub fn init(
         b: *std.Build,
@@ -47,11 +46,6 @@ pub const Deps = struct {
                 .optimize = optimize,
                 .root_source_file = b.path("sokol_examples/libs/dbgui/dbgui.zig"),
             }),
-            .SokolCamera = b.createModule(.{
-                .target = target,
-                .optimize = optimize,
-                .root_source_file = b.path("src/SokolCamera.zig"),
-            }),
         };
 
         // inject the cimgui header search path into the sokol C library compile step
@@ -61,8 +55,6 @@ pub const Deps = struct {
         deps.lopgl.addImport("sokol", deps.dep_sokol.module("sokol"));
         deps.lopgl.addImport("rowmath", deps.rowmath);
         deps.dbgui.addImport("sokol", deps.dep_sokol.module("sokol"));
-        deps.SokolCamera.addImport("rowmath", deps.rowmath);
-        deps.SokolCamera.addImport("sokol", deps.dep_sokol.module("sokol"));
 
         return deps;
     }
@@ -75,6 +67,5 @@ pub const Deps = struct {
         compile.root_module.addImport("lopgl", self.lopgl);
         compile.root_module.addImport("dbgui", self.dbgui);
         compile.root_module.addImport("rowmath", self.rowmath);
-        compile.root_module.addImport("SokolCamera", self.SokolCamera);
     }
 };

@@ -21,7 +21,7 @@ const shader = @import("ozz-skin-sapp.glsl.zig");
 const ozz_wrap = @import("ozz_wrap.zig");
 const simgui = sokol.imgui;
 const ig = @import("cimgui");
-const SokolCamera = @import("SokolCamera");
+const rowmath = @import("rowmath");
 
 // the upper limit for joint palette size is 256 (because the mesh joint indices
 // are stored in packed byte-size vertex formats), but the example mesh only needs less than 64
@@ -62,7 +62,8 @@ const state = struct {
     var joint_texture_width: c_int = 0; // in number of pixels
     var joint_texture_height: c_int = 0; // in number of pixels
     var joint_texture_pitch: c_int = 0; // in number of floats
-    var camera: SokolCamera = .{};
+    var camera: rowmath.MouseCamera = .{};
+    var input: rowmath.InputState = .{};
     var draw_enabled: bool = true;
     const loaded = struct {
         var skeleton = false;
@@ -211,6 +212,8 @@ export fn init() void {
         .callback = mesh_data_loaded,
         .buffer = sokol.fetch.asRange(&mesh_io_buffer),
     });
+
+    state.camera.init();
 }
 
 // initialize the static instance data, since the character instances don't
@@ -315,7 +318,12 @@ export fn frame() void {
     if (!state.time.paused) {
         state.time.abs_time_sec += state.time.frame_time_sec * state.time.factor;
     }
-    state.camera.frame();
+
+    state.input.screen_width = sokol.app.widthf();
+    state.input.screen_height = sokol.app.heightf();
+    state.camera.frame(state.input);
+    state.input.mouse_wheel = 0;
+
     simgui.newFrame(.{
         .width = sokol.app.width(),
         .height = sokol.app.height(),
@@ -348,11 +356,48 @@ export fn frame() void {
     sg.commit();
 }
 
-export fn input(ev: [*c]const sokol.app.Event) void {
-    if (simgui.handleEvent(ev.*)) {
+export fn input(e: [*c]const sokol.app.Event) void {
+    if (simgui.handleEvent(e.*)) {
         return;
     }
-    state.camera.handleEvent(ev);
+    switch (e.*.type) {
+        .MOUSE_DOWN => {
+            switch (e.*.mouse_button) {
+                .LEFT => {
+                    state.input.mouse_left = true;
+                },
+                .RIGHT => {
+                    state.input.mouse_right = true;
+                },
+                .MIDDLE => {
+                    state.input.mouse_middle = true;
+                },
+                .INVALID => {},
+            }
+        },
+        .MOUSE_UP => {
+            switch (e.*.mouse_button) {
+                .LEFT => {
+                    state.input.mouse_left = false;
+                },
+                .RIGHT => {
+                    state.input.mouse_right = false;
+                },
+                .MIDDLE => {
+                    state.input.mouse_middle = false;
+                },
+                .INVALID => {},
+            }
+        },
+        .MOUSE_MOVE => {
+            state.input.mouse_x = e.*.mouse_x;
+            state.input.mouse_y = e.*.mouse_y;
+        },
+        .MOUSE_SCROLL => {
+            state.input.mouse_wheel = e.*.scroll_y;
+        },
+        else => {},
+    }
 }
 
 export fn cleanup() void {

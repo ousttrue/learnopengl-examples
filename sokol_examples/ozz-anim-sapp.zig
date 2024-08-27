@@ -9,12 +9,13 @@
 const std = @import("std");
 const rowmath = @import("rowmath");
 const Vec3 = rowmath.Vec3;
+const MouseCamera = rowmath.MouseCamera;
+const InputState = rowmath.InputState;
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const simgui = sokol.imgui;
 const ig = @import("cimgui");
 
-const SokolCamera = @import("SokolCamera");
 const ozz_wrap = @import("ozz_wrap.zig");
 
 const state = struct {
@@ -25,8 +26,8 @@ const state = struct {
         var failed = false;
     };
     var pass_action = sg.PassAction{};
-    var camera: SokolCamera = .{};
-
+    var camera: MouseCamera = .{};
+    var input: InputState = .{};
     const time = struct {
         var frame: f64 = 0;
         var absolute: f64 = 0;
@@ -95,7 +96,10 @@ export fn frame() void {
     sokol.fetch.dowork();
 
     state.time.frame = sokol.app.frameDuration();
-    state.camera.frame();
+    state.input.screen_width = sokol.app.widthf();
+    state.input.screen_height = sokol.app.heightf();
+    state.camera.frame(state.input);
+    state.input.mouse_wheel = 0;
 
     simgui.newFrame(.{
         .width = sokol.app.width(),
@@ -134,11 +138,48 @@ export fn frame() void {
     sg.commit();
 }
 
-export fn input(ev: [*c]const sokol.app.Event) void {
-    if (simgui.handleEvent(ev.*)) {
+export fn event(e: [*c]const sokol.app.Event) void {
+    if (simgui.handleEvent(e.*)) {
         return;
     }
-    state.camera.handleEvent(ev);
+    switch (e.*.type) {
+        .MOUSE_DOWN => {
+            switch (e.*.mouse_button) {
+                .LEFT => {
+                    state.input.mouse_left = true;
+                },
+                .RIGHT => {
+                    state.input.mouse_right = true;
+                },
+                .MIDDLE => {
+                    state.input.mouse_middle = true;
+                },
+                .INVALID => {},
+            }
+        },
+        .MOUSE_UP => {
+            switch (e.*.mouse_button) {
+                .LEFT => {
+                    state.input.mouse_left = false;
+                },
+                .RIGHT => {
+                    state.input.mouse_right = false;
+                },
+                .MIDDLE => {
+                    state.input.mouse_middle = false;
+                },
+                .INVALID => {},
+            }
+        },
+        .MOUSE_MOVE => {
+            state.input.mouse_x = e.*.mouse_x;
+            state.input.mouse_y = e.*.mouse_y;
+        },
+        .MOUSE_SCROLL => {
+            state.input.mouse_wheel = e.*.scroll_y;
+        },
+        else => {},
+    }
 }
 
 export fn cleanup() void {
@@ -201,7 +242,10 @@ fn draw_skeleton(ozz: *anyopaque) void {
         return;
     }
     sokol.gl.defaults();
-    state.camera.glSetupMatrix();
+    sokol.gl.matrixModeProjection();
+    sokol.gl.loadMatrix(&state.camera.projectionMatrix().m[0]);
+    sokol.gl.matrixModeModelview();
+    sokol.gl.loadMatrix(&state.camera.viewMatrix().m[0]);
 
     const num_joints = ozz_wrap.OZZ_num_joints(ozz);
     const joint_parents = ozz_wrap.OZZ_joint_parents(ozz);
@@ -324,7 +368,7 @@ pub fn main() void {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
-        .event_cb = input,
+        .event_cb = event,
         .width = 800,
         .height = 600,
         .sample_count = 4,

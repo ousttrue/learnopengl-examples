@@ -1,12 +1,24 @@
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
-const SokolCamera = @import("SokolCamera");
+const rowmath = @import("rowmath");
 
 const state = struct {
     var pass_action = sg.PassAction{};
-    var camera = SokolCamera{};
+    var camera = rowmath.MouseCamera{};
+    var input = rowmath.InputState{};
 };
+
+export fn init() void {
+    sg.setup(.{
+        .environment = sokol.glue.environment(),
+        .logger = .{ .func = sokol.log.func },
+    });
+    sokol.gl.setup(.{
+        .logger = .{ .func = sokol.log.func },
+    });
+    state.camera.init();
+}
 
 fn grid() void {
     const n = 5.0;
@@ -29,43 +41,79 @@ fn grid() void {
     sokol.gl.end();
 }
 
-export fn init() void {
-    sg.setup(.{
-        .environment = sokol.glue.environment(),
-        .logger = .{ .func = sokol.log.func },
-    });
-    state.pass_action.colors[0] = .{
-        .load_action = .CLEAR,
-        .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
-    };
-    sokol.gl.setup(.{
-        .logger = .{ .func = sokol.log.func },
-    });
-    state.camera.init();
-}
-
 export fn frame() void {
-    state.camera.frame();
-    // std.debug.print("{any}\n", .{state.camera.transform.worldToLocal()});
+    state.input.screen_width = sokol.app.widthf();
+    state.input.screen_height = sokol.app.heightf();
+    state.camera.frame(state.input);
+    state.input.mouse_wheel = 0;
 
-    sg.beginPass(.{
-        .action = state.pass_action,
-        .swapchain = sokol.glue.swapchain(),
-    });
-    sokol.gl.setContext(sokol.gl.defaultContext());
-    sokol.gl.defaults();
+    {
+        defer sg.commit();
 
-    state.camera.glSetupMatrix();
+        state.pass_action.colors[0] = .{
+            .load_action = .CLEAR,
+            .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
+        };
+        sg.beginPass(.{
+            .action = state.pass_action,
+            .swapchain = sokol.glue.swapchain(),
+        });
+        defer sg.endPass();
 
-    grid();
-    sokol.gl.contextDraw(sokol.gl.defaultContext());
+        {
+            sokol.gl.setContext(sokol.gl.defaultContext());
+            defer sokol.gl.contextDraw(sokol.gl.defaultContext());
 
-    sg.endPass();
-    sg.commit();
+            sokol.gl.defaults();
+            sokol.gl.matrixModeProjection();
+            sokol.gl.loadMatrix(&state.camera.projectionMatrix().m[0]);
+            sokol.gl.matrixModeModelview();
+            sokol.gl.loadMatrix(&state.camera.viewMatrix().m[0]);
+
+            grid();
+        }
+    }
 }
 
 export fn event(e: [*c]const sokol.app.Event) void {
-    state.camera.handleEvent(e);
+    switch (e.*.type) {
+        .MOUSE_DOWN => {
+            switch (e.*.mouse_button) {
+                .LEFT => {
+                    state.input.mouse_left = true;
+                },
+                .RIGHT => {
+                    state.input.mouse_right = true;
+                },
+                .MIDDLE => {
+                    state.input.mouse_middle = true;
+                },
+                .INVALID => {},
+            }
+        },
+        .MOUSE_UP => {
+            switch (e.*.mouse_button) {
+                .LEFT => {
+                    state.input.mouse_left = false;
+                },
+                .RIGHT => {
+                    state.input.mouse_right = false;
+                },
+                .MIDDLE => {
+                    state.input.mouse_middle = false;
+                },
+                .INVALID => {},
+            }
+        },
+        .MOUSE_MOVE => {
+            state.input.mouse_x = e.*.mouse_x;
+            state.input.mouse_y = e.*.mouse_y;
+        },
+        .MOUSE_SCROLL => {
+            state.input.mouse_wheel = e.*.scroll_y;
+        },
+        else => {},
+    }
 }
 
 export fn cleanup() void {
