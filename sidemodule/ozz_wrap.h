@@ -1,16 +1,20 @@
 #pragma once
 #include <stddef.h>
 
-#ifdef EMSCRIPTEN
-#define DECLSPEC __attribute__((visibility("default")))
-#elif _MSC_VER
+#if _MSC_VER
 #ifdef DLL_EXPORTS
 #define DECLSPEC __declspec(dllexport)
 #else
 #define DECLSPEC __declspec(dllimport)
 #endif
+
 #else
-#define DECLSPEC
+// #define DECLSPEC __attribute__((visibility("default")))
+#ifdef DLL_EXPORTS
+#define DECLSPEC __declspec(dllexport)
+#else
+#define DECLSPEC __declspec(dllimport)
+#endif
 #endif
 
 #ifdef __cplusplus

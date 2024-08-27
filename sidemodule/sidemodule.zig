@@ -114,3 +114,33 @@ pub fn mesonNative(b: *std.Build) *std.Build.Step {
 
     return &meson_install.step;
 }
+
+pub fn build(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+) *std.Build.Step.Compile {
+    const dll = b.addSharedLibrary(.{
+        .name = "sidemodule",
+        .target = target,
+        .optimize = optimize,
+        .root_source_file = b.path("sidemodule/ozz_wrap.zig"),
+    });
+    b.installArtifact(dll);
+    dll.addCSourceFiles(.{
+        .files = &.{
+            "sidemodule/ozz_wrap.cpp",
+            "sidemodule/src/mesh.cc",
+            "sidemodule/src/ozz_base.cc",
+            "sidemodule/src/ozz_animation.cc",
+        },
+        .flags = &.{
+            "-DDLL_EXPORTS",
+        },
+    });
+    dll.rdynamic = true;
+    dll.linkLibCpp();
+    dll.addIncludePath(b.path("sidemodule/include"));
+    dll.addIncludePath(b.path("sidemodule"));
+    return dll;
+}

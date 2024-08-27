@@ -16,7 +16,7 @@ const sg = sokol.gfx;
 const simgui = sokol.imgui;
 const ig = @import("cimgui");
 
-const ozz_wrap = @import("ozz_wrap.zig");
+const ozz_wrap = @import("ozz_wrap");
 
 const state = struct {
     var ozz: *anyopaque = undefined;

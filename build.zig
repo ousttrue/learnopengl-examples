@@ -3,7 +3,7 @@ const builtin = @import("builtin");
 const emzig = @import("emsdk-zig");
 const examples = @import("examples.zig");
 const Deps = @import("deps.zig").Deps;
-const sidemodule = @import("sidemodule.zig");
+const sidemodule = @import("sidemodule/sidemodule.zig");
 
 const WASM_ARGS = [_][]const u8{
     "-sTOTAL_MEMORY=200MB",
@@ -32,7 +32,8 @@ pub fn build(b: *std.Build) !void {
         const side_wasm = try sidemodule.mesonWasm(b, optimize, dep_emsdk);
         buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
     } else {
-        const side_dll = sidemodule.mesonNative(b);
+        // const side_dll = sidemodule.mesonNative(b);
+        const side_dll = sidemodule.build(b, target, optimize);
         buildNative(b, target, optimize, &deps, &examples.all_examples, side_dll);
     }
 }
@@ -126,7 +127,7 @@ fn buildNative(
     optimize: std.builtin.OptimizeMode,
     deps: *const Deps,
     comptime all_examples: []const examples.Example,
-    side_dll: *std.Build.Step,
+    side_dll: *std.Build.Step.Compile,
 ) void {
     inline for (all_examples) |example| {
         const exe = b.addExecutable(.{
@@ -143,9 +144,6 @@ fn buildNative(
                 shader,
             ));
         }
-        if (example.sidemodule) {
-            exe.step.dependOn(side_dll);
-        }
 
         exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });
         deps.inject_dependencies(exe);
@@ -156,7 +154,11 @@ fn buildNative(
         const install = b.addInstallArtifact(exe, .{});
         b.getInstallStep().dependOn(&install.step);
         inline for (example.assets) |asset| {
-            const install_asset = b.addInstallFileWithDir(b.path(asset.from), .prefix, "bin/" ++ asset.to);
+            const install_asset = b.addInstallFileWithDir(
+                b.path(asset.from),
+                .prefix,
+                "bin/" ++ asset.to,
+            );
             install.step.dependOn(&install_asset.step);
         }
 
@@ -175,7 +177,11 @@ fn buildNative(
                 exe.addLibraryPath(b.path("zig-out/lib"));
             }
             exe.linkLibCpp();
-            exe.linkSystemLibrary("sidemodule");
+            // exe.linkSystemLibrary("sidemodule");
+            // exe.step.dependOn(side_dll);
+            exe.linkLibrary(side_dll);
+            exe.root_module.addImport("ozz_wrap", &side_dll.root_module);
+            side_dll.root_module.addImport("rowmath", deps.rowmath);
         }
     }
 }
