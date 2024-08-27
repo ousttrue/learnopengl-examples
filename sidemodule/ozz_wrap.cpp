@@ -244,6 +244,6 @@ void OZZ_update_joints(ozz_t *p, int num_instances, float abs_time_sec,
   }
 }
 
-void OZZ_free(void *p) { free(p); }
+DECLSPEC void OZZ_free(void *p) { free(p); }
 
 } // extern "C"

@@ -136,9 +136,13 @@ pub fn build(
         },
         .flags = &.{
             "-DDLL_EXPORTS",
+            // "-fPIC",
+            // "-fvisibility=hidden",
         },
     });
-    dll.rdynamic = true;
+    // https://github.com/ziglang/zig/issues/19746
+    // dll.rdynamic = true;
+    // dll.dll_export_fns = true;
     dll.linkLibCpp();
     dll.addIncludePath(b.path("sidemodule/include"));
     dll.addIncludePath(b.path("sidemodule"));

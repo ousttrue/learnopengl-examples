@@ -33,7 +33,7 @@ pub fn build(b: *std.Build) !void {
         buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
     } else {
         // const side_dll = sidemodule.mesonNative(b);
-        const side_dll = sidemodule.build(b, target, optimize);
+        const side_dll = sidemodule.mesonNative(b);
         buildNative(b, target, optimize, &deps, &examples.all_examples, side_dll);
     }
 }
@@ -127,7 +127,7 @@ fn buildNative(
     optimize: std.builtin.OptimizeMode,
     deps: *const Deps,
     comptime all_examples: []const examples.Example,
-    side_dll: *std.Build.Step.Compile,
+    side_dll: *std.Build.Step,
 ) void {
     inline for (all_examples) |example| {
         const exe = b.addExecutable(.{
@@ -177,11 +177,20 @@ fn buildNative(
                 exe.addLibraryPath(b.path("zig-out/lib"));
             }
             exe.linkLibCpp();
-            // exe.linkSystemLibrary("sidemodule");
-            // exe.step.dependOn(side_dll);
-            exe.linkLibrary(side_dll);
-            exe.root_module.addImport("ozz_wrap", &side_dll.root_module);
-            side_dll.root_module.addImport("rowmath", deps.rowmath);
+            if (comptime @TypeOf(side_dll) == *std.Build.Step) {
+                exe.linkSystemLibrary("sidemodule");
+                exe.step.dependOn(side_dll);
+
+                const ozz_wrap = b.addModule("ozz_wrap", .{
+                    .root_source_file = b.path("sidemodule/ozz_wrap.zig"),
+                });
+                ozz_wrap.addImport("rowmath", deps.rowmath);
+                exe.root_module.addImport("ozz_wrap", ozz_wrap);
+            } else {
+                exe.linkLibrary(side_dll);
+                exe.root_module.addImport("ozz_wrap", &side_dll.root_module);
+                side_dll.root_module.addImport("rowmath", deps.rowmath);
+            }
         }
     }
 }

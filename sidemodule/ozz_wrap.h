@@ -9,12 +9,7 @@
 #endif
 
 #else
-// #define DECLSPEC __attribute__((visibility("default")))
-#ifdef DLL_EXPORTS
-#define DECLSPEC __declspec(dllexport)
-#else
-#define DECLSPEC __declspec(dllimport)
-#endif
+#define DECLSPEC __attribute__((visibility("default")))
 #endif
 
 #ifdef __cplusplus
