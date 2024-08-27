@@ -27,14 +27,11 @@ pub fn build(b: *std.Build) !void {
     const deps = Deps.init(b, target, optimize);
 
     if (target.result.isWasm()) {
-
-        // build examples
         const dep_emsdk = b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{});
-        b.sysroot = dep_emsdk.path("upstream/emscripten").getPath(b);
+
         const side_wasm = try sidemodule.mesonWasm(b, optimize, dep_emsdk);
         buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
     } else {
-        // build examples
         const side_dll = sidemodule.mesonNative(b);
         buildNative(b, target, optimize, &deps, &examples.all_examples, side_dll);
     }
@@ -49,12 +46,22 @@ fn buildWasm(
     dep_emsdk: *std.Build.Dependency,
     side_wasm: *std.Build.Step,
 ) void {
-    const cimgui_clib_artifact = deps.dep_cimgui.artifact("cimgui_clib");
-
     // all C libraries need to depend on the sokol library, when building for
     // WASM this makes sure that the Emscripten SDK has been setup before
     // C compilation is attempted (since the sokol C library depends on the
     // Emscripten SDK setup step)
+    // need to inject the Emscripten system header include path into
+    // the cimgui C library otherwise the C/C++ code won't find
+    // C stdlib headers
+    const emsdk_incl_path = dep_emsdk.path(
+        "upstream/emscripten/cache/sysroot/include",
+    );
+    // const emsdk_cpp_incl_path = dep_emsdk.path(
+    //     "upstream/emscripten/cache/sysroot/include/c++/v1",
+    // );
+
+    const cimgui_clib_artifact = deps.dep_cimgui.artifact("cimgui_clib");
+    cimgui_clib_artifact.addSystemIncludePath(emsdk_incl_path);
     cimgui_clib_artifact.step.dependOn(&deps.dep_sokol.artifact("sokol_clib").step);
 
     inline for (all_examples) |example| {
