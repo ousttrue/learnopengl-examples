@@ -75,7 +75,7 @@ pub fn mesonWasm(
             // "--reconfigure",
             "--cross-file",
         });
-        meson_setup.addFileInput(ini);
+        meson_setup.addFileArg(ini);
         meson_install.step.dependOn(&meson_setup.step);
     }
 
