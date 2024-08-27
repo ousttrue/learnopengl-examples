@@ -7,7 +7,6 @@ pub const Example = struct {
     name: []const u8,
     root_source: []const u8,
     shader: ?[]const u8 = null,
-    c_srcs: ?[]const []const u8 = null,
     c_includes: []const []const u8 = &.{},
     sidemodule: bool = false,
     assets: []const Asset = &.{},

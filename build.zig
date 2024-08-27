@@ -16,9 +16,9 @@ const WASM_ARGS_DEBUG = [_][]const u8{
     "-sASSERTIONS",
 };
 const WASM_ARGS_DYNAMIC = [_][]const u8{
-    // "-sMAIN_MODULE=1",
-    // "zig-out/bin/sidemodule.wasm",
-    // "-sERROR_ON_UNDEFINED_SYMBOLS=0",
+    "-sMAIN_MODULE=1",
+    "zig-out/web/sidemodule.wasm",
+    "-sERROR_ON_UNDEFINED_SYMBOLS=0",
 };
 
 pub fn build(b: *std.Build) !void {
@@ -30,12 +30,12 @@ pub fn build(b: *std.Build) !void {
 
         // build examples
         const dep_emsdk = b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{});
-        const wait_emsdk = try emzig.emSdkSetupStep(b, dep_emsdk);
-        const side_wasm = try sidemodule.buildWasm(b, optimize, dep_emsdk, if (wait_emsdk) |x| &x.step else null);
+        b.sysroot = dep_emsdk.path("upstream/emscripten").getPath(b);
+        const side_wasm = try sidemodule.mesonWasm(b, optimize, dep_emsdk);
         buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
     } else {
         // build examples
-        const side_dll = sidemodule.buildNative(b);
+        const side_dll = sidemodule.mesonNative(b);
         buildNative(b, target, optimize, &deps, &examples.all_examples, side_dll);
     }
 }
@@ -49,18 +49,7 @@ fn buildWasm(
     dep_emsdk: *std.Build.Dependency,
     side_wasm: *std.Build.Step,
 ) void {
-    // need to inject the Emscripten system header include path into
-    // the cimgui C library otherwise the C/C++ code won't find
-    // C stdlib headers
-    const emsdk_incl_path = dep_emsdk.path(
-        "upstream/emscripten/cache/sysroot/include",
-    );
-    const emsdk_cpp_incl_path = dep_emsdk.path(
-        "upstream/emscripten/cache/sysroot/include/c++/v1",
-    );
-
     const cimgui_clib_artifact = deps.dep_cimgui.artifact("cimgui_clib");
-    cimgui_clib_artifact.addSystemIncludePath(emsdk_incl_path);
 
     // all C libraries need to depend on the sokol library, when building for
     // WASM this makes sure that the Emscripten SDK has been setup before
@@ -91,22 +80,8 @@ fn buildWasm(
 
         deps.inject_dependencies(lib);
 
-        // deps.inject_ozz_animation(b, lib);
-        if (example.c_srcs) |srcs| {
-            lib.addCSourceFiles(.{
-                .files = srcs,
-                .flags = &.{
-                    "-nostdinc",
-                    "-nostdinc++",
-                },
-            });
-            // this order is important
-            lib.addSystemIncludePath(emsdk_incl_path);
-            lib.addSystemIncludePath(emsdk_cpp_incl_path);
-        }
-
         // create a build step which invokes the Emscripten linker
-        const install = try emzig.emLinkStep(b, b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{}), .{
+        const install = try emzig.emLinkStep(b, dep_emsdk, .{
             .lib_main = lib,
             .target = target,
             .optimize = optimize,
@@ -116,21 +91,11 @@ fn buildWasm(
             .shell_file_path = deps.dep_sokol.path("src/sokol/web/shell.html").getPath(b),
             .release_use_closure = false,
             .extra_before = if (optimize == .Debug)
-                if (example.sidemodule)
-                    &(WASM_ARGS ++ WASM_ARGS_DEBUG ++ WASM_ARGS_DYNAMIC)
-                else
-                    &(WASM_ARGS ++ WASM_ARGS_DEBUG)
-            else if (example.sidemodule)
-                &(WASM_ARGS ++ WASM_ARGS_DYNAMIC)
+                &(WASM_ARGS ++ WASM_ARGS_DEBUG)
             else
                 &WASM_ARGS,
             .extra_after = if (example.sidemodule)
-                // &.{"zig-out/lib/libsidemodule.a"}
-                &.{
-                    "-sMAIN_MODULE",
-                    "zig-out/web/sidemodule.wasm",
-                    "-sERROR_ON_UNDEFINED_SYMBOLS=0",
-                }
+                &WASM_ARGS_DYNAMIC
             else
                 &.{},
         });
@@ -177,11 +142,6 @@ fn buildNative(
 
         exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });
         deps.inject_dependencies(exe);
-        if (example.c_srcs) |srcs| {
-            exe.addCSourceFiles(.{
-                .files = srcs,
-            });
-        }
         for (example.c_includes) |include| {
             exe.addIncludePath(b.path(include));
         }

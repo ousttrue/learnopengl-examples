@@ -1,19 +1,13 @@
 const std = @import("std");
 const builtin = @import("builtin");
 
-pub fn buildWasm(
+pub fn crossFile(
     b: *std.Build,
-    optimize: std.builtin.OptimizeMode,
+    wf: *std.Build.Step.WriteFile,
     dep_emsdk: *std.Build.Dependency,
-    dep: ?*std.Build.Step,
-) !*std.Build.Step {
-    const builddir = "build_wasm";
-    const prefix = b.path("zig-out").getPath(b);
-
-    var output_file = try std.fs.cwd().createFile(b.path("sidemodule/emsdk.ini").getPath(b), .{});
-    defer output_file.close();
+) std.Build.LazyPath {
     const ext: []const u8 = if (builtin.os.tag == .windows) ".bat" else "";
-    try output_file.writeAll(b.fmt(
+    return wf.add("emsdk.ini", b.fmt(
         \\# wasm.ini
         \\[constants]
         \\args = []
@@ -42,27 +36,17 @@ pub fn buildWasm(
         dep_emsdk.path(b.fmt("upstream/emscripten/emar{s}", .{ext})).getPath(b),
         dep_emsdk.path(b.fmt("upstream/emscripten/emstrip{s}", .{ext})).getPath(b),
     }));
+}
 
-    // meson setup --compilation emsdk.ini
-    const meson_setup = b.addSystemCommand(&.{"meson"});
-    if (dep) |d| {
-        meson_setup.step.dependOn(d);
-    }
-    meson_setup.cwd = b.path("sidemodule");
-    meson_setup.addArgs(&.{
-        "setup",
-        builddir,
-        if (optimize == .Debug) "-Dbuildtype=debug" else "-Dbuildtype=release",
-        "--prefix",
-        prefix,
-        // "--reconfigure",
-        "--cross-file",
-        "emsdk.ini",
-    });
+pub fn mesonWasm(
+    b: *std.Build,
+    optimize: std.builtin.OptimizeMode,
+    dep_emsdk: *std.Build.Dependency,
+) !*std.Build.Step {
+    const builddir = "build_wasm";
 
     // meson install
     const meson_install = b.addSystemCommand(&.{"meson"});
-    meson_install.step.dependOn(&meson_setup.step);
     meson_install.cwd = b.path("sidemodule");
     meson_install.addArgs(&.{
         "install",
@@ -71,37 +55,62 @@ pub fn buildWasm(
     });
     // => zig-out/bin/sidemodule.wasm
 
+    const setup_dir = b.path(b.fmt("sidemodule/{s}", .{builddir})).getPath(b);
+    // std.debug.print("mesonWasm => {s}\n", .{setup_dir});
+    if (std.fs.openDirAbsolute(setup_dir, .{})) |*dir| {
+        @constCast(dir).close();
+    } else |_| {
+        // meson setup --cross-file emsdk.ini
+        const prefix = b.path("zig-out").getPath(b);
+        const wf = b.addWriteFiles();
+        const ini = crossFile(b, wf, dep_emsdk);
+        const meson_setup = b.addSystemCommand(&.{"meson"});
+        meson_setup.cwd = b.path("sidemodule");
+        meson_setup.addArgs(&.{
+            "setup",
+            builddir,
+            if (optimize == .Debug) "-Dbuildtype=debug" else "-Dbuildtype=release",
+            "--prefix",
+            prefix,
+            // "--reconfigure",
+            "--cross-file",
+        });
+        meson_setup.addFileInput(ini);
+        meson_install.step.dependOn(&meson_setup.step);
+    }
+
     return &meson_install.step;
 }
 
-fn mesonSetupNative(b: *std.Build, builddir: []const u8, prefix: []const u8) *std.Build.Step {
-    const tool_run = b.addSystemCommand(&.{"meson"});
-    tool_run.cwd = b.path("sidemodule");
-    tool_run.addArgs(&.{
-        "setup",
-        builddir,
-        "--prefix",
-        prefix,
-        // "--reconfigure",
-    });
-    return &tool_run.step;
-}
+pub fn mesonNative(b: *std.Build) *std.Build.Step {
+    const builddir = "build_native";
 
-fn mesonBUild(b: *std.Build, builddir: []const u8) *std.Build.Step {
-    const tool_run = b.addSystemCommand(&.{"meson"});
-    tool_run.cwd = b.path("sidemodule");
-    tool_run.addArgs(&.{
+    const meson_install = b.addSystemCommand(&.{"meson"});
+    meson_install.cwd = b.path("sidemodule");
+    meson_install.addArgs(&.{
         "install",
         "-C",
         builddir,
     });
-    return &tool_run.step;
-}
+    // => zig-out/bin/sidemodule.dll
 
-pub fn buildNative(b: *std.Build) *std.Build.Step {
-    const builddir = "build_native";
-    const meson_setup = mesonSetupNative(b, builddir, b.path("zig-out").getPath(b));
-    const meson_build = mesonBUild(b, builddir);
-    meson_build.dependOn(meson_setup);
-    return meson_build;
+    const setup_dir = b.path(b.fmt("sidemodule/{s}", .{builddir})).getPath(b);
+    // std.debug.print("mesonWasm => {s}\n", .{setup_dir});
+    if (std.fs.openDirAbsolute(setup_dir, .{})) |*dir| {
+        @constCast(dir).close();
+    } else |_| {
+        const prefix = b.path("zig-out").getPath(b);
+        const meson_setup = b.addSystemCommand(&.{"meson"});
+        meson_setup.cwd = b.path("sidemodule");
+        meson_setup.addArgs(&.{
+            "setup",
+            builddir,
+            "--prefix",
+            prefix,
+            // "--reconfigure",
+        });
+        meson_install.step.dependOn(&meson_setup.step);
+    }
+
+    return &meson_install.step;
 }
