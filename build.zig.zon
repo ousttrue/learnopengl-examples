@@ -31,8 +31,8 @@
             .hash = "12207dbaa9d2e7d1f9cd0f9b363773b2110fe1147743b2e684e2590488900ba09c79",
         },
         .@"ozz-animation" = .{
-            .url = "git+https://github.com/ousttrue/ozz-animation.git#522e1f716f0a8b8c7351ff8e9bc8e70acf30ea89",
-            .hash = "1220ab1202ca9819ed119a856ec5b772e5cf218d57fe3ccacc0cb947ecf6bbf081e8",
+            .url = "git+https://github.com/ousttrue/ozz-animation.git#507dc910a2abe3509d86906453ce7339786ccce6",
+            .hash = "1220fa89204e1dd36172d37a891fa624a6895ce2d13c17d7f5c57efef8482ea642b3",
         },
     },
     .paths = .{

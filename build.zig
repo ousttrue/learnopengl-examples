@@ -17,7 +17,7 @@ const WASM_ARGS_DEBUG = [_][]const u8{
 };
 const WASM_ARGS_DYNAMIC = [_][]const u8{
     "-sMAIN_MODULE=1",
-    "zig-out/web/sidemodule.wasm",
+    "zig-out/web/ozz-animation.wasm",
     "-sERROR_ON_UNDEFINED_SYMBOLS=0",
 };
 
@@ -26,19 +26,18 @@ pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{});
     const deps = Deps.init(b, target, optimize);
 
+    const ozz = b.dependency("ozz-animation", .{ .target = target, .optimize = optimize });
+    const wf = ozz.namedWriteFiles("meson_build");
+    const install = b.addInstallDirectory(.{
+        .install_dir = .{ .prefix = void{} },
+        .install_subdir = "",
+        .source_dir = wf.getDirectory(),
+    });
     if (target.result.isWasm()) {
         const dep_emsdk = b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{});
 
-        const side_wasm = try sidemodule.mesonWasm(b, optimize, dep_emsdk);
-        buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
+        buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, &install.step);
     } else {
-        const ozz = b.dependency("ozz-animation", .{});
-        const wf = ozz.namedWriteFiles("meson_build");
-        const install = b.addInstallDirectory(.{
-            .install_dir = .{ .prefix = void{} },
-            .install_subdir = "",
-            .source_dir = wf.getDirectory(),
-        });
         buildNative(b, target, optimize, &deps, &examples.all_examples, &install.step);
     }
 }
@@ -88,7 +87,12 @@ fn buildWasm(
         }
         if (example.sidemodule) {
             lib.step.dependOn(side_wasm);
-            // emcc main.c -s MAIN_MODULE=1 -o main.html -s "RUNTIME_LINKED_LIBS=['sidemodule.wasm']"
+
+            const ozz_wrap = b.addModule("ozz_wrap", .{
+                .root_source_file = b.path("sidemodule/ozz_wrap.zig"),
+            });
+            ozz_wrap.addImport("rowmath", deps.rowmath);
+            lib.root_module.addImport("ozz_wrap", ozz_wrap);
         }
 
         deps.inject_dependencies(lib);
@@ -182,20 +186,15 @@ fn buildNative(
                 exe.addLibraryPath(b.path("zig-out/lib"));
             }
             exe.linkLibCpp();
-            if (comptime @TypeOf(side_dll) == *std.Build.Step) {
-                exe.linkSystemLibrary("ozz-animation");
-                exe.step.dependOn(side_dll);
 
-                const ozz_wrap = b.addModule("ozz_wrap", .{
-                    .root_source_file = b.path("sidemodule/ozz_wrap.zig"),
-                });
-                ozz_wrap.addImport("rowmath", deps.rowmath);
-                exe.root_module.addImport("ozz_wrap", ozz_wrap);
-            } else {
-                exe.linkLibrary(side_dll);
-                exe.root_module.addImport("ozz_wrap", &side_dll.root_module);
-                side_dll.root_module.addImport("rowmath", deps.rowmath);
-            }
+            exe.linkSystemLibrary("ozz-animation");
+            exe.step.dependOn(side_dll);
+
+            const ozz_wrap = b.addModule("ozz_wrap", .{
+                .root_source_file = b.path("sidemodule/ozz_wrap.zig"),
+            });
+            ozz_wrap.addImport("rowmath", deps.rowmath);
+            exe.root_module.addImport("ozz_wrap", ozz_wrap);
         }
     }
 }

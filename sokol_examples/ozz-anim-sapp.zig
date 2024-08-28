@@ -80,13 +80,13 @@ export fn init() void {
 
     // start loading the skeleton and animation files
     _ = sokol.fetch.send(.{
-        .path = "ozz_anim_skeleton.ozz",
+        .path = "pab_skeleton.ozz",
         .callback = skeleton_data_loaded,
         .buffer = sokol.fetch.asRange(&skel_data_buffer),
     });
 
     _ = sokol.fetch.send(.{
-        .path = "ozz_anim_animation.ozz",
+        .path = "pab_crossarms.ozz",
         .callback = animation_data_loaded,
         .buffer = sokol.fetch.asRange(&anim_data_buffer),
     });

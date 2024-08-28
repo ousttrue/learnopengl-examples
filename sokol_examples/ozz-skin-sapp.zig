@@ -198,17 +198,17 @@ export fn init() void {
 
     // start loading data
     _ = sokol.fetch.send(.{
-        .path = "ozz_skin_skeleton.ozz",
+        .path = "pab_skeleton.ozz",
         .callback = skel_data_loaded,
         .buffer = sokol.fetch.asRange(&skel_io_buffer),
     });
     _ = sokol.fetch.send(.{
-        .path = "ozz_skin_animation.ozz",
+        .path = "pab_crossarms.ozz",
         .callback = anim_data_loaded,
         .buffer = sokol.fetch.asRange(&anim_io_buffer),
     });
     _ = sokol.fetch.send(.{
-        .path = "ozz_skin_mesh.ozz",
+        .path = "arnaud_mesh_4.ozz",
         .callback = mesh_data_loaded,
         .buffer = sokol.fetch.asRange(&mesh_io_buffer),
     });

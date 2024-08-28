@@ -312,21 +312,12 @@ pub const sokol_examples = [_]Example{
         .name = "ozz-anim",
         .root_source = "sokol_examples/ozz-anim-sapp.zig",
         .sidemodule = true,
-        .assets = &.{
-            .{ .from = "sokol_examples/data/ozz/ozz_anim_skeleton.ozz", .to = "ozz_anim_skeleton.ozz" },
-            .{ .from = "sokol_examples/data/ozz/ozz_anim_animation.ozz", .to = "ozz_anim_animation.ozz" },
-        },
     },
     .{
         .name = "ozz-skin",
         .root_source = "sokol_examples/ozz-skin-sapp.zig",
         .sidemodule = true,
         .shader = "sokol_examples/ozz-skin-sapp.glsl",
-        .assets = &.{
-            .{ .from = "sokol_examples/data/ozz/ozz_skin_skeleton.ozz", .to = "ozz_skin_skeleton.ozz" },
-            .{ .from = "sokol_examples/data/ozz/ozz_skin_animation.ozz", .to = "ozz_skin_animation.ozz" },
-            .{ .from = "sokol_examples/data/ozz/ozz_skin_mesh.ozz", .to = "ozz_skin_mesh.ozz" },
-        },
     },
     // - [ ] [ozz-storagebuffer](sokol_examples/ozz-storagebuffer-sapp.zig)
     // - [ ] [shdfeatures](sokol_examples/shdfeatures-sapp.zig)
