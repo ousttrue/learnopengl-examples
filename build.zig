@@ -98,7 +98,7 @@ fn buildWasm(
         deps.inject_dependencies(lib);
 
         // create a build step which invokes the Emscripten linker
-        const install = try emzig.emLinkStep(b, dep_emsdk, .{
+        const emcc = try emzig.emLinkCommand(b, dep_emsdk, .{
             .lib_main = lib,
             .target = target,
             .optimize = optimize,
@@ -111,11 +111,23 @@ fn buildWasm(
                 &(WASM_ARGS ++ WASM_ARGS_DEBUG)
             else
                 &WASM_ARGS,
-            .extra_after = if (example.sidemodule)
-                &WASM_ARGS_DYNAMIC
-            else
-                &.{},
         });
+
+        emcc.addArg("-o");
+        const out_file = emcc.addOutputFileArg(b.fmt("{s}.html", .{lib.name}));
+        if (example.sidemodule) {
+            for (WASM_ARGS_DYNAMIC) |arg| {
+                emcc.addArg(arg);
+            }
+        }
+
+        // the emcc linker creates 3 output files (.html, .wasm and .js)
+        const install = b.addInstallDirectory(.{
+            .source_dir = out_file.dirname(),
+            .install_dir = .prefix,
+            .install_subdir = "web",
+        });
+        install.step.dependOn(&emcc.step);
         b.getInstallStep().dependOn(&install.step);
 
         inline for (example.assets) |asset| {
