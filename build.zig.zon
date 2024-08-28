@@ -30,6 +30,10 @@
             .url = "git+https://github.com/ousttrue/emsdk-zig.git#29cbca572fa013c4daab21051ddb5e69b2b4c114",
             .hash = "12207dbaa9d2e7d1f9cd0f9b363773b2110fe1147743b2e684e2590488900ba09c79",
         },
+        .@"ozz-animation" = .{
+            .url = "git+https://github.com/ousttrue/ozz-animation.git#522e1f716f0a8b8c7351ff8e9bc8e70acf30ea89",
+            .hash = "1220ab1202ca9819ed119a856ec5b772e5cf218d57fe3ccacc0cb947ecf6bbf081e8",
+        },
     },
     .paths = .{
         "build.zig",

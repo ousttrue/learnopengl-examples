@@ -32,9 +32,14 @@ pub fn build(b: *std.Build) !void {
         const side_wasm = try sidemodule.mesonWasm(b, optimize, dep_emsdk);
         buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, side_wasm);
     } else {
-        // const side_dll = sidemodule.mesonNative(b);
-        const side_dll = sidemodule.mesonNative(b);
-        buildNative(b, target, optimize, &deps, &examples.all_examples, side_dll);
+        const ozz = b.dependency("ozz-animation", .{});
+        const wf = ozz.namedWriteFiles("meson_build");
+        const install = b.addInstallDirectory(.{
+            .install_dir = .{ .prefix = void{} },
+            .install_subdir = "",
+            .source_dir = wf.getDirectory(),
+        });
+        buildNative(b, target, optimize, &deps, &examples.all_examples, &install.step);
     }
 }
 
@@ -178,7 +183,7 @@ fn buildNative(
             }
             exe.linkLibCpp();
             if (comptime @TypeOf(side_dll) == *std.Build.Step) {
-                exe.linkSystemLibrary("sidemodule");
+                exe.linkSystemLibrary("ozz-animation");
                 exe.step.dependOn(side_dll);
 
                 const ozz_wrap = b.addModule("ozz_wrap", .{
