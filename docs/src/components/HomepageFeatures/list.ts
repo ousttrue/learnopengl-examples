@@ -1,4 +1,4 @@
-[
+export const list = [
   {
     "name": "Getting started",
     "list": [
@@ -362,4 +362,4 @@
       }
     ]
   }
-]
+];
