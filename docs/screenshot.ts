@@ -50,3 +50,4 @@ for (const group of examples) {
   }
 }
 
+process.exit(0)

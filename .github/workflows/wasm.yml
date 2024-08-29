@@ -52,6 +52,7 @@ jobs:
           npx playwright install --with-deps chromium
           npm start&
           npm run ss
+          echo "screenshot done"
           npm run build
       # deploy
       - name: Setup Pages
