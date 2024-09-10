@@ -6,9 +6,9 @@ const Deps = @import("deps.zig").Deps;
 
 const WASM_ARGS = [_][]const u8{
     // default 64MB
-    "-sSTACK_SIZE=128MB",
+    "-sSTACK_SIZE=256MB",
     // must STACK_SIZE < TOTAL_MEMORY
-    "-sTOTAL_MEMORY=512MB",
+    "-sTOTAL_MEMORY=1024MB",
     "-sUSE_OFFSET_CONVERTER=1",
     "-sSTB_IMAGE=1",
     "-Wno-limited-postlink-optimizations",
@@ -38,7 +38,7 @@ pub fn build(b: *std.Build) !void {
     if (target.result.isWasm()) {
         const dep_emsdk = b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{});
 
-        buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, &wf.step);
+        buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, &install.step);
     } else {
         buildNative(b, target, optimize, &deps, &examples.all_examples, &install.step);
     }
@@ -92,6 +92,7 @@ fn buildWasm(
         }
 
         deps.inject_dependencies(b, lib);
+        lib.addSystemIncludePath(emsdk_incl_path);
 
         // create a build step which invokes the Emscripten linker
         const emcc = try emzig.emLinkCommand(b, dep_emsdk, .{
