@@ -18,7 +18,7 @@ const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const shader = @import("ozz-skin-sapp.glsl.zig");
-const ozz_wrap = @import("ozz_wrap");
+const ozz_wrap = @import("ozz_wrap.zig");
 const simgui = sokol.imgui;
 const ig = @import("cimgui");
 const rowmath = @import("rowmath");
@@ -48,7 +48,7 @@ const Instance = struct {
 };
 
 const state = struct {
-    var ozz: *anyopaque = undefined;
+    var ozz: ?*ozz_wrap.ozz_t = null;
 
     var pass_action = sg.PassAction{};
     var pip = sg.Pipeline{};
@@ -297,7 +297,7 @@ fn update_joint_texture() void {
     const start_time = sokol.time.now();
     ozz_wrap.OZZ_update_joints(
         state.ozz,
-        state.num_instances,
+        @intCast(state.num_instances),
         @floatCast(state.time.abs_time_sec),
         &joint_upload_buffer[0][0][0][0],
         MAX_JOINTS,
@@ -579,16 +579,16 @@ export fn anim_data_loaded(response: [*c]const sokol.fetch.Response) void {
 export fn mesh_data_loaded(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
         std.debug.print("mesh_data_loaded {} bytes\n", .{response.*.data.size});
-        var vertices: *anyopaque = undefined;
-        var indices: *anyopaque = undefined;
+        var vertices: [*c]ozz_wrap.vertex_t = undefined;
+        var indices: [*c]u16 = undefined;
         if (ozz_wrap.OZZ_load_mesh(
             state.ozz,
             response.*.data.ptr,
             response.*.data.size,
             &vertices,
-            &state.num_vertices,
+            @ptrCast(&state.num_vertices),
             &indices,
-            &state.num_triangle_indices,
+            @ptrCast(&state.num_triangle_indices),
         )) {
             defer ozz_wrap.OZZ_free(vertices);
             defer ozz_wrap.OZZ_free(indices);

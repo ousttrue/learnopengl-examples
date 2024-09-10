@@ -3,10 +3,10 @@ const builtin = @import("builtin");
 const emzig = @import("emsdk-zig");
 const examples = @import("examples.zig");
 const Deps = @import("deps.zig").Deps;
-const sidemodule = @import("sidemodule/sidemodule.zig");
 
 const WASM_ARGS = [_][]const u8{
     "-sTOTAL_MEMORY=200MB",
+    "-sSTACK_SIZE=256MB",
     "-sUSE_OFFSET_CONVERTER=1",
     "-sSTB_IMAGE=1",
     "-Wno-limited-postlink-optimizations",
@@ -26,13 +26,13 @@ pub fn build(b: *std.Build) !void {
     const optimize = b.standardOptimizeOption(.{});
     const deps = Deps.init(b, target, optimize);
 
-    const ozz = b.dependency("ozz-animation", .{ .target = target, .optimize = optimize });
-    const wf = ozz.namedWriteFiles("meson_build");
+    const wf = deps.dep_ozz.namedWriteFiles("meson_build");
     const install = b.addInstallDirectory(.{
         .install_dir = .{ .prefix = void{} },
         .install_subdir = "",
         .source_dir = wf.getDirectory(),
     });
+
     if (target.result.isWasm()) {
         const dep_emsdk = b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{});
 
@@ -87,15 +87,9 @@ fn buildWasm(
         }
         if (example.sidemodule) {
             lib.step.dependOn(side_wasm);
-
-            const ozz_wrap = b.addModule("ozz_wrap", .{
-                .root_source_file = b.path("sidemodule/ozz_wrap.zig"),
-            });
-            ozz_wrap.addImport("rowmath", deps.rowmath);
-            lib.root_module.addImport("ozz_wrap", ozz_wrap);
         }
 
-        deps.inject_dependencies(lib);
+        deps.inject_dependencies(b, lib);
 
         // create a build step which invokes the Emscripten linker
         const emcc = try emzig.emLinkCommand(b, dep_emsdk, .{
@@ -167,7 +161,7 @@ fn buildNative(
         }
 
         exe.addCSourceFile(.{ .file = b.path("c/stb_image.c") });
-        deps.inject_dependencies(exe);
+        deps.inject_dependencies(b, exe);
         for (example.c_includes) |include| {
             exe.addIncludePath(b.path(include));
         }
@@ -201,12 +195,6 @@ fn buildNative(
 
             exe.linkSystemLibrary("ozz-animation");
             exe.step.dependOn(side_dll);
-
-            const ozz_wrap = b.addModule("ozz_wrap", .{
-                .root_source_file = b.path("sidemodule/ozz_wrap.zig"),
-            });
-            ozz_wrap.addImport("rowmath", deps.rowmath);
-            exe.root_module.addImport("ozz_wrap", ozz_wrap);
         }
     }
 }

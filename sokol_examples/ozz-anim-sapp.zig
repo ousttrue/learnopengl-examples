@@ -9,6 +9,7 @@
 const std = @import("std");
 const rowmath = @import("rowmath");
 const Vec3 = rowmath.Vec3;
+const Mat4 = rowmath.Mat4;
 const MouseCamera = rowmath.MouseCamera;
 const InputState = rowmath.InputState;
 const sokol = @import("sokol");
@@ -16,10 +17,10 @@ const sg = sokol.gfx;
 const simgui = sokol.imgui;
 const ig = @import("cimgui");
 
-const ozz_wrap = @import("ozz_wrap");
+const ozz_wrap = @import("ozz_wrap.zig");
 
 const state = struct {
-    var ozz: *anyopaque = undefined;
+    var ozz: ?*ozz_wrap.ozz_t = null;
     const loaded = struct {
         var skeleton = false;
         var animation = false;
@@ -125,7 +126,9 @@ export fn frame() void {
         }
 
         ozz_wrap.OZZ_eval_animation(state.ozz, state.time.anim_ratio);
-        draw_skeleton(state.ozz);
+        if (state.ozz) |ozz| {
+            draw_skeleton(ozz);
+        }
     }
 
     sg.beginPass(.{
@@ -202,13 +205,13 @@ fn draw_line(v0: Vec3, v1: Vec3) void {
 }
 
 // this draws a wireframe 3d rhombus between the current and parent joints
-fn draw_joint(ozz: *anyopaque, joint_index: usize, parent_joint_index: u16) void {
+fn draw_joint(matrices: [*]const Mat4, joint_index: usize, parent_joint_index: u16) void {
     if (parent_joint_index == std.math.maxInt(u16)) {
         return;
     }
 
-    const m0 = ozz_wrap.OZZ_model_matrices(ozz, joint_index).*;
-    const m1 = ozz_wrap.OZZ_model_matrices(ozz, @intCast(parent_joint_index)).*;
+    const m0 = matrices[joint_index];
+    const m1 = matrices[parent_joint_index];
 
     const p0 = m0.row3().toVec3();
     const p1 = m1.row3().toVec3();
@@ -237,7 +240,7 @@ fn draw_joint(ozz: *anyopaque, joint_index: usize, parent_joint_index: u16) void
     draw_line(p5, p2);
 }
 
-fn draw_skeleton(ozz: *anyopaque) void {
+fn draw_skeleton(ozz: *ozz_wrap.ozz_t) void {
     if (!state.loaded.skeleton) {
         return;
     }
@@ -261,11 +264,12 @@ fn draw_skeleton(ozz: *anyopaque) void {
     sokol.gl.v3f(0, 0, 0);
     sokol.gl.v3f(0, 0, 1);
 
+    const matrices: [*]const Mat4 = @ptrCast(ozz_wrap.OZZ_model_matrices(ozz));
     for (0..num_joints) |joint_index| {
         if (joint_index == std.math.maxInt(u16)) {
             continue;
         }
-        draw_joint(ozz, joint_index, joint_parents[joint_index]);
+        draw_joint(matrices, joint_index, joint_parents[joint_index]);
     }
     sokol.gl.end();
 }
