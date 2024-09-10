@@ -35,22 +35,25 @@ jobs:
       - uses: goto-bus-stop/setup-zig@v2
         with:
           version: 0.13.0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
       - name: build Wasm
         run: |
           sudo apt install meson ninja-build
           zig build --summary all -Dtarget=wasm32-emscripten -Doptimize=ReleaseSmall
           find zig-out
           cp -rp zig-out/web docs/static/wasm
-      # docusaurus
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Install dependencies
+      - name: start docusaurus
         run: |
           cd docs
           npm install
-          npx playwright install --with-deps chromium
           npm start&
+      # docusaurus
+      - name: playwright
+        run: |
+          cd docs
+          npx playwright install --with-deps chromium
           npm run ss
           echo "screenshot done"
           npm run build
