@@ -5,8 +5,10 @@ const examples = @import("examples.zig");
 const Deps = @import("deps.zig").Deps;
 
 const WASM_ARGS = [_][]const u8{
-    "-sTOTAL_MEMORY=200MB",
-    "-sSTACK_SIZE=256MB",
+    // default 64MB
+    "-sSTACK_SIZE=128MB",
+    // must STACK_SIZE < TOTAL_MEMORY
+    "-sTOTAL_MEMORY=512MB",
     "-sUSE_OFFSET_CONVERTER=1",
     "-sSTB_IMAGE=1",
     "-Wno-limited-postlink-optimizations",
