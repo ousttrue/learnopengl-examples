@@ -1,18 +1,30 @@
-export const list = [
+export type ArticleType = {
+  title: string,
+  url: string,
+  samples: string[],
+};
+
+export type CategoryType = {
+  name: string,
+  url?: string,
+  articles: ArticleType[],
+};
+
+export const CATEGORIES: CategoryType[] = [
   {
     "name": "Getting started",
-    "list": [
+    "articles": [
       {
         "title": "Hello Window",
         "url": "https://learnopengl.com/Getting-started/Hello-Window",
-        "sections": [
+        "samples": [
           "1-3-1"
         ]
       },
       {
         "title": "Hello Triangle",
         "url": "https://learnopengl.com/Getting-started/Hello-Triangle",
-        "sections": [
+        "samples": [
           "1-4-1",
           "1-4-2",
           "1-4-3"
@@ -21,7 +33,7 @@ export const list = [
       {
         "title": "Shaders",
         "url": "https://learnopengl.com/Getting-started/Shaders",
-        "sections": [
+        "samples": [
           "1-5-1",
           "1-5-2",
           "1-5-3"
@@ -30,7 +42,7 @@ export const list = [
       {
         "title": "Textures",
         "url": "https://learnopengl.com/Getting-started/Textures",
-        "sections": [
+        "samples": [
           "1-6-1",
           "1-6-2",
           "1-6-3"
@@ -39,7 +51,7 @@ export const list = [
       {
         "title": "Transformations",
         "url": "https://learnopengl.com/Getting-started/Transformations",
-        "sections": [
+        "samples": [
           "1-7-1",
           "1-7-2"
         ]
@@ -47,7 +59,7 @@ export const list = [
       {
         "title": "Coordinate Systems",
         "url": "https://learnopengl.com/Getting-started/Coordinate-Systems",
-        "sections": [
+        "samples": [
           "1-8-1",
           "1-8-2",
           "1-8-3"
@@ -56,7 +68,7 @@ export const list = [
       {
         "title": "Camera",
         "url": "https://learnopengl.com/Getting-started/Camera",
-        "sections": [
+        "samples": [
           "1-9-1",
           "1-9-2",
           "1-9-3"
@@ -66,18 +78,18 @@ export const list = [
   },
   {
     "name": "Lighting",
-    "list": [
+    "articles": [
       {
         "title": "Colors",
         "url": "https://learnopengl.com/Lighting/Colors",
-        "sections": [
+        "samples": [
           "2-1-1"
         ]
       },
       {
         "title": "Basic Lighting",
         "url": "https://learnopengl.com/Lighting/Basic-Lighting",
-        "sections": [
+        "samples": [
           "2-2-1",
           "2-2-2",
           "2-2-3"
@@ -86,7 +98,7 @@ export const list = [
       {
         "title": "Materials",
         "url": "https://learnopengl.com/Lighting/Materials",
-        "sections": [
+        "samples": [
           "2-3-1",
           "2-3-1",
           "2-3-3"
@@ -95,7 +107,7 @@ export const list = [
       {
         "title": "Lighting Maps",
         "url": "https://learnopengl.com/Lighting/Lighting-maps",
-        "sections": [
+        "samples": [
           "2-4-1",
           "2-4-2"
         ]
@@ -103,7 +115,7 @@ export const list = [
       {
         "title": "Light Casters",
         "url": "https://learnopengl.com/Lighting/Light-casters",
-        "sections": [
+        "samples": [
           "2-5-1",
           "2-5-2",
           "2-5-3",
@@ -113,7 +125,7 @@ export const list = [
       {
         "title": "Multiple Lights",
         "url": "https://learnopengl.com/Lighting/Multiple-lights",
-        "sections": [
+        "samples": [
           "2-6-1"
         ]
       }
@@ -121,11 +133,11 @@ export const list = [
   },
   {
     "name": "Model Loading",
-    "list": [
+    "articles": [
       {
         "title": "Model",
         "url": "https://learnopengl.com/Model-Loading/Model",
-        "sections": [
+        "samples": [
           "3-1-1",
           "3-1-2"
         ]
@@ -134,11 +146,11 @@ export const list = [
   },
   {
     "name": "Advanced OpenGL",
-    "list": [
+    "articles": [
       {
         "title": "Depth Testing",
         "url": "https://learnopengl.com/Advanced-OpenGL/Depth-testing",
-        "sections": [
+        "samples": [
           "4-1-1",
           "4-1-2",
           "4-1-3",
@@ -148,14 +160,14 @@ export const list = [
       {
         "title": "Stencil Testing",
         "url": "https://learnopengl.com/Advanced-OpenGL/Stencil-testing",
-        "sections": [
+        "samples": [
           "4-2-1"
         ]
       },
       {
         "title": "Blending",
         "url": "https://learnopengl.com/Advanced-OpenGL/Blending",
-        "sections": [
+        "samples": [
           "4-3-1",
           "4-3-2",
           "4-3-3",
@@ -165,14 +177,14 @@ export const list = [
       {
         "title": "Face Culling",
         "url": "https://learnopengl.com/Advanced-OpenGL/Face-culling",
-        "sections": [
+        "samples": [
           "4-4-1"
         ]
       },
       {
         "title": "Framebuffers",
         "url": "https://learnopengl.com/Advanced-OpenGL/Framebuffers",
-        "sections": [
+        "samples": [
           "4-5-1",
           "4-5-2",
           "4-5-3",
@@ -184,7 +196,7 @@ export const list = [
       {
         "title": "Cubemaps ",
         "url": "https://learnopengl.com/Advanced-OpenGL/Cubemaps",
-        "sections": [
+        "samples": [
           "4-6-1",
           "4-6-2",
           "4-6-3",
@@ -195,7 +207,7 @@ export const list = [
       {
         "title": "Advanced GLSL",
         "url": "https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL",
-        "sections": [
+        "samples": [
           "4-8-1",
           "4-8-2",
           "4-8-3",
@@ -205,7 +217,7 @@ export const list = [
       {
         "title": "Geometry Shader",
         "url": "https://learnopengl.com/Advanced-OpenGL/Geometry-Shader",
-        "sections": [
+        "samples": [
           "4-9-1",
           "4-9-2",
           "4-9-3",
@@ -215,7 +227,7 @@ export const list = [
       {
         "title": "Instancing",
         "url": "https://learnopengl.com/Advanced-OpenGL/Instancing",
-        "sections": [
+        "samples": [
           "4-10-1",
           "4-10-2",
           "4-10-3",
@@ -225,7 +237,7 @@ export const list = [
       {
         "title": "Anti Aliasing",
         "url": "https://learnopengl.com/Advanced-OpenGL/Anti-Aliasing",
-        "sections": [
+        "samples": [
           "4-11-1",
           "4-11-2",
           "4-11-3",
@@ -235,21 +247,21 @@ export const list = [
       {
         "title": "Advanced Lighting",
         "url": "https://learnopengl.com/Advanced-Lighting/Advanced-Lighting",
-        "sections": [
+        "samples": [
           "5-1-1"
         ]
       },
       {
         "title": "Gamma",
         "url": "https://learnopengl.com/Advanced-Lighting/Gamma-Correction",
-        "sections": [
+        "samples": [
           "5-2-1"
         ]
       },
       {
         "title": "Shadow Mapping",
         "url": "https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping",
-        "sections": [
+        "samples": [
           "5-3-1",
           "5-3-2",
           "5-3-3"
@@ -258,7 +270,7 @@ export const list = [
       {
         "title": "Point Shadows",
         "url": "https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows",
-        "sections": [
+        "samples": [
           "5-4-1",
           "5-4-2",
           "5-4-3"
@@ -267,7 +279,7 @@ export const list = [
       {
         "title": "Normal Mapping",
         "url": "https://learnopengl.com/Advanced-Lighting/Normal-Mapping",
-        "sections": [
+        "samples": [
           "5-5-1",
           "5-5-2",
           "5-5-3"
@@ -277,11 +289,11 @@ export const list = [
   },
   {
     "name": "SokolExamples",
-    "list": [
+    "articles": [
       {
         "title": "Sokol WebGL",
         "url": "https://floooh.github.io/sokol-html5/",
-        "sections": [
+        "samples": [
           "clear",
           "triangle",
           "triangle-bufferless",
@@ -348,18 +360,126 @@ export const list = [
           "loadpng",
           "plmpeg",
           "cgltf",
-          "ozz-anim",
-          "ozz-skin",
-          "ozz-storagebuffer",
           "shdfeatures",
           "spine-simple",
           "spine-inspector",
           "spine-layers",
           "spine-skinsets",
           "spine-switch-skinsets",
-          "spine-contexts"
+          "spine-contexts",
+          "ozz-anim",
+          "ozz-skin",
+          "ozz-storagebuffer",
         ]
       }
     ]
+  },
+  {
+    name: "ozz-animation",
+    url: "https://guillaumeblanc.github.io/ozz-animation/",
+    articles: [
+      {
+        title: "playback",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/playback/",
+        samples: [
+        ],
+      },
+      {
+        title: "attach",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/attach/",
+        samples: [
+        ],
+      },
+      {
+        title: "blend",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/blend/",
+        samples: [
+        ],
+      },
+      {
+        title: "partial_blend",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/partial_blend/",
+        samples: [
+        ],
+      },
+      {
+        title: "additive",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/additive/",
+        samples: [
+        ],
+      },
+      {
+        title: "baked",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/baked/",
+        samples: [
+        ],
+      },
+      {
+        title: "user_channel",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/user_channel/",
+        samples: [
+        ],
+      },
+      {
+        title: "motion_extraction",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/motion_extraction/",
+        samples: [
+        ],
+      },
+      {
+        title: "motion_playback",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/motion_playback/",
+        samples: [
+        ],
+      },
+      {
+        title: "motion_blend",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/motion_blend/",
+        samples: [
+        ],
+      },
+      {
+        title: "optimize",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/optimize/",
+        samples: [
+        ],
+      },
+      {
+        title: "millipede",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/millipede/",
+        samples: [
+        ],
+      },
+      {
+        title: "two_bone_ik",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/two_bone_ik/",
+        samples: [
+        ],
+      },
+      {
+        title: "look_at",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/look_at/",
+        samples: [
+        ],
+      },
+      {
+        title: "foot_ik",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/foot_ik/",
+        samples: [
+        ],
+      },
+      {
+        title: "skinning",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/skinning/",
+        samples: [
+        ],
+      },
+      {
+        title: "multithread",
+        url: "https://guillaumeblanc.github.io/ozz-animation/samples/multithread/",
+        samples: [
+        ],
+      },
+    ],
   }
 ];

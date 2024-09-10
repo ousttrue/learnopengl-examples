@@ -1,66 +1,78 @@
-import clsx from 'clsx';
+import React from "react";
 import Heading from '@theme/Heading';
-import styles from './styles.module.css';
-import { list as LearnOpenGL } from './list';
+import {
+  CATEGORIES,
+  type ArticleType,
+  type CategoryType,
+} from './data';
 import Link from '@docusaurus/Link';
 import ThemedImage from '@theme/ThemedImage';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
 
-function Item({ name }: { name: string }) {
-  return (
-
-    <div className={clsx('col col--4')}>
-      <div className="text--center padding-horiz--md">
-        <Heading as="h3">{name}</Heading>
-        <p>
-          <Link
-            target="_blank"
-            to={useBaseUrl(`/wasm/${name}.html`)}>
-            <ThemedImage
-              sources={{
-                light: useBaseUrl(`/wasm/${name}.jpg`),
-                dark: useBaseUrl(`/wasm/${name}.jpg`),
-              }} />
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
+// a sample. wasm thumbnail 
+function Sample({ name }: { name: string }) {
+  return (<span className="sample">
+    <p>
+      <Link
+        target="_blank"
+        to={useBaseUrl(`/wasm/${name}.html`)}>
+        <h4>{name}</h4>
+        <figure>
+          <img src={useBaseUrl(`/wasm/${name}.jpg`)} />
+        </figure>
+      </Link>
+    </p>
+  </span>);
 }
 
-function Feature({ title, url, sections }) {
+function OpenClose({ children }) {
+  const [open, setOpen] = React.useState(false)
+  const onClick = () => setOpen((prev) => !prev)
   return (
     <>
-      {sections.map((name, idx) => (
-        <Item key={idx} name={name} />
-      ))
-      }
+      <button onClick={onClick} style={{ cursor: "pointer" }}>{open ? 'close' : 'open'}</button>
+      <div className={`collapse ${open ? 'visible' : 'hidden'}`}>{children}</div>
     </>
-  );
+  )
 }
 
-function Group({ name, list }) {
+// article. url
+function Article(props: ArticleType) {
+  return (<>
+    <h3><a href={props.url}>{props.title}</a></h3>
+    <OpenClose>
+      <div className="article">
+        {props.samples.map((name, key) => (
+          <Sample key={key} name={name} />
+        ))
+        }
+      </div>
+    </OpenClose>
+  </>);
+}
+
+// category
+function Category(props: CategoryType) {
   return (
     <>
-      {list.map((props, idx) => (
-        <Feature key={idx} {...props} />
-      ))
-      }
+      <h2>{props.name}</h2>
+      <div className="category">
+        {props.articles.map((props, key) => (
+          <Article key={key} {...props} />
+        ))
+        }
+      </div>
     </>
   );
 }
 
 export default function HomepageFeatures(): JSX.Element {
   return (
-    <section className={styles.features}>
-      <div className="container">
-        <div className="row">
-          {LearnOpenGL.map((props, idx) => (
-            <Group key={idx} {...props} />
-          ))}
-        </div>
-      </div>
+    <section>
+      {CATEGORIES.map((props, key) => (
+        <Category key={key} {...props} />
+      ))}
     </section>
   );
 }

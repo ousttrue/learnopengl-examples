@@ -1,20 +1,20 @@
 import { chromium } from '@playwright/test';
-import { list as examples } from './src/components/HomepageFeatures/list';
+import {
+  CATEGORIES,
+} from './src/components/HomepageFeatures/data';
 import fs from 'node:fs';
 
 let sum = 0;
-for (const group of examples) {
-  for (const article of group.list) {
-    for (const name of article.sections) {
-      ++sum;
-    }
+for (const category of CATEGORIES) {
+  for (const article of category.articles) {
+    sum += article.samples.length;
   }
 }
 
 let i = 1;
-for (const group of examples) {
-  for (const article of group.list) {
-    for (const name of article.sections) {
+for (const category of CATEGORIES) {
+  for (const article of category.articles) {
+    for (const name of article.samples) {
       const url = `http://localhost:3000/learnopengl-examples/wasm/${name}.html`
       console.log(`[${i}/${sum}]`, url);
       ++i;
