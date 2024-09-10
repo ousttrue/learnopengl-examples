@@ -38,7 +38,7 @@ pub fn build(b: *std.Build) !void {
     if (target.result.isWasm()) {
         const dep_emsdk = b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{});
 
-        buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, &install.step);
+        buildWasm(b, target, optimize, &deps, &examples.all_examples, dep_emsdk, &wf.step);
     } else {
         buildNative(b, target, optimize, &deps, &examples.all_examples, &install.step);
     }

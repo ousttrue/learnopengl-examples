@@ -76,6 +76,8 @@ pub const Deps = struct {
         compile.root_module.addImport("lopgl", self.lopgl);
         compile.root_module.addImport("dbgui", self.dbgui);
         compile.root_module.addImport("rowmath", self.rowmath);
-        compile.addIncludePath(self.dep_ozz.namedWriteFiles("meson_build").getDirectory().path(b, "include"));
+
+        const wf = self.dep_ozz.namedWriteFiles("meson_build");
+        compile.addIncludePath(wf.getDirectory().path(b, "include"));
     }
 };
