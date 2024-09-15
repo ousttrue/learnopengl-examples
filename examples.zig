@@ -167,15 +167,6 @@ pub const learnopengl_examples = [_]Example{
 
 pub const sokol_examples = [_]Example{
     .{
-        .name = "orbit-camera",
-        .root_source = "src/orbit-camera.zig",
-    },
-    .{
-        .name = "imgui-sample",
-        .root_source = "src/imgui-sample.zig",
-    },
-    //
-    .{
         .name = "clear",
         .root_source = "sokol_examples/clear-sapp.zig",
     },

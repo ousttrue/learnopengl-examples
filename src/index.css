@@ -1,0 +1,44 @@
+:root {
+  --bg_color: gray;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  background-color: var(--bg_color);
+  display: flex;
+  flex-direction: column;
+}
+
+.items {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  gap: 1em;
+
+  figure {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.item {
+  border: solid 4px black;
+  width: 150px;
+  height: 150px;
+}
+
+.category {
+  border-color: red;
+}
+
+.article {
+  border-color: green;
+}
