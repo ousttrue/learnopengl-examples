@@ -1,7 +1,7 @@
 import { chromium } from '@playwright/test';
 import {
   CATEGORIES,
-} from './src/components/HomepageFeatures/data';
+} from './src/data';
 import fs from 'node:fs';
 
 let sum = 0;
@@ -15,7 +15,7 @@ let i = 1;
 for (const category of CATEGORIES) {
   for (const article of category.articles) {
     for (const name of article.samples) {
-      const url = `http://localhost:3000/learnopengl-examples/wasm/${name}.html`
+      const url = `http://localhost:5173/learnopengl-examples/wasm/${name}.html`
       console.log(`[${i}/${sum}]`, url);
       ++i;
 
