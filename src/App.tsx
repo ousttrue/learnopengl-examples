@@ -1,11 +1,22 @@
 import { CATEGORIES, type CategoryType, type ArticleType } from './data.ts';
 
+import config from '../vite.config.ts';
+
+function resolve(path: string): string {
+  if (config.base) {
+    return config.base + path;
+  }
+  else {
+    return path;
+  }
+}
+
 function Item(props: { name: string }) {
   return (<div className="item">
-    <a href={`/wasm/${props.name}.html`}>
+    <a href={resolve(`/wasm/${props.name}.html`)}>
       {props.name}
       <figure>
-        <img width={150} height={78} src={`/wasm/${props.name}.jpg`} />
+        <img width={150} height={78} src={resolve(`/wasm/${props.name}.jpg`)} />
       </figure>
     </a>
   </div>);
