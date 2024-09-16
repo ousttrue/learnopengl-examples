@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import config from './vite.config.ts';
 
 const host = 'http://localhost:5173';
+const dst = 'public/';
 
 function resolve(src: string): string {
   if (config.base) {
@@ -39,14 +40,14 @@ for (const category of CATEGORIES) {
       try {
         await page.goto(url);
         await page.waitForLoadState('networkidle')
-        await page.screenshot({ path: `static/wasm/${name}.jpg` });
+        await page.screenshot({ path: `${dst}/wasm/${name}.jpg` });
         await browser.close();
       } catch (ex) {
         console.error(ex);
       }
 
       // inject html to ogp
-      const path = `static/wasm/${name}.html`
+      const path = `${dst}/wasm/${name}.html`
       if (fs.existsSync(path)) {
         let src = fs.readFileSync(path, 'utf8');
         fs.writeFileSync(path, src.replace('<meta charset=utf-8>', `<meta charset=utf-8>
