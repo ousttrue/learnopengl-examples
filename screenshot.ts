@@ -3,6 +3,18 @@ import {
   CATEGORIES,
 } from './src/data';
 import fs from 'node:fs';
+import config from './vite.config.ts';
+
+const host = 'http://localhost:5173';
+
+function resolve(path: string): string {
+  if (config.base) {
+    return config.base + path;
+  }
+  else {
+    return path;
+  }
+}
 
 let sum = 0;
 for (const category of CATEGORIES) {
@@ -15,7 +27,7 @@ let i = 1;
 for (const category of CATEGORIES) {
   for (const article of category.articles) {
     for (const name of article.samples) {
-      const url = `http://localhost:5173/learnopengl-examples/wasm/${name}.html`
+      const url = host + resolve('wasm/${name}.html')
       console.log(`[${i}/${sum}]`, url);
       ++i;
 
