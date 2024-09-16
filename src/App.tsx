@@ -1,22 +1,12 @@
 import { CATEGORIES, type CategoryType, type ArticleType } from './data.ts';
-
-import config from '../vite.config.ts';
-
-function resolve(path: string): string {
-  if (config.base) {
-    return config.base + path;
-  }
-  else {
-    return path;
-  }
-}
+const BASE_URL = import.meta.env.BASE_URL;
 
 function Item(props: { name: string }) {
   return (<div className="item">
-    <a href={resolve(`/wasm/${props.name}.html`)}>
+    <a href={`${BASE_URL}/wasm/${props.name}.html`}>
       {props.name}
       <figure>
-        <img width={150} height={78} src={resolve(`/wasm/${props.name}.jpg`)} />
+        <img width={150} height={78} src={`${BASE_URL}/wasm/${props.name}.jpg`} />
       </figure>
     </a>
   </div>);

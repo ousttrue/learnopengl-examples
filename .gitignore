@@ -14,5 +14,6 @@ zig-out/
 *.glsl.zig
 Makefile
 
-node_modules
-dist
+node_modules/
+/dist/
+/static/

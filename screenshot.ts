@@ -7,12 +7,12 @@ import config from './vite.config.ts';
 
 const host = 'http://localhost:5173';
 
-function resolve(path: string): string {
+function resolve(src: string): string {
   if (config.base) {
-    return config.base + path;
+    return config.base + src;
   }
   else {
-    return path;
+    return src;
   }
 }
 
@@ -27,7 +27,7 @@ let i = 1;
 for (const category of CATEGORIES) {
   for (const article of category.articles) {
     for (const name of article.samples) {
-      const url = host + resolve('wasm/${name}.html')
+      const url = host + resolve(`wasm/${name}.html`)
       console.log(`[${i}/${sum}]`, url);
       ++i;
 
