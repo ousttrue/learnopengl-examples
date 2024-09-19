@@ -8,6 +8,7 @@ pub const Example = struct {
     root_source: []const u8,
     shader: ?[]const u8 = null,
     c_includes: []const []const u8 = &.{},
+    c_sources: []const []const u8 = &.{},
     sidemodule: bool = false,
     assets: []const Asset = &.{},
 };
@@ -291,6 +292,9 @@ pub const sokol_examples = [_]Example{
         .shader = "sokol_examples/cgltf-sapp.glsl",
         .c_includes = &.{
             "sokol_examples/libs/cgltf",
+        },
+        .c_sources = &.{
+            "sokol_examples/cgltf.c",
         },
         .assets = &.{
             .{

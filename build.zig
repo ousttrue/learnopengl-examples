@@ -168,6 +168,11 @@ fn buildNative(
         for (example.c_includes) |include| {
             exe.addIncludePath(b.path(include));
         }
+        if (example.c_sources.len > 0) {
+            exe.addCSourceFiles(.{
+                .files = example.c_sources,
+            });
+        }
 
         const install = b.addInstallArtifact(exe, .{});
         b.getInstallStep().dependOn(&install.step);
