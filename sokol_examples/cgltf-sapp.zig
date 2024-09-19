@@ -13,6 +13,8 @@ const dbgui = @import("dbgui");
 const shader = @import("cgltf-sapp.glsl.zig");
 const rowmath = @import("rowmath");
 const Mat4 = rowmath.Mat4;
+const Quat = rowmath.Quat;
+const Vec3 = rowmath.Vec3;
 // #include "basisu/sokol_basisu.h"
 const c = @cImport({
     @cInclude("cgltf.h");
@@ -145,12 +147,12 @@ const image_sampler_creation_params_t = struct {
 };
 
 // pipeline cache helper struct to avoid duplicate pipeline-state-objects
-// typedef struct {
-//     sg_vertex_layout_state layout;
-//     sg_primitive_type prim_type;
-//     sg_index_type index_type;
-//     bool alpha;
-// } pipeline_cache_params_t;
+const pipeline_cache_params_t = struct {
+    layout: sg.VertexLayoutState = .{},
+    prim_type: sg.PrimitiveType = .DEFAULT,
+    index_type: sg.IndexType = .NONE,
+    alpha: bool,
+};
 
 // the top-level application state struct
 const state = struct {
@@ -181,9 +183,9 @@ const state = struct {
         var buffers: [SCENE_MAX_BUFFERS]buffer_creation_params_t = undefined;
         var images: [SCENE_MAX_IMAGES]image_sampler_creation_params_t = undefined;
     };
-    //     struct {
-    //         pipeline_cache_params_t items[SCENE_MAX_PIPELINES];
-    //     } pip_cache;
+    const pip_cache = struct {
+        var items: [SCENE_MAX_PIPELINES]pipeline_cache_params_t = undefined;
+    };
     const placeholders = struct {
         var white = sg.Image{};
         var normal = sg.Image{};
@@ -203,7 +205,7 @@ export fn init() void {
     dbgui.setup(sokol.app.sampleCount());
 
     // initialize Basis Universal
-    //     sbasisu_setup();
+    // sbasisu_setup();
 
     // setup sokol-debugtext
     var sdtx_desc = sokol.debugtext.Desc{
@@ -535,7 +537,7 @@ fn gltf_parse(file_data: sokol.fetch.Range) void {
         gltf_parse_images(data);
         gltf_parse_materials(data);
         gltf_parse_meshes(data);
-        // gltf_parse_nodes(data);
+        gltf_parse_nodes(data);
         c.cgltf_free(data);
     }
 }
@@ -784,22 +786,23 @@ fn gltf_parse_meshes(gltf: *const c.cgltf_data) void {
 }
 
 // parse GLTF nodes into our own node definition
-// static void gltf_parse_nodes(gltf: *const c.cgltf_data) {
-//     if (gltf.nodes_count > SCENE_MAX_NODES) {
-//         state.failed = true;
-//         return;
-//     }
-//     for (cgltf_size node_index = 0; node_index < gltf.nodes_count; node_index++) {
-//         const cgltf_node* gltf_node = &gltf.nodes[node_index];
-//         // ignore nodes without mesh, those are not relevant since we
-//         // bake the transform hierarchy into per-node world space transforms
-//         if (gltf_node.mesh) {
-//             node_t* node = &state.scene.nodes[state.scene.num_nodes++];
-//             node.mesh = gltf_mesh_index(gltf, gltf_node.mesh);
-//             node.transform = build_transform_for_gltf_node(gltf, gltf_node);
-//         }
-//     }
-// }
+fn gltf_parse_nodes(gltf: *const c.cgltf_data) void {
+    if (gltf.nodes_count > SCENE_MAX_NODES) {
+        state.failed = true;
+        return;
+    }
+    for (0..gltf.nodes_count) |node_index| {
+        const gltf_node = &gltf.nodes[node_index];
+        // ignore nodes without mesh, those are not relevant since we
+        // bake the transform hierarchy into per-node world space transforms
+        if (gltf_node.mesh) |gltf_mesh| {
+            const node = &state.scene.nodes[state.scene.num_nodes];
+            state.scene.num_nodes += 1;
+            node.mesh = get_gltf_mesh_index(gltf, gltf_mesh);
+            node.transform = build_transform_for_gltf_node(gltf, @ptrCast(gltf_node));
+        }
+    }
+}
 
 // create the sokol-gfx buffer objects associated with a GLTF buffer view
 fn create_sg_buffers_for_gltf_buffer(gltf_buffer_index: usize, data: sg.Range) void {
@@ -831,70 +834,61 @@ fn create_sg_image_samplers_for_gltf_image(gltf_image_index: usize, data: sg.Ran
     }
 }
 
-// static sg_vertex_format gltf_to_vertex_format(cgltf_accessor* acc) {
-//     switch (acc.component_type) {
-//         case cgltf_component_type_r_8:
-//             if (acc.type == cgltf_type_vec4) {
-//                 return acc.normalized ? SG_VERTEXFORMAT_BYTE4N : SG_VERTEXFORMAT_BYTE4;
-//             }
-//             break;
-//         case cgltf_component_type_r_8u:
-//             if (acc.type == cgltf_type_vec4) {
-//                 return acc.normalized ? SG_VERTEXFORMAT_UBYTE4N : SG_VERTEXFORMAT_UBYTE4;
-//             }
-//             break;
-//         case cgltf_component_type_r_16:
-//             switch (acc.type) {
-//                 case cgltf_type_vec2: return acc.normalized ? SG_VERTEXFORMAT_SHORT2N : SG_VERTEXFORMAT_SHORT2;
-//                 case cgltf_type_vec4: return acc.normalized ? SG_VERTEXFORMAT_SHORT4N : SG_VERTEXFORMAT_SHORT4;
-//                 default: break;
-//             }
-//             break;
-//         case cgltf_component_type_r_32f:
-//             switch (acc.type) {
-//                 case cgltf_type_scalar: return SG_VERTEXFORMAT_FLOAT;
-//                 case cgltf_type_vec2: return SG_VERTEXFORMAT_FLOAT2;
-//                 case cgltf_type_vec3: return SG_VERTEXFORMAT_FLOAT3;
-//                 case cgltf_type_vec4: return SG_VERTEXFORMAT_FLOAT4;
-//                 default: break;
-//             }
-//             break;
-//         default: break;
-//     }
-//     return SG_VERTEXFORMAT_INVALID;
-// }
+fn gltf_to_vertex_format(acc: *const c.cgltf_accessor) sg.VertexFormat {
+    return switch (acc.component_type) {
+        c.cgltf_component_type_r_8 => if (acc.type == c.cgltf_type_vec4)
+            if (acc.normalized != 0) .BYTE4N else .BYTE4
+        else
+            unreachable,
+        c.cgltf_component_type_r_8u => if (acc.type == c.cgltf_type_vec4)
+            if (acc.normalized != 0) .UBYTE4N else .UBYTE4
+        else
+            unreachable,
+        c.cgltf_component_type_r_16 => switch (acc.type) {
+            c.cgltf_type_vec2 => if (acc.normalized != 0) .SHORT2N else .SHORT2,
+            c.cgltf_type_vec4 => if (acc.normalized != 0) .SHORT4N else .SHORT4,
+            else => unreachable,
+        },
+        c.cgltf_component_type_r_32f => switch (acc.type) {
+            c.cgltf_type_scalar => .FLOAT,
+            c.cgltf_type_vec2 => .FLOAT2,
+            c.cgltf_type_vec3 => .FLOAT3,
+            c.cgltf_type_vec4 => .FLOAT4,
+            else => unreachable,
+        },
+        else => unreachable,
+    };
+}
 
-// static int gltf_attr_type_to_vs_input_slot(cgltf_attribute_type attr_type) {
-//     switch (attr_type) {
-//         case cgltf_attribute_type_position: return ATTR_vs_position;
-//         case cgltf_attribute_type_normal: return ATTR_vs_normal;
-//         case cgltf_attribute_type_texcoord: return ATTR_vs_texcoord;
-//         default: return SCENE_INVALID_INDEX;
-//     }
-// }
+fn gltf_attr_type_to_vs_input_slot(attr_type: c.cgltf_attribute_type) usize {
+    return switch (attr_type) {
+        c.cgltf_attribute_type_position => shader.ATTR_vs_position,
+        c.cgltf_attribute_type_normal => shader.ATTR_vs_normal,
+        c.cgltf_attribute_type_texcoord => shader.ATTR_vs_texcoord,
+        else => SCENE_INVALID_INDEX,
+    };
+}
 
-// static sg_primitive_type gltf_to_prim_type(cgltf_primitive_type prim_type) {
-//     switch (prim_type) {
-//         case cgltf_primitive_type_points: return SG_PRIMITIVETYPE_POINTS;
-//         case cgltf_primitive_type_lines: return SG_PRIMITIVETYPE_LINES;
-//         case cgltf_primitive_type_line_strip: return SG_PRIMITIVETYPE_LINE_STRIP;
-//         case cgltf_primitive_type_triangles: return SG_PRIMITIVETYPE_TRIANGLES;
-//         case cgltf_primitive_type_triangle_strip: return SG_PRIMITIVETYPE_TRIANGLE_STRIP;
-//         default: return _SG_PRIMITIVETYPE_DEFAULT;
-//     }
-// }
+fn gltf_to_prim_type(prim_type: c.cgltf_primitive_type) sg.PrimitiveType {
+    return switch (prim_type) {
+        c.cgltf_primitive_type_points => .POINTS,
+        c.cgltf_primitive_type_lines => .LINES,
+        c.cgltf_primitive_type_line_strip => .LINE_STRIP,
+        c.cgltf_primitive_type_triangles => .TRIANGLES,
+        c.cgltf_primitive_type_triangle_strip => .TRIANGLE_STRIP,
+        else => .DEFAULT,
+    };
+}
 
-// static sg_index_type gltf_to_index_type(const cgltf_primitive* prim) {
-//     if (prim.indices) {
-//         if (prim.indices.component_type == cgltf_component_type_r_16u) {
-//             return SG_INDEXTYPE_UINT16;
-//         } else {
-//             return SG_INDEXTYPE_UINT32;
-//         }
-//     } else {
-//         return SG_INDEXTYPE_NONE;
-//     }
-// }
+fn gltf_to_index_type(prim: *const c.cgltf_primitive) sg.IndexType {
+    return if (prim.indices != null)
+        if (prim.indices.*.component_type == c.cgltf_component_type_r_16u)
+            .UINT16
+        else
+            .UINT32
+    else
+        return .NONE;
+}
 
 // creates a vertex buffer bind slot mapping for a specific GLTF primitive
 fn create_vertex_buffer_mapping_for_gltf_primitive(gltf: *const c.cgltf_data, prim: *const c.cgltf_primitive) vertex_buffer_mapping_t {
@@ -921,48 +915,55 @@ fn create_vertex_buffer_mapping_for_gltf_primitive(gltf: *const c.cgltf_data, pr
     return map;
 }
 
-// static sg_vertex_layout_state create_sg_layout_for_gltf_primitive(gltf: *const c.cgltf_data, const cgltf_primitive* prim, const vertex_buffer_mapping_t* vbuf_map) {
-//     assert(prim.attributes_count <= SG_MAX_VERTEX_ATTRIBUTES);
-//     sg_vertex_layout_state layout = { 0 };
-//     for (cgltf_size attr_index = 0; attr_index < prim.attributes_count; attr_index++) {
-//         const cgltf_attribute* attr = &prim.attributes[attr_index];
-//         int attr_slot = gltf_attr_type_to_vs_input_slot(attr.type);
-//         if (attr_slot != SCENE_INVALID_INDEX) {
-//             layout.attrs[attr_slot].format = gltf_to_vertex_format(attr.data);
-//         }
-//         int buffer_view_index = gltf_bufferview_index(gltf, attr.data.buffer_view);
-//         for (int vb_slot = 0; vb_slot < vbuf_map.num; vb_slot++) {
-//             if (vbuf_map.buffer[vb_slot] == buffer_view_index) {
-//                 layout.attrs[attr_slot].buffer_index = vb_slot;
-//             }
-//         }
-//     }
-//     return layout;
-// }
+fn create_sg_layout_for_gltf_primitive(
+    gltf: *const c.cgltf_data,
+    prim: *const c.cgltf_primitive,
+    vbuf_map: *const vertex_buffer_mapping_t,
+) sg.VertexLayoutState {
+    std.debug.assert(prim.attributes_count <= sg.max_vertex_attributes);
+    var layout = sg.VertexLayoutState{};
+    for (0..prim.attributes_count) |attr_index| {
+        const attr = &prim.attributes[attr_index];
+        const attr_slot = gltf_attr_type_to_vs_input_slot(attr.type);
+        if (attr_slot != SCENE_INVALID_INDEX) {
+            layout.attrs[attr_slot].format = gltf_to_vertex_format(attr.data);
+        }
+        const buffer_view_index = get_gltf_bufferview_index(gltf, attr.data.*.buffer_view);
+        for (0..vbuf_map.num) |vb_slot| {
+            if (vbuf_map.buffer[vb_slot] == buffer_view_index) {
+                layout.attrs[attr_slot].buffer_index = @intCast(vb_slot);
+            }
+        }
+    }
+    return layout;
+}
 
 // helper to compare to pipeline-cache items
-// static bool pipelines_equal(const pipeline_cache_params_t* p0, const pipeline_cache_params_t* p1) {
-//     if (p0.prim_type != p1.prim_type) {
-//         return false;
-//     }
-//     if (p0.alpha != p1.alpha) {
-//         return false;
-//     }
-//     if (p0.index_type != p1.index_type) {
-//         return false;
-//     }
-//     for (int i = 0; i < SG_MAX_VERTEX_ATTRIBUTES; i++) {
-//         const sg_vertex_attr_state* a0 = &p0.layout.attrs[i];
-//         const sg_vertex_attr_state* a1 = &p1.layout.attrs[i];
-//         if ((a0.buffer_index != a1.buffer_index) ||
-//             (a0.offset != a1.offset) ||
-//             (a0.format != a1.format))
-//         {
-//             return false;
-//         }
-//     }
-//     return true;
-// }
+fn pipelines_equal(
+    p0: *const pipeline_cache_params_t,
+    p1: *const pipeline_cache_params_t,
+) bool {
+    if (p0.prim_type != p1.prim_type) {
+        return false;
+    }
+    if (p0.alpha != p1.alpha) {
+        return false;
+    }
+    if (p0.index_type != p1.index_type) {
+        return false;
+    }
+    for (0..sg.max_vertex_attributes) |i| {
+        const a0 = &p0.layout.attrs[i];
+        const a1 = &p1.layout.attrs[i];
+        if ((a0.buffer_index != a1.buffer_index) or
+            (a0.offset != a1.offset) or
+            (a0.format != a1.format))
+        {
+            return false;
+        }
+    }
+    return true;
+}
 
 // Create a unique sokol-gfx pipeline object for GLTF primitive (aka submesh),
 // maintains a cache of shared, unique pipeline objects. Returns an index
@@ -972,24 +973,20 @@ fn create_sg_pipeline_for_gltf_primitive(
     prim: *const c.cgltf_primitive,
     vbuf_map: *const vertex_buffer_mapping_t,
 ) usize {
-    _ = gltf;
-    _ = prim;
-    _ = vbuf_map;
-    unreachable;
-    //     pipeline_cache_params_t pip_params = {
-    //         .layout = create_sg_layout_for_gltf_primitive(gltf, prim, vbuf_map),
-    //         .prim_type = gltf_to_prim_type(prim.type),
-    //         .index_type = gltf_to_index_type(prim),
-    //         .alpha = prim.material.alpha_mode != cgltf_alpha_mode_opaque
-    //     };
-    //     int i = 0;
-    //     for (; i < state.scene.num_pipelines; i++) {
-    //         if (pipelines_equal(&state.pip_cache.items[i], &pip_params)) {
-    //             // an indentical pipeline already exists, reuse this
-    //             assert(state.scene.pipelines[i].id != SG_INVALID_ID);
-    //             return i;
-    //         }
-    //     }
+    const pip_params = pipeline_cache_params_t{
+        .layout = create_sg_layout_for_gltf_primitive(gltf, prim, vbuf_map),
+        .prim_type = gltf_to_prim_type(prim.type),
+        .index_type = gltf_to_index_type(prim),
+        .alpha = prim.material.*.alpha_mode != c.cgltf_alpha_mode_opaque,
+    };
+    var i: usize = 0;
+    while (i < state.scene.num_pipelines) : (i += 1) {
+        if (pipelines_equal(&state.pip_cache.items[i], &pip_params)) {
+            // an indentical pipeline already exists, reuse this
+            std.debug.assert(state.scene.pipelines[i].id != sg.invalid_id);
+            return i;
+        }
+    }
     //     if ((i == state.scene.num_pipelines) && (state.scene.num_pipelines < SCENE_MAX_PIPELINES)) {
     //         state.pip_cache.items[i] = pip_params;
     //         const bool is_metallic = prim.material.has_pbr_metallic_roughness;
@@ -1015,36 +1012,59 @@ fn create_sg_pipeline_for_gltf_primitive(
     //         });
     //         state.scene.num_pipelines++;
     //     }
-    //     assert(state.scene.num_pipelines <= SCENE_MAX_PIPELINES);
-    //     return i;
+    std.debug.assert(state.scene.num_pipelines <= SCENE_MAX_PIPELINES);
+    return i;
 }
 
-// static hmm_mat4 build_transform_for_gltf_node(gltf: *const c.cgltf_data, const cgltf_node* node) {
-//     hmm_mat4 parent_tform = HMM_Mat4d(1);
-//     if (node.parent) {
-//         parent_tform = build_transform_for_gltf_node(gltf, node.parent);
-//     }
-//     if (node.has_matrix) {
-//         // needs testing, not sure if the element order is correct
-//         hmm_mat4 tform = *(hmm_mat4*)node.matrix;
-//         return tform;
-//     } else {
-//         hmm_mat4 translate = HMM_Mat4d(1);
-//         hmm_mat4 rotate = HMM_Mat4d(1);
-//         hmm_mat4 scale = HMM_Mat4d(1);
-//         if (node.has_translation) {
-//             translate = HMM_Translate(HMM_Vec3(node.translation[0], node.translation[1], node.translation[2]));
-//         }
-//         if (node.has_rotation) {
-//             rotate = HMM_QuaternionToMat4(HMM_Quaternion(node.rotation[0], node.rotation[1], node.rotation[2], node.rotation[3]));
-//         }
-//         if (node.has_scale) {
-//             scale = HMM_Scale(HMM_Vec3(node.scale[0], node.scale[1], node.scale[2]));
-//         }
-//         // NOTE: not sure if the multiplication order is correct
-//         return HMM_MultiplyMat4(parent_tform, HMM_MultiplyMat4(HMM_MultiplyMat4(scale, rotate), translate));
-//     }
-// }
+fn build_transform_for_gltf_node(
+    gltf: *const c.cgltf_data,
+    node: *const c.cgltf_node,
+) Mat4 {
+    var parent_tform = Mat4.identity;
+    if (node.parent) |node_parent| {
+        parent_tform = build_transform_for_gltf_node(gltf, node_parent);
+    }
+    if (node.has_matrix != 0) {
+        // needs testing, not sure if the element order is correct
+        const tform = node.matrix;
+        return .{
+            .m = .{
+                tform[0],  tform[1],  tform[2],  tform[3],
+                tform[4],  tform[5],  tform[6],  tform[7],
+                tform[8],  tform[9],  tform[10], tform[11],
+                tform[12], tform[13], tform[14], tform[15],
+            },
+        };
+    } else {
+        var translate = Mat4.identity;
+        var rotate = Mat4.identity;
+        var scale = Mat4.identity;
+        if (node.has_translation != 0) {
+            translate = Mat4.translate(.{
+                .x = node.translation[0],
+                .y = node.translation[1],
+                .z = node.translation[2],
+            });
+        }
+        if (node.has_rotation != 0) {
+            rotate = Mat4.trs(.{ .r = Quat{
+                .x = node.rotation[0],
+                .y = node.rotation[1],
+                .z = node.rotation[2],
+                .w = node.rotation[3],
+            } });
+        }
+        if (node.has_scale != 0) {
+            scale = Mat4.scale(.{
+                .x = node.scale[0],
+                .y = node.scale[1],
+                .z = node.scale[2],
+            });
+        }
+        // NOTE: not sure if the multiplication order is correct
+        return parent_tform.mul(scale.mul(rotate).mul(translate));
+    }
+}
 
 // static void update_scene(void) {
 //     /*

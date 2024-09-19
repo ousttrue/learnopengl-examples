@@ -14,8 +14,8 @@
             .hash = "12205b36041f858db146628cd3b25fae4cda5f161a6a52d48fa22cde0c03b689ccb8",
         },
         .rowmath = .{
-            .url = "git+https://github.com/ousttrue/rowmath.git#a2c98b3e9682634a5803a67b31ae1d4af63f3b90",
-            .hash = "1220db780d0c537ba39ee6c310bb39d7ef181ab2362b9353e76df3247b982c2a3dba",
+            .url = "git+https://github.com/ousttrue/rowmath.git#b4fcc29e03d1421e4cd3463e640eab1907c4c44d",
+            .hash = "12205615dbe8e7f9b0757a59434fed26545fb476a98ac0b702a96bca77e5105cc462",
         },
         .@"emsdk-zig" = .{
             .url = "git+https://github.com/ousttrue/emsdk-zig.git#4b3df5dc7824514a3ef99c1dee77ee3087019050",
