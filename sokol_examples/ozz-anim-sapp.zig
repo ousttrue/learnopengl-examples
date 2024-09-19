@@ -10,7 +10,6 @@ const std = @import("std");
 const rowmath = @import("rowmath");
 const Vec3 = rowmath.Vec3;
 const Mat4 = rowmath.Mat4;
-const MouseCamera = rowmath.MouseCamera;
 const InputState = rowmath.InputState;
 const sokol = @import("sokol");
 const sg = sokol.gfx;
@@ -27,7 +26,7 @@ const state = struct {
         var failed = false;
     };
     var pass_action = sg.PassAction{};
-    var camera: MouseCamera = .{};
+    var orbit: rowmath.OrbitCamera = .{};
     var input: InputState = .{};
     const time = struct {
         var frame: f64 = 0;
@@ -76,9 +75,6 @@ export fn init() void {
     state.pass_action.colors[0].load_action = .CLEAR;
     state.pass_action.colors[0].clear_value = .{ .r = 0.0, .g = 0.1, .b = 0.2, .a = 1.0 };
 
-    // initialize camera helper
-    state.camera.init();
-
     // start loading the skeleton and animation files
     _ = sokol.fetch.send(.{
         .path = "pab_skeleton.ozz",
@@ -99,7 +95,7 @@ export fn frame() void {
     state.time.frame = sokol.app.frameDuration();
     state.input.screen_width = sokol.app.widthf();
     state.input.screen_height = sokol.app.heightf();
-    state.camera.frame(state.input);
+    state.orbit.frame(state.input);
     state.input.mouse_wheel = 0;
 
     simgui.newFrame(.{
@@ -246,9 +242,9 @@ fn draw_skeleton(ozz: *ozz_wrap.ozz_t) void {
     }
     sokol.gl.defaults();
     sokol.gl.matrixModeProjection();
-    sokol.gl.loadMatrix(&state.camera.projectionMatrix().m[0]);
+    sokol.gl.loadMatrix(&state.orbit.projectionMatrix().m[0]);
     sokol.gl.matrixModeModelview();
-    sokol.gl.loadMatrix(&state.camera.viewMatrix().m[0]);
+    sokol.gl.loadMatrix(&state.orbit.viewMatrix().m[0]);
 
     const num_joints = ozz_wrap.OZZ_num_joints(ozz);
     const joint_parents = ozz_wrap.OZZ_joint_parents(ozz);

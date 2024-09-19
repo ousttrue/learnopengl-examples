@@ -9,22 +9,13 @@
             .url = "git+https://github.com/floooh/sokol-tools-bin.git#8cc8c257380c9a5e230a84aeebf09cd500903fbc",
             .hash = "12200f5129c997728160ab584adcc939b9dbca6f802d7273f386dad777de85e80421",
         },
-        // .sokol = .{
-        //     .path = "../sokol-zig",
-        // },
-        // .rowmath = .{
-        //     .path = "../rowmath",
-        // },
-        // .@"emsdk-zig" = .{
-        //     .path = "../emsdk-zig",
-        // },
         .sokol = .{
             .url = "git+https://github.com/ousttrue/sokol-zig.git#38014bc673fd3c82f44612f02573d5af00dfc66f",
             .hash = "12205b36041f858db146628cd3b25fae4cda5f161a6a52d48fa22cde0c03b689ccb8",
         },
         .rowmath = .{
-            .url = "git+https://github.com/ousttrue/rowmath.git#5c9708d17575b919edc7fdaed6816b991b50558b",
-            .hash = "1220651385e31d0bca4e8d9d9a3b72cfa1c70dae3b0e22142d63b8157eecabf1246c",
+            .url = "git+https://github.com/ousttrue/rowmath.git#a2c98b3e9682634a5803a67b31ae1d4af63f3b90",
+            .hash = "1220db780d0c537ba39ee6c310bb39d7ef181ab2362b9353e76df3247b982c2a3dba",
         },
         .@"emsdk-zig" = .{
             .url = "git+https://github.com/ousttrue/emsdk-zig.git#4b3df5dc7824514a3ef99c1dee77ee3087019050",

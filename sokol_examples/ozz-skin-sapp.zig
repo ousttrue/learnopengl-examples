@@ -62,7 +62,7 @@ const state = struct {
     var joint_texture_width: c_int = 0; // in number of pixels
     var joint_texture_height: c_int = 0; // in number of pixels
     var joint_texture_pitch: c_int = 0; // in number of floats
-    var camera: rowmath.MouseCamera = .{};
+    var orbit: rowmath.OrbitCamera = .{};
     var input: rowmath.InputState = .{};
     var draw_enabled: bool = true;
     const loaded = struct {
@@ -129,9 +129,6 @@ export fn init() void {
         .load_action = .CLEAR,
         .clear_value = .{ .r = 0.0, .g = 0.0, .b = 0.0, .a = 1.0 },
     };
-
-    // initialize camera controller
-    state.camera.init();
 
     // vertex-skinning shader and pipeline object for 3d rendering, note the hardware-instanced vertex layout
     var pip_desc = sg.PipelineDesc{
@@ -212,8 +209,6 @@ export fn init() void {
         .callback = mesh_data_loaded,
         .buffer = sokol.fetch.asRange(&mesh_io_buffer),
     });
-
-    state.camera.init();
 }
 
 // initialize the static instance data, since the character instances don't
@@ -321,7 +316,7 @@ export fn frame() void {
 
     state.input.screen_width = sokol.app.widthf();
     state.input.screen_height = sokol.app.heightf();
-    state.camera.frame(state.input);
+    state.orbit.frame(state.input);
     state.input.mouse_wheel = 0;
 
     simgui.newFrame(.{
@@ -341,7 +336,7 @@ export fn frame() void {
         update_joint_texture();
 
         const vs_params = shader.VsParams{
-            .view_proj = state.camera.viewProjectionMatrix().m,
+            .view_proj = state.orbit.viewProjectionMatrix().m,
             .joint_pixel_width = 1.0 / @as(f32, @floatFromInt(state.joint_texture_width)),
         };
         sg.applyPipeline(state.pip);
