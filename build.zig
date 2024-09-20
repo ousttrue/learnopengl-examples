@@ -92,6 +92,14 @@ fn buildWasm(
         }
 
         deps.inject_dependencies(b, lib);
+        for (example.c_includes) |include| {
+            lib.addIncludePath(b.path(include));
+        }
+        if (example.c_sources.len > 0) {
+            lib.addCSourceFiles(.{
+                .files = example.c_sources,
+            });
+        }
         lib.addSystemIncludePath(emsdk_incl_path);
 
         // create a build step which invokes the Emscripten linker
