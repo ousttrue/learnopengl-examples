@@ -297,10 +297,13 @@ pub const sokol_examples = [_]Example{
             "sokol_examples/cgltf.c",
         },
         .assets = &.{
-            .{
-                .from = "sokol_examples/data/gltf/DamagedHelmet/DamagedHelmet.gltf",
-                .to = "DamagedHelmet.gltf",
-            },
+            .{ .from = "sokol_examples/data/gltf/DamagedHelmet/DamagedHelmet.gltf", .to = "DamagedHelmet.gltf" },
+            .{ .from = "sokol_examples/data/gltf/DamagedHelmet/DamagedHelmet.bin", .to = "DamagedHelmet.bin" },
+            .{ .from = "sokol_examples/data/gltf/DamagedHelmet/Default_AO.basis", .to = "Default_AO.basis" },
+            .{ .from = "sokol_examples/data/gltf/DamagedHelmet/Default_albedo.basis", .to = "Default_albedo.basis" },
+            .{ .from = "sokol_examples/data/gltf/DamagedHelmet/Default_emissive.basis", .to = "Default_emissive.basis" },
+            .{ .from = "sokol_examples/data/gltf/DamagedHelmet/Default_metalRoughness.basis", .to = "Default_metalRoughness.basis" },
+            .{ .from = "sokol_examples/data/gltf/DamagedHelmet/Default_normal.basis", .to = "Default_normal.basis" },
         },
     },
     .{

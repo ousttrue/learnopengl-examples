@@ -156,7 +156,7 @@ const pipeline_cache_params_t = struct {
 
 // the top-level application state struct
 const state = struct {
-    var failed = true;
+    var failed = false;
     const pass_actions = struct {
         var ok = sg.PassAction{};
         var failed = sg.PassAction{};
@@ -347,48 +347,48 @@ export fn frame() void {
                 sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
                 sg.applyUniforms(.FS, shader.SLOT_light_params, sg.asRange(&state.point_light));
                 if (mat.*.is_metallic) {
-                    //                     sg_image base_color_tex = state.scene.image_samplers[mat.metallic.images.base_color].img;
-                    //                     sg_image metallic_roughness_tex = state.scene.image_samplers[mat.metallic.images.metallic_roughness].img;
-                    //                     sg_image normal_tex = state.scene.image_samplers[mat.metallic.images.normal].img;
-                    //                     sg_image occlusion_tex = state.scene.image_samplers[mat.metallic.images.occlusion].img;
-                    //                     sg_image emissive_tex = state.scene.image_samplers[mat.metallic.images.emissive].img;
-                    //                     sg_sampler base_color_smp = state.scene.image_samplers[mat.metallic.images.base_color].smp;
-                    //                     sg_sampler metallic_roughness_smp = state.scene.image_samplers[mat.metallic.images.metallic_roughness].smp;
-                    //                     sg_sampler normal_smp = state.scene.image_samplers[mat.metallic.images.normal].smp;
-                    //                     sg_sampler occlusion_smp = state.scene.image_samplers[mat.metallic.images.occlusion].smp;
-                    //                     sg_sampler emissive_smp = state.scene.image_samplers[mat.metallic.images.emissive].smp;
-                    //
-                    //                     if (!base_color_tex.id) {
-                    //                         base_color_tex = state.placeholders.white;
-                    //                         base_color_smp = state.placeholders.smp;
-                    //                     }
-                    //                     if (!metallic_roughness_tex.id) {
-                    //                         metallic_roughness_tex = state.placeholders.white;
-                    //                         metallic_roughness_smp = state.placeholders.smp;
-                    //                     }
-                    //                     if (!normal_tex.id) {
-                    //                         normal_tex = state.placeholders.normal;
-                    //                         normal_smp = state.placeholders.smp;
-                    //                     }
-                    //                     if (!occlusion_tex.id) {
-                    //                         occlusion_tex = state.placeholders.white;
-                    //                         occlusion_smp = state.placeholders.smp;
-                    //                     }
-                    //                     if (!emissive_tex.id) {
-                    //                         emissive_tex = state.placeholders.black;
-                    //                         emissive_smp = state.placeholders.smp;
-                    //                     }
-                    //                     bind.fs.images[SLOT_base_color_tex] = base_color_tex;
-                    //                     bind.fs.images[SLOT_metallic_roughness_tex] = metallic_roughness_tex;
-                    //                     bind.fs.images[SLOT_normal_tex] = normal_tex;
-                    //                     bind.fs.images[SLOT_occlusion_tex] = occlusion_tex;
-                    //                     bind.fs.images[SLOT_emissive_tex] = emissive_tex;
-                    //                     bind.fs.samplers[SLOT_base_color_smp] = base_color_smp;
-                    //                     bind.fs.samplers[SLOT_metallic_roughness_smp] = metallic_roughness_smp;
-                    //                     bind.fs.samplers[SLOT_normal_smp] = normal_smp;
-                    //                     bind.fs.samplers[SLOT_occlusion_smp] = occlusion_smp;
-                    //                     bind.fs.samplers[SLOT_emissive_tex] = emissive_smp;
-                    //                     sg_apply_uniforms(SG_SHADERSTAGE_FS, SLOT_metallic_params, &SG_RANGE(mat.metallic.fs_params));
+                    var base_color_tex = state.scene.image_samplers[mat.metallic.images.base_color].img;
+                    var metallic_roughness_tex = state.scene.image_samplers[mat.metallic.images.metallic_roughness].img;
+                    var normal_tex = state.scene.image_samplers[mat.metallic.images.normal].img;
+                    var occlusion_tex = state.scene.image_samplers[mat.metallic.images.occlusion].img;
+                    var emissive_tex = state.scene.image_samplers[mat.metallic.images.emissive].img;
+                    var base_color_smp = state.scene.image_samplers[mat.metallic.images.base_color].smp;
+                    var metallic_roughness_smp = state.scene.image_samplers[mat.metallic.images.metallic_roughness].smp;
+                    var normal_smp = state.scene.image_samplers[mat.metallic.images.normal].smp;
+                    var occlusion_smp = state.scene.image_samplers[mat.metallic.images.occlusion].smp;
+                    var emissive_smp = state.scene.image_samplers[mat.metallic.images.emissive].smp;
+
+                    if (base_color_tex.id == 0) {
+                        base_color_tex = state.placeholders.white;
+                        base_color_smp = state.placeholders.smp;
+                    }
+                    if (metallic_roughness_tex.id == 0) {
+                        metallic_roughness_tex = state.placeholders.white;
+                        metallic_roughness_smp = state.placeholders.smp;
+                    }
+                    if (normal_tex.id == 0) {
+                        normal_tex = state.placeholders.normal;
+                        normal_smp = state.placeholders.smp;
+                    }
+                    if (occlusion_tex.id == 0) {
+                        occlusion_tex = state.placeholders.white;
+                        occlusion_smp = state.placeholders.smp;
+                    }
+                    if (emissive_tex.id == 0) {
+                        emissive_tex = state.placeholders.black;
+                        emissive_smp = state.placeholders.smp;
+                    }
+                    bind.fs.images[shader.SLOT_base_color_tex] = base_color_tex;
+                    bind.fs.images[shader.SLOT_metallic_roughness_tex] = metallic_roughness_tex;
+                    bind.fs.images[shader.SLOT_normal_tex] = normal_tex;
+                    bind.fs.images[shader.SLOT_occlusion_tex] = occlusion_tex;
+                    bind.fs.images[shader.SLOT_emissive_tex] = emissive_tex;
+                    bind.fs.samplers[shader.SLOT_base_color_smp] = base_color_smp;
+                    bind.fs.samplers[shader.SLOT_metallic_roughness_smp] = metallic_roughness_smp;
+                    bind.fs.samplers[shader.SLOT_normal_smp] = normal_smp;
+                    bind.fs.samplers[shader.SLOT_occlusion_smp] = occlusion_smp;
+                    bind.fs.samplers[shader.SLOT_emissive_tex] = emissive_smp;
+                    sg.applyUniforms(.FS, shader.SLOT_metallic_params, sg.asRange(&mat.metallic.fs_params));
                 } else {
                     // // sg_apply_uniforms(SG_SHADERSTAGE_VS,
                     // //     SLOT_specular_params,
@@ -691,7 +691,7 @@ fn gltf_parse_materials(gltf: *const c.cgltf_data) void {
         state.failed = true;
         return;
     }
-    //     state.scene.num_materials = (int) gltf.materials_count;
+    state.scene.num_materials = gltf.materials_count;
     for (0..state.scene.num_materials) |i| {
         const gltf_mat = &gltf.materials[i];
         const scene_mat = &state.scene.materials[i];
@@ -987,31 +987,36 @@ fn create_sg_pipeline_for_gltf_primitive(
             return i;
         }
     }
-    //     if ((i == state.scene.num_pipelines) && (state.scene.num_pipelines < SCENE_MAX_PIPELINES)) {
-    //         state.pip_cache.items[i] = pip_params;
-    //         const bool is_metallic = prim.material.has_pbr_metallic_roughness;
-    //         state.scene.pipelines[i] = sg_make_pipeline(&(sg_pipeline_desc){
-    //             .layout = pip_params.layout,
-    //             .shader = is_metallic ? state.shaders.metallic : state.shaders.specular,
-    //             .primitive_type = pip_params.prim_type,
-    //             .index_type = pip_params.index_type,
-    //             .cull_mode = SG_CULLMODE_BACK,
-    //             .face_winding = SG_FACEWINDING_CCW,
-    //             .depth = {
-    //                 .write_enabled = !pip_params.alpha,
-    //                 .compare = SG_COMPAREFUNC_LESS_EQUAL,
-    //             },
-    //             .colors[0] = {
-    //                 .write_mask = pip_params.alpha ? SG_COLORMASK_RGB : 0,
-    //                 .blend = {
-    //                     .enabled = pip_params.alpha,
-    //                     .src_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_SRC_ALPHA : 0,
-    //                     .dst_factor_rgb = pip_params.alpha ? SG_BLENDFACTOR_ONE_MINUS_SRC_ALPHA : 0,
-    //                 },
-    //             }
-    //         });
-    //         state.scene.num_pipelines++;
-    //     }
+    if ((i == state.scene.num_pipelines) and (state.scene.num_pipelines < SCENE_MAX_PIPELINES)) {
+        state.pip_cache.items[i] = pip_params;
+        const is_metallic = prim.material.*.has_pbr_metallic_roughness != 0;
+        state.scene.pipelines[i] = sg.makePipeline(.{
+            .layout = pip_params.layout,
+            .shader = if (is_metallic) state.shaders.metallic else state.shaders.specular,
+            .primitive_type = pip_params.prim_type,
+            .index_type = pip_params.index_type,
+            .cull_mode = .BACK,
+            .face_winding = .CCW,
+            .depth = .{
+                .write_enabled = !pip_params.alpha,
+                .compare = .LESS_EQUAL,
+            },
+            .colors = .{
+                .{
+                    .write_mask = if (pip_params.alpha) .RGB else .DEFAULT,
+                    .blend = .{
+                        .enabled = pip_params.alpha,
+                        .src_factor_rgb = if (pip_params.alpha) .SRC_ALPHA else .DEFAULT,
+                        .dst_factor_rgb = if (pip_params.alpha) .ONE_MINUS_SRC_ALPHA else .DEFAULT,
+                    },
+                },
+                .{},
+                .{},
+                .{},
+            },
+        });
+        state.scene.num_pipelines += 1;
+    }
     std.debug.assert(state.scene.num_pipelines <= SCENE_MAX_PIPELINES);
     return i;
 }
