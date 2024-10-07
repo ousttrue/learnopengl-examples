@@ -1052,7 +1052,7 @@ fn build_transform_for_gltf_node(
             });
         }
         if (node.has_rotation != 0) {
-            rotate = Mat4.trs(.{ .r = Quat{
+            rotate = Mat4.fromTrs(.{ .r = Quat{
                 .x = node.rotation[0],
                 .y = node.rotation[1],
                 .z = node.rotation[2],
@@ -1060,7 +1060,7 @@ fn build_transform_for_gltf_node(
             } });
         }
         if (node.has_scale != 0) {
-            scale = Mat4.scale(.{
+            scale = Mat4.makeScale(.{
                 .x = node.scale[0],
                 .y = node.scale[1],
                 .z = node.scale[2],

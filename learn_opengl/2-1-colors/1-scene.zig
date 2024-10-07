@@ -131,7 +131,7 @@ export fn frame() void {
     });
 
     const view = lopgl.viewMatrix();
-    const projection = Mat4.perspective(
+    const projection = Mat4.makePerspective(
         lopgl.fovRadians(),
         sokol.app.widthf() / sokol.app.heightf(),
         0.1,
@@ -161,7 +161,7 @@ export fn frame() void {
     sg.applyPipeline(state.pip_light);
     sg.applyBindings(state.bind);
     var model = Mat4.translate(state.light_pos);
-    model = model.mul(Mat4.scale(.{ .x = 0.2, .y = 0.2, .z = 0.2 }));
+    model = model.mul(Mat4.makeScale(.{ .x = 0.2, .y = 0.2, .z = 0.2 }));
     vs_params.model = model.m;
     sg.applyUniforms(.VS, shd.SLOT_vs_params, sg.asRange(&vs_params));
     sg.draw(0, 36, 1);

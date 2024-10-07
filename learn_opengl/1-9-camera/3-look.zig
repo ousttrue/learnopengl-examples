@@ -230,12 +230,12 @@ export fn frame() void {
     state.delta_time = sokol.time.laptime(&state.last_time);
     sokol.fetch.dowork();
 
-    const view = Mat4.lookAt(
+    const view = Mat4.makeLookAt(
         state.camera_pos,
         state.camera_pos.add(state.camera_front),
         state.camera_up,
     );
-    const projection = Mat4.perspective(
+    const projection = Mat4.makePerspective(
         state.fov_radians,
         @as(f32, @floatFromInt(sokol.app.width())) / @as(f32, @floatFromInt(sokol.app.height())),
         0.1,

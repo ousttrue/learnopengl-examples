@@ -135,13 +135,13 @@ export fn init() void {
 export fn frame() void {
     // compute model-view-projection matrix for vertex shader
     const t: f32 = @as(f32, @floatCast(sokol.app.frameDuration())) * 60.0;
-    const proj = rowmath.Mat4.perspective(
+    const proj = rowmath.Mat4.makePerspective(
         std.math.degreesToRadians(60.0),
         sokol.app.widthf() / sokol.app.heightf(),
         0.01,
         10.0,
     );
-    const view = rowmath.Mat4.lookAt(
+    const view = rowmath.Mat4.makeLookAt(
         .{ .x = 0.0, .y = 1.5, .z = 6.0 },
         .{ .x = 0.0, .y = 0.0, .z = 0.0 },
         .{ .x = 0.0, .y = 1.0, .z = 0.0 },

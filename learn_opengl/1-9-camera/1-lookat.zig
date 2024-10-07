@@ -200,13 +200,13 @@ export fn frame() void {
     const camX: f32 = @floatCast(std.math.sin(sokol.time.sec(sokol.time.now())) * radius);
     const camZ: f32 = @floatCast(std.math.cos(sokol.time.sec(sokol.time.now())) * radius);
 
-    const view = Mat4.lookAt(
+    const view = Mat4.makeLookAt(
         .{ .x = camX, .y = 0.0, .z = camZ },
         .{ .x = 0.0, .y = 0.0, .z = 0.0 },
         .{ .x = 0.0, .y = 1.0, .z = 0.0 },
     );
 
-    const projection = Mat4.perspective(
+    const projection = Mat4.makePerspective(
         std.math.degreesToRadians(45.0),
         800.0 / 600.0,
         0.1,

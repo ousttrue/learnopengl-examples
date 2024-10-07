@@ -167,7 +167,7 @@ export fn frame() void {
     // note that we're translating the scene in the reverse direction of where we want to move
     const view = Mat4.translate(.{ .x = 0.0, .y = 0.0, .z = -3.0 });
 
-    const projection = Mat4.perspective(
+    const projection = Mat4.makePerspective(
         std.math.degreesToRadians(45.0),
         @as(f32, @floatFromInt(sokol.app.width())) / @as(f32, @floatFromInt(sokol.app.height())),
         0.1,

@@ -143,13 +143,13 @@ export fn frame() void {
     });
 
     // model-view-projection matrix
-    const proj = Mat4.perspective(
+    const proj = Mat4.makePerspective(
         std.math.degreesToRadians(60.0),
         sokol.app.widthf() / sokol.app.heightf(),
         0.01,
         50.0,
     );
-    const view = Mat4.lookAt(
+    const view = Mat4.makeLookAt(
         .{ .x = 0.0, .y = 1.5, .z = 12.0 },
         .{ .x = 0.0, .y = 0.0, .z = 0.0 },
         .{ .x = 0.0, .y = 1.0, .z = 0.0 },

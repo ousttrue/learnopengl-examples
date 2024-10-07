@@ -163,8 +163,8 @@ export fn init() void {
 
 // helper function to compute model-view-projection matrix
 fn compute_mvp(rx: f32, ry: f32, aspect: f32, eye_dist: f32) Mat4 {
-    const proj = Mat4.perspective(std.math.degreesToRadians(45.0), aspect, 0.01, 10.0);
-    const view = Mat4.lookAt(
+    const proj = Mat4.makePerspective(std.math.degreesToRadians(45.0), aspect, 0.01, 10.0);
+    const view = Mat4.makeLookAt(
         .{ .x = 0.0, .y = 0.0, .z = eye_dist },
         .{ .x = 0.0, .y = 0.0, .z = 0.0 },
         .{ .x = 0.0, .y = 1.0, .z = 0.0 },

@@ -154,7 +154,7 @@ export fn frame() void {
         std.math.degreesToRadians(90.0),
         Vec3{ .x = 0.0, .y = 0.0, .z = 1.0 },
     );
-    const scale = Mat4.scale(.{ .x = 0.5, .y = 0.5, .z = 0.5 });
+    const scale = Mat4.makeScale(.{ .x = 0.5, .y = 0.5, .z = 0.5 });
     const trans = rotate.mul(scale);
 
     sg.beginPass(.{

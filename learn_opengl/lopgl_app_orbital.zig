@@ -50,7 +50,7 @@ pub const OrbitalCamera = struct {
     last_touch: [sokol.app.max_touchpoints]Vec2 = undefined,
 
     pub fn view_matrix(self: @This()) Mat4 {
-        return Mat4.lookAt(self.position, self.desc.target, self.desc.up);
+        return Mat4.makeLookAt(self.position, self.desc.target, self.desc.up);
     }
 
     pub fn handle_input(
