@@ -1,4 +1,9 @@
 import { CATEGORIES, type CategoryType, type ArticleType } from './data.ts';
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import github_svg from './github-mark.svg';
+import zig_svg from './zig-mark.svg';
+import sokol_logo from './logo_s_large.png';
+import './App.css'
 const BASE_URL = import.meta.env.BASE_URL;
 
 function Item(props: { name: string }) {
@@ -32,33 +37,56 @@ function Category(category: CategoryType) {
   </>);
 }
 
-function App() {
+function Home() {
+
+  <header>
+    <h1>Learn OpenGL Examples</h1>
+    <nav>
+      <ul>
+      </ul>
+    </nav>
+  </header>
 
   return (
     <>
-      <div className="container">
-        <header>
-          <h1>Learn OpenGL Examples</h1>
-          <nav>
-            <ul>
-              <li><a href="https://github.com/floooh/sokol-zig">sokol-zig</a></li>
-              <li><a href="https://learnopengl.com/">learnopengl</a></li>
-              <li><a href="https://github.com/zeromake/learnopengl-examples">
-                learnopengl-examples
-              </a></li>
-              <li><a href="https://github.com/ousttrue/learnopengl-examples">
-                learnopengl-examples-zig
-              </a></li>
-            </ul>
-          </nav>
-        </header>
-        <main className="items">
-          {CATEGORIES.map((props, key) => <Category key={key} {...props} />)}
-        </main>
-        <footer>
-          <nav></nav>
-        </footer>
-      </div>
+      <main className="items">
+        <div className="item"><a href="https://github.com/ousttrue/learnopengl-examples">
+          <a href="https://github.com/ousttrue/learnopengl-examples"><img width={150} src={github_svg} /></a>
+        </a></div>
+        <div className="item">
+          <a href="https://github.com/floooh/sokol-zig">
+            <img width={75} src={sokol_logo} />
+            <img width={75} src={zig_svg} />
+          </a>
+        </div>
+        <div className="item"><a href="https://github.com/JoeyDeVries/LearnOpenGL">learnopengl</a></div>
+        <div className="item"><a href="https://github.com/zeromake/learnopengl-examples">
+          <img width={75} src={sokol_logo} />
+          learnopengl-examples
+        </a></div>
+        {CATEGORIES.map((props, key) => <Category key={key} {...props} />)}
+      </main>
+    </>
+  )
+}
+
+function Page404() {
+  return (<>
+    <div className="not_found">
+      <div>404 not found</div>
+    </div>
+  </>);
+}
+
+function App() {
+  return (
+    <>
+      <BrowserRouter basename={BASE_URL}>
+        <Routes>
+          <Route index element={<Home />} />
+          <Route path="*" element={<Page404 />} />
+        </Routes>
+      </BrowserRouter>
     </>
   )
 }
