@@ -8,7 +8,6 @@ pub const Deps = struct {
     helper: *std.Build.Module,
     stb_image: *std.Build.Module,
     lopgl: *std.Build.Module,
-    dbgui: *std.Build.Module,
     rowmath: *std.Build.Module,
 
     pub fn init(
@@ -46,11 +45,6 @@ pub const Deps = struct {
                 .optimize = optimize,
                 .root_source_file = b.path("learn_opengl/lopgl_app.zig"),
             }),
-            .dbgui = b.createModule(.{
-                .target = target,
-                .optimize = optimize,
-                .root_source_file = b.path("sokol_examples/libs/dbgui/dbgui.zig"),
-            }),
         };
 
         // inject the cimgui header search path into the sokol C library compile step
@@ -59,7 +53,6 @@ pub const Deps = struct {
         deps.helper.addImport("sokol", deps.dep_sokol.module("sokol"));
         deps.lopgl.addImport("sokol", deps.dep_sokol.module("sokol"));
         deps.lopgl.addImport("rowmath", deps.rowmath);
-        deps.dbgui.addImport("sokol", deps.dep_sokol.module("sokol"));
 
         return deps;
     }
@@ -74,7 +67,6 @@ pub const Deps = struct {
         compile.root_module.addImport("stb_image", self.stb_image);
         compile.root_module.addImport("cimgui", self.dep_cimgui.module("cimgui"));
         compile.root_module.addImport("lopgl", self.lopgl);
-        compile.root_module.addImport("dbgui", self.dbgui);
         compile.root_module.addImport("rowmath", self.rowmath);
 
         const wf = self.dep_ozz.namedWriteFiles("meson_build");
