@@ -2,28 +2,8 @@
     .name = "learnopengl-examples",
     .version = "0.0.0",
     .dependencies = .{
-        .cimgui = .{
-            .path = "deps/cimgui",
-        },
-        .@"sokol-tools-bin" = .{
-            .url = "git+https://github.com/floooh/sokol-tools-bin.git#8cc8c257380c9a5e230a84aeebf09cd500903fbc",
-            .hash = "12200f5129c997728160ab584adcc939b9dbca6f802d7273f386dad777de85e80421",
-        },
-        .sokol = .{
-            .url = "git+https://github.com/ousttrue/sokol-zig.git#38014bc673fd3c82f44612f02573d5af00dfc66f",
-            .hash = "12205b36041f858db146628cd3b25fae4cda5f161a6a52d48fa22cde0c03b689ccb8",
-        },
-        .rowmath = .{
-            .url = "git+https://github.com/ousttrue/rowmath.git#5ec6007ce7969d31000b89280c16a997fed6c6bd",
-            .hash = "1220f1379331d08475352530d763a9cd249e6851e6d699a6bebafea8c2e6b925ea73",
-        },
-        .@"emsdk-zig" = .{
-            .url = "git+https://github.com/ousttrue/emsdk-zig.git#4b3df5dc7824514a3ef99c1dee77ee3087019050",
-            .hash = "122062b769fe74a24375a9409bce954bdd378f79b4b9fd2adf7a23360634cf5ad55c",
-        },
-        .@"ozz-animation" = .{
-            .url = "git+https://github.com/ousttrue/ozz-animation.git#d91fd0da39dd2484ee0d130966459e6bd3e71568",
-            .hash = "1220b0c856cfe4739561c1fa0aa1eb1c09231a063c0f7c610a4428c1e3bd9909cece",
+        .learn_opengl_zig = .{
+            .path = "deps/learn_opengl_zig",
         },
     },
     .paths = .{

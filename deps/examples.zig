@@ -20,11 +20,6 @@ pub const learnopengl_examples = [_]Example{
         .root_source = "learn_opengl/1-3-hello-window/1-rendering.zig",
     },
     .{
-        .name = "hello_triangle",
-        .root_source = "learn_opengl/1/2-1/hello_triangle.zig",
-        .shaders = &.{"learn_opengl/1/2-1/hello_triangle.glsl"},
-    },
-    .{
         .name = "1-4-1",
         .root_source = "learn_opengl/1-4-hello-triangle/1-triangle.zig",
         .shaders = &.{"learn_opengl/1-4-hello-triangle/1-triangle.glsl"},
@@ -152,14 +147,6 @@ pub const learnopengl_examples = [_]Example{
         },
     },
     //
-    .{
-        .name = "colors",
-        .root_source = "learn_opengl/2/1-1/colors.zig",
-        .shaders = &.{
-            "learn_opengl/2/1-1/colors.glsl",
-            "learn_opengl/2/1-1/light_cube.glsl",
-        },
-    },
     .{
         .name = "2-1-1",
         .root_source = "learn_opengl/2-1-colors/1-scene.zig",
