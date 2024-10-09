@@ -12,7 +12,7 @@ const TITLE = "1-2-1 hello_triangle";
 // application state
 const state = struct {
     var pip = sg.Pipeline{};
-    var bind = sg.Bindings{};
+    var vertex_buffer = sg.Buffer{};
 };
 
 export fn init() void {
@@ -28,15 +28,13 @@ export fn init() void {
         0.5, -0.5, 0.0, // right
         0.0, 0.5, 0.0, // top
     };
-    state.bind.vertex_buffers[0] = sg.makeBuffer(.{
+    state.vertex_buffer = sg.makeBuffer(.{
         .data = sg.asRange(&vertices),
         .label = "vertices",
     });
 
-    const shd = sg.makeShader(shader.helloTriangleShaderDesc(sg.queryBackend()));
-
     var pip_desc = sg.PipelineDesc{
-        .shader = shd,
+        .shader = sg.makeShader(shader.helloTriangleShaderDesc(sg.queryBackend())),
         .label = "hello_triangle",
     };
     pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
@@ -55,16 +53,23 @@ export fn frame() void {
             .{},
         },
     };
-    sg.beginPass(.{
-        .action = pass_action,
-        .swapchain = sokol.glue.swapchain(),
-    });
+    defer sg.commit();
 
-    sg.applyPipeline(state.pip);
-    sg.applyBindings(state.bind);
-    sg.draw(0, 3, 1);
-    sg.endPass();
-    sg.commit();
+    {
+        sg.beginPass(.{
+            .action = pass_action,
+            .swapchain = sokol.glue.swapchain(),
+        });
+        defer sg.endPass();
+
+        {
+            sg.applyPipeline(state.pip);
+            var bind = sg.Bindings{};
+            bind.vertex_buffers[0] = state.vertex_buffer;
+            sg.applyBindings(bind);
+            sg.draw(0, 3, 1);
+        }
+    }
 }
 
 export fn cleanup() void {

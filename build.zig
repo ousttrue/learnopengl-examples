@@ -79,7 +79,7 @@ fn buildWasm(
             .root_source_file = b.path(example.root_source),
             .pic = true,
         });
-        if (example.shader) |shader| {
+        for (example.shaders) |shader| {
             // glsl to glsl.zig
             lib.step.dependOn(sokolShdc(
                 b,
@@ -162,7 +162,7 @@ fn buildNative(
             .name = example.name,
             .root_source_file = b.path(example.root_source),
         });
-        if (example.shader) |shader| {
+        for (example.shaders) |shader| {
             // glsl to glsl.zig
             exe.step.dependOn(sokolShdc(
                 b,
@@ -219,7 +219,7 @@ fn buildNative(
 pub fn sokolShdc(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
-    comptime shader: []const u8,
+    shader: []const u8,
 ) *std.Build.Step {
     const optional_shdc = comptime switch (builtin.os.tag) {
         .windows => "win32/sokol-shdc.exe",
@@ -236,7 +236,7 @@ pub fn sokolShdc(
         "-i",
         shader,
         "-o",
-        shader ++ ".zig",
+        b.fmt("{s}.zig", .{shader}),
         "-l",
         slang,
         "-f",
