@@ -1,5 +1,5 @@
 .{
-    .name = "learn_opengl_zig",
+    .name = "learn_opengl_joey",
     .version = "0.0.0",
     .dependencies = .{
         .cimgui = .{

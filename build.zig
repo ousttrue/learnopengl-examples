@@ -5,21 +5,27 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // if (b.option(bool, "sokol_sample", "build sokol sample") orelse false) {
-    //     const dep = b.dependency("learn_opengl_sokol", .{
-    //         .target = target,
-    //         .optimize = optimize,
-    //     });
-    // }
+    if (b.option(bool, "sample1", "port from zeromake/learnopengl-examples") orelse false) {
+        const dep = b.dependency("learn_opengl_zero", .{
+            .target = target,
+            .optimize = optimize,
+        });
+        _ = dep;
+    }
 
-    if (b.option(bool, "zig_sample", "build zig sample") orelse false) {
-        const dep = b.dependency("learn_opengl_zig", .{
+    if (b.option(bool, "sample2", "port from JoeyDeVries/LearnOpenGL") orelse false) {
+        const dep = b.dependency("learn_opengl_joey", .{
             .target = target,
             .optimize = optimize,
         });
 
         if (target.result.isWasm()) {
-            unreachable;
+            const wf = dep.namedWriteFiles("web");
+            b.installDirectory(.{
+                .source_dir = wf.getDirectory(),
+                .install_dir = .{ .prefix = void{} },
+                .install_subdir = "web",
+            });
         } else {
             for (dep.builder.install_tls.step.dependencies.items) |dep_step| {
                 if (dep_step.cast(std.Build.Step.InstallArtifact)) |install_artifact| {
@@ -55,5 +61,3 @@ pub fn build(b: *std.Build) !void {
     //     buildNative(b, target, optimize, &deps, &examples.all_examples, &install.step);
     // }
 }
-
-
