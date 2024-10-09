@@ -20,6 +20,8 @@ body {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  overflow-wrap: anywhere;
+  /* overflow-wrap: break-word; */
 
   figure {
     margin: 0;
