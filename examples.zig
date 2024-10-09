@@ -5,6 +5,7 @@ pub const Asset = struct {
 
 pub const Example = struct {
     name: []const u8,
+    label: ?[]const u8 = null,
     root_source: []const u8,
     shader: ?[]const u8 = null,
     c_includes: []const []const u8 = &.{},
@@ -17,6 +18,11 @@ pub const learnopengl_examples = [_]Example{
     .{
         .name = "1-3-1",
         .root_source = "learn_opengl/1-3-hello-window/1-rendering.zig",
+    },
+    .{
+        .name = "hello_triangle",
+        .root_source = "learn_opengl/1/2-1/hello_triangle.zig",
+        .shader = "learn_opengl/1/2-1/hello_triangle.glsl",
     },
     .{
         .name = "1-4-1",

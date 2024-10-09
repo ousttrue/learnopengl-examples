@@ -27,7 +27,8 @@ for (const category of CATEGORIES) {
 let i = 1;
 for (const category of CATEGORIES) {
   for (const article of category.articles) {
-    for (const name of article.samples) {
+    for (const sample of article.samples) {
+      const name = typeof sample == 'string' ? sample : sample[0];
       const url = host + resolve(`wasm/${name}.html`)
       console.log(`[${i}/${sum}]`, url);
       ++i;

@@ -1,4 +1,4 @@
-import { CATEGORIES, type CategoryType, type ArticleType } from './data.ts';
+import { CATEGORIES, type CategoryType, type ArticleType, type SampleType } from './data.ts';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import github_svg from './github-mark.svg';
 import zig_svg from './zig-mark.svg';
@@ -6,12 +6,15 @@ import sokol_logo from './logo_s_large.png';
 import './App.css'
 const BASE_URL = import.meta.env.BASE_URL;
 
-function Item(props: { name: string }) {
+function Item(props: { sample: SampleType }) {
+  const [name, label] = typeof props.sample == 'string'
+    ? [props.sample, props.sample]
+    : props.sample;
   return (<div className="item">
-    <a href={`${BASE_URL}wasm/${props.name}.html`}>
-      {props.name}
+    <a href={`${BASE_URL}wasm/${name}.html`}>
+      {label}
       <figure>
-        <img width={150} height={78} src={`${BASE_URL}wasm/${props.name}.jpg`} />
+        <img width={150} height={78} src={`${BASE_URL}wasm/${name}.jpg`} />
       </figure>
     </a>
   </div>);
@@ -21,10 +24,10 @@ function Article(article: ArticleType) {
   return (<>
     <div className="item article">
       <a href={article.url} target="_blank">
-        {article.title}
+        {'🔗'}{article.title}
       </a>
     </div>
-    {article.samples.map((name, key) => <Item key={key} name={name} />)}
+    {article.samples.map((sample, key) => <Item key={key} sample={sample} />)}
   </>);
 }
 
@@ -51,19 +54,36 @@ function Home() {
     <>
       <main className="items">
         <div className="item"><a href="https://github.com/ousttrue/learnopengl-examples">
-          <a href="https://github.com/ousttrue/learnopengl-examples"><img width={150} src={github_svg} /></a>
+          <a href="https://github.com/ousttrue/learnopengl-examples" target="_blank">
+            <img width={150} src={github_svg} />
+          </a>
         </a></div>
         <div className="item">
-          <a href="https://github.com/floooh/sokol-zig">
+          <a href="https://github.com/floooh/sokol-zig" target="_blank">
             <img width={75} src={sokol_logo} />
             <img width={75} src={zig_svg} />
           </a>
         </div>
-        <div className="item"><a href="https://github.com/JoeyDeVries/LearnOpenGL">learnopengl</a></div>
-        <div className="item"><a href="https://github.com/zeromake/learnopengl-examples">
-          <img width={75} src={sokol_logo} />
-          learnopengl-examples
-        </a></div>
+        <div className="item">
+          <a href="https://github.com/JoeyDeVries/LearnOpenGL" target="_blank">
+            🔗learnopengl
+          </a>
+        </div>
+
+        <div className="item">
+          <a href="https://github.com/JoeyDeVries/LearnOpenGL" target="_blank">
+            <img width={75} src={sokol_logo} />
+            🔗learnopengl-examples
+          </a>
+        </div>
+
+        <div className="item">
+          <a href="https://github.com/zeromake/learnopengl-examples" target="_blank">
+            <img width={75} src={sokol_logo} />
+            🔗learnopengl-examples
+          </a>
+        </div>
+
         {CATEGORIES.map((props, key) => <Category key={key} {...props} />)}
       </main>
     </>

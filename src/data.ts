@@ -1,7 +1,10 @@
+// name, label
+export type SampleType = string | [string, string];
+
 export type ArticleType = {
   title: string,
   url: string,
-  samples: string[],
+  samples: SampleType[],
 };
 
 export type CategoryType = {
