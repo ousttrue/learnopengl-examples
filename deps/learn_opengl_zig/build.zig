@@ -1,6 +1,8 @@
 const std = @import("std");
 const build_examples = @import("build_examples.zig");
 const Deps = @import("Deps.zig");
+// const emzig = @import("emsdk-zig");
+// const examples = @import("examples.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
