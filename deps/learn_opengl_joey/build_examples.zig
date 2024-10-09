@@ -12,11 +12,18 @@ const _5 = "5.advanced_lighting/";
 const _6 = "6.pbr/";
 
 pub const examples = [_]Example{
+    // 1.getting_started
     .{
         .name = "hello_triangle",
         .root_source = _1 ++ "2.1/hello_triangle.zig",
         .shaders = &.{_1 ++ "2.1/hello_triangle.glsl"},
     },
+    .{
+        .name = "textures",
+        .root_source = _1 ++ "4.1/textures.zig",
+        .shaders = &.{_1 ++ "4.1/textures.glsl"},
+    },
+    // 2.light_cube
     .{
         .name = "colors",
         .root_source = _2 ++ "1.1/colors.zig",
@@ -25,9 +32,11 @@ pub const examples = [_]Example{
             _2 ++ "1.1/light_cube.glsl",
         },
     },
-    .{
-        .name = "ibl_specular_textured",
-        .root_source = _6 ++ "2.2.2/ibl_specular_textured.zig",
-        .shaders = &.{},
-    },
+    // .{
+    //     .name = "ibl_specular_textured",
+    //     .root_source = _6 ++ "2.2.2/ibl_specular_textured.zig",
+    //     .shaders = &.{
+    //         _6 ++ "2.2.2/pbr.glsl",
+    //     },
+    // },
 };

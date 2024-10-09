@@ -14,7 +14,17 @@ export type CategoryType = {
 };
 
 export const CATEGORIES: CategoryType[] = [
-  { name: "Getting started", articles: [] },
+  {
+    name: "Getting started", articles: [
+      {
+        title: "Textures",
+        url: "https://learnopengl.com/Getting-started/Textures",
+        samples: [
+          "textures",
+        ],
+      },
+    ]
+  },
   {
     name: "Lighting",
     articles: [
