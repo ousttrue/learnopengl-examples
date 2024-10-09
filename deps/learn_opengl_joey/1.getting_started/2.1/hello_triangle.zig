@@ -7,7 +7,7 @@ const shader = @import("hello_triangle.glsl.zig");
 // settings
 const SCR_WIDTH = 800;
 const SCR_HEIGHT = 600;
-const TITLE = "1-2-1 hello_triangle";
+const TITLE = "1.2.1 hello_triangle";
 
 // application state
 const state = struct {

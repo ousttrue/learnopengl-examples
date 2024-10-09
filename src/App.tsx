@@ -65,8 +65,22 @@ function Home() {
           </a>
         </div>
         <div className="item">
-          <a href="https://github.com/JoeyDeVries/LearnOpenGL" target="_blank">
-            🔗learnopengl
+          <div>
+            <a href="https://learnopengl.com/" target="_blank">
+              🔗learnopengl
+            </a>
+          </div>
+          <div>
+            <a href="https://github.com/JoeyDeVries/LearnOpenGL" target="_blank">
+              🔗github
+            </a>
+          </div>
+        </div>
+
+        <div className="item">
+          <a href="https://github.com/zeromake/learnopengl-examples" target="_blank">
+            <img width={75} src={sokol_logo} />
+            🔗learnopengl-examples(zero)
           </a>
         </div>
 
@@ -74,13 +88,6 @@ function Home() {
           <a href="https://github.com/JoeyDeVries/LearnOpenGL" target="_blank">
             <img width={75} src={sokol_logo} />
             🔗learnopengl-examples(joey)
-          </a>
-        </div>
-
-        <div className="item">
-          <a href="https://github.com/zeromake/learnopengl-examples" target="_blank">
-            <img width={75} src={sokol_logo} />
-            🔗learnopengl-examples(zero)
           </a>
         </div>
 

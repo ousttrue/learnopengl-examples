@@ -30,20 +30,21 @@ pub fn init(
     const cimgui_root = deps.cimgui_dep.namedWriteFiles("cimgui").getDirectory();
     deps.sokol_dep.artifact("sokol_clib").addIncludePath(cimgui_root);
 
-    // all C libraries need to depend on the sokol library, when building for
-    // WASM this makes sure that the Emscripten SDK has been setup before
-    // C compilation is attempted (since the sokol C library depends on the
-    // Emscripten SDK setup step)
-    // need to inject the Emscripten system header include path into
-    // the cimgui C library otherwise the C/C++ code won't find
-    // C stdlib headers
-    const emsdk_incl_path = deps.emsdk_dep.path(
-        "upstream/emscripten/cache/sysroot/include",
-    );
-
     const cimgui_clib_artifact = deps.cimgui_dep.artifact("cimgui_clib");
-    cimgui_clib_artifact.addSystemIncludePath(emsdk_incl_path);
     cimgui_clib_artifact.step.dependOn(&deps.sokol_dep.artifact("sokol_clib").step);
+    if (target.result.isWasm()) {
+        // all C libraries need to depend on the sokol library, when building for
+        // WASM this makes sure that the Emscripten SDK has been setup before
+        // C compilation is attempted (since the sokol C library depends on the
+        // Emscripten SDK setup step)
+        // need to inject the Emscripten system header include path into
+        // the cimgui C library otherwise the C/C++ code won't find
+        // C stdlib headers
+        const emsdk_incl_path = deps.emsdk_dep.path(
+            "upstream/emscripten/cache/sysroot/include",
+        );
+        cimgui_clib_artifact.addSystemIncludePath(emsdk_incl_path);
+    }
 
     return deps;
 }

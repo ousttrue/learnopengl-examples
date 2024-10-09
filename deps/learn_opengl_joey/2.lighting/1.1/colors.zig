@@ -12,7 +12,7 @@ const Vec3 = rowmath.Vec3;
 // settings
 const SCR_WIDTH = 800;
 const SCR_HEIGHT = 600;
-const TITLE = "2-1-1 colors";
+const TITLE = "2.1.1 colors";
 
 const state = struct {
     var lighting_pip = sg.Pipeline{};

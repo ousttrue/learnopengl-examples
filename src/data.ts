@@ -14,6 +14,7 @@ export type CategoryType = {
 };
 
 export const CATEGORIES: CategoryType[] = [
+  { name: "Getting started", articles: [] },
   {
     name: "Lighting",
     articles: [
@@ -36,5 +37,41 @@ export const CATEGORIES: CategoryType[] = [
         ],
       },
     ],
+  },
+  { name: "Model Loading", articles: [] },
+  { name: "Advanced OpenGL", articles: [] },
+  { name: "Advanced Lighting", articles: [] },
+  {
+    name: "PBR", articles: [
+      {
+        title: "noet: PBR sahder を動かす",
+        url: "https://qiita.com/ousttrue/items/d362d8d774eed7b6ce5f",
+        samples: [],
+      },
+      {
+        title: "Lighting",
+        url: "https://learnopengl.com/PBR/Lighting",
+        samples: [
+          "lighting",
+          "lighting_textured",
+        ],
+      },
+      {
+        title: "IBL Diffuse irradiance",
+        url: "https://learnopengl.com/PBR/IBL/Diffuse-irradiance",
+        samples: [
+          "ibl_irradiance_conversion",
+          "ibl_irradiance",
+        ],
+      },
+      {
+        title: "IBL Specular",
+        url: "https://learnopengl.com/PBR/IBL/Specular-IBL",
+        samples: [
+          "ibl_specular",
+          "ibl_specular_textured",
+        ],
+      },
+    ]
   },
 ];
