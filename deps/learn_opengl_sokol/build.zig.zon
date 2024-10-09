@@ -1,0 +1,6 @@
+.{
+    .name = "learn_opengl_sokol",
+    .version = "0.0.0",
+    .dependencies = .{},
+    .paths = .{""},
+}
