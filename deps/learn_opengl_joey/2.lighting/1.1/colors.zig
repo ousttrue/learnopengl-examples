@@ -172,7 +172,7 @@ export fn frame() void {
 
             const projection = state.orbit.projectionMatrix();
             const view = state.orbit.viewMatrix();
-            const t = Mat4.translate(state.lightPos);
+            const t = Mat4.makeTranslation(state.lightPos);
             const s = Mat4.makeScale(.{ .x = 0.2, .y = 0.2, .z = 0.3 }); // a smaller cube
             const m = s.mul(t);
             const vs_params = light_cube_shader.VsParams{
