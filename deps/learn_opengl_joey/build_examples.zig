@@ -32,11 +32,20 @@ pub const examples = [_]Example{
             _2 ++ "1.1/light_cube.glsl",
         },
     },
-    // .{
-    //     .name = "ibl_specular_textured",
-    //     .root_source = _6 ++ "2.2.2/ibl_specular_textured.zig",
-    //     .shaders = &.{
-    //         _6 ++ "2.2.2/pbr.glsl",
-    //     },
-    // },
+    .{
+        .name = "ibl_specular_textured",
+        .root_source = _6 ++ "2.2.2/ibl_specular_textured.zig",
+        .shaders = &.{
+            _6 ++ "2.2.2/pbr.glsl",
+        },
+    },
+    // 4.advanced_opengl
+    .{
+        .name = "cubemap_skybox",
+        .root_source = _4 ++ "6.1/cubemap_skybox.zig",
+        .shaders = &.{
+            _4 ++ "6.1/cubemap.glsl",
+            _4 ++ "6.1/skybox.glsl",
+        },
+    },
 };

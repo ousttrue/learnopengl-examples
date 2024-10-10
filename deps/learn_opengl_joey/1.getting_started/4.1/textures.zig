@@ -3,7 +3,6 @@ const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const shader = @import("textures.glsl.zig");
-const stb_image = @import("stb_image");
 const Texture = @import("Texture.zig");
 
 // settings
@@ -75,31 +74,10 @@ export fn init() void {
 
 export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
     if (response.*.fetched) {
-        var img_width: c_int = undefined;
-        var img_height: c_int = undefined;
-        var num_channels: c_int = undefined;
-        const desired_channels = 4;
-        const pixels = stb_image.stbi_load_from_memory(
-            @ptrCast(response.*.data.ptr),
-            @intCast(response.*.data.size),
-            &img_width,
-            &img_height,
-            &num_channels,
-            desired_channels,
-        );
-        if (pixels != null) {
-            std.debug.print(
-                "{s} => {} x {}: {}ch\n",
-                .{ TEXTURE, img_width, img_height, num_channels },
-            );
-            state.texture = Texture.init(
-                img_width,
-                img_height,
-                pixels,
-            );
-            stb_image.stbi_image_free(pixels);
-        } else {
-            std.debug.print("stbi_load_from_memory failed\n", .{});
+        if (Texture.load(response.*.data.ptr, response.*.data.size)) |texture| {
+            state.texture = texture;
+        } else |_| {
+            std.debug.print("Texture.load failed\n", .{});
         }
     } else if (response.*.failed) {
         std.debug.print("fetch failed\n", .{});

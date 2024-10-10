@@ -56,7 +56,17 @@ export const CATEGORIES: CategoryType[] = [
     ],
   },
   { name: "Model Loading", articles: [] },
-  { name: "Advanced OpenGL", articles: [] },
+  {
+    name: "Advanced OpenGL", articles: [
+      {
+        title: "Cubemap",
+        url: "https://learnopengl.com/Advanced-OpenGL/Cubemaps",
+        samples: [
+          "cubemap_skybox",
+        ],
+      },
+    ]
+  },
   { name: "Advanced Lighting", articles: [] },
   {
     name: "PBR", articles: [

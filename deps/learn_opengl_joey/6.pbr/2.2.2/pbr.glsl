@@ -11,12 +11,15 @@ uniform vs_params {
   mat4 projection;
   mat4 view;
   mat4 model;
-  mat3 normalMatrix;
+  vec3 normalMatrixCol0;
+  vec3 normalMatrixCol1;
+  vec3 normalMatrixCol2;
 };
 
 void main() {
   TexCoords = aTexCoords;
   WorldPos = vec3(model * vec4(aPos, 1.0));
+  mat3 normalMatrix = mat3(normalMatrixCol0, normalMatrixCol1, normalMatrixCol2);
   Normal = normalMatrix * aNormal;
 
   gl_Position = projection * view * vec4(WorldPos, 1.0);
@@ -30,16 +33,25 @@ in vec3 WorldPos;
 in vec3 Normal;
 
 // material parameters
-uniform sampler2D albedoMap;
-uniform sampler2D normalMap;
-uniform sampler2D metallicMap;
-uniform sampler2D roughnessMap;
-uniform sampler2D aoMap;
+uniform texture2D albedoMap;
+uniform texture2D normalMap;
+uniform texture2D metallicMap;
+uniform texture2D roughnessMap;
+uniform texture2D aoMap;
+uniform sampler albedoMapSampler;
+uniform sampler normalMapSampler;
+uniform sampler metallicMapSampler;
+uniform sampler roughnessMapSampler;
+uniform sampler aoMapSampler;
+
 
 // IBL
-uniform samplerCube irradianceMap;
-uniform samplerCube prefilterMap;
-uniform sampler2D brdfLUT;
+uniform textureCube irradianceMap;
+uniform textureCube prefilterMap;
+uniform texture2D brdfLUT;
+uniform sampler irradianceMapSampler;
+uniform sampler prefilterMapSampler;
+uniform sampler brdfLUTSampler;
 
 uniform fs_params {
   // lights
@@ -56,7 +68,9 @@ const float PI = 3.14159265359;
 // mapping the usual way for performance anyways; I do plan make a note of this
 // technique somewhere later in the normal mapping tutorial.
 vec3 getNormalFromMap() {
-  vec3 tangentNormal = texture(normalMap, TexCoords).xyz * 2.0 - 1.0;
+  vec3 tangentNormal = texture(
+        sampler2D(normalMap, normalMapSampler), TexCoords
+      ).xyz * 2.0 - 1.0;
 
   vec3 Q1 = dFdx(WorldPos);
   vec3 Q2 = dFdy(WorldPos);
@@ -114,10 +128,18 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
 // ----------------------------------------------------------------------------
 void main() {
   // material properties
-  vec3 albedo = pow(texture(albedoMap, TexCoords).rgb, vec3(2.2));
-  float metallic = texture(metallicMap, TexCoords).r;
-  float roughness = texture(roughnessMap, TexCoords).r;
-  float ao = texture(aoMap, TexCoords).r;
+  vec3 albedo = pow(texture(
+        sampler2D(albedoMap, albedoMapSampler), TexCoords
+      ).rgb, vec3(2.2));
+  float metallic = texture(
+        sampler2D(metallicMap, metallicMapSampler), TexCoords
+      ).r;
+  float roughness = texture(
+        sampler2D(roughnessMap, roughnessMapSampler), TexCoords
+      ).r;
+  float ao = texture(
+        sampler2D(aoMap, aoMapSampler), TexCoords
+      ).r;
 
   // input lighting data
   vec3 N = getNormalFromMap();
@@ -177,15 +199,21 @@ void main() {
   vec3 kD = 1.0 - kS;
   kD *= 1.0 - metallic;
 
-  vec3 irradiance = texture(irradianceMap, N).rgb;
+  vec3 irradiance = texture(
+        samplerCube(irradianceMap, irradianceMapSampler), N
+      ).rgb;
   vec3 diffuse = irradiance * albedo;
 
   // sample both the pre-filter map and the BRDF lut and combine them together
   // as per the Split-Sum approximation to get the IBL specular part.
   const float MAX_REFLECTION_LOD = 4.0;
   vec3 prefilteredColor =
-      textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
-  vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
+      textureLod(
+        samplerCube(prefilterMap, prefilterMapSampler), R, roughness * MAX_REFLECTION_LOD
+      ).rgb;
+  vec2 brdf = texture(
+        sampler2D(brdfLUT, brdfLUTSampler), vec2(max(dot(N, V), 0.0), roughness)
+      ).rg;
   vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
   vec3 ambient = (kD * diffuse + specular) * ao;

@@ -11,6 +11,12 @@ pub fn build(b: *std.Build) void {
 
     const wf = b.addNamedWriteFiles("web");
     _ = wf.addCopyFile(b.path("assets/container.jpg"), "container.jpg");
+    _ = wf.addCopyFile(b.path("assets/skybox_back.jpg"), "skybox_back.jpg");
+    _ = wf.addCopyFile(b.path("assets/skybox_bottom.jpg"), "skybox_bottom.jpg");
+    _ = wf.addCopyFile(b.path("assets/skybox_front.jpg"), "skybox_front.jpg");
+    _ = wf.addCopyFile(b.path("assets/skybox_left.jpg"), "skybox_left.jpg");
+    _ = wf.addCopyFile(b.path("assets/skybox_right.jpg"), "skybox_right.jpg");
+    _ = wf.addCopyFile(b.path("assets/skybox_top.jpg"), "skybox_top.jpg");
 
     for (build_examples.examples) |example| {
         const compile = if (target.result.isWasm())

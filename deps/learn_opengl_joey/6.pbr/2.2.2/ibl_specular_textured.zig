@@ -1,4 +1,5 @@
 // https://github.com/JoeyDeVries/LearnOpenGL/blob/master/src/6.pbr/2.2.2.ibl_specular_textured/ibl_specular_textured.cpp
+const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const pbr_shader = @import("pbr.glsl.zig");
@@ -6,6 +7,10 @@ const rowmath = @import("rowmath");
 const InputState = rowmath.InputState;
 const OrbitCamera = rowmath.OrbitCamera;
 const Vec3 = rowmath.Vec3;
+const Vec2 = rowmath.Vec2;
+const Mat4 = rowmath.Mat4;
+const Sphere = @import("Sphere.zig");
+const Texture = @import("Texture.zig");
 
 // settings
 const SCR_WIDTH = 1280;
@@ -14,13 +19,62 @@ const TITLE = "6.2.2.2 ibl_specular_textured";
 
 const state = struct {
     var pbr_pip = sg.Pipeline{};
-    var vertex_buffer = sg.Buffer{};
+    var sphere: Sphere = undefined;
+
+    var iron: ?PbrMaterial = null;
+    var gold: ?PbrMaterial = null;
+    var grass: ?PbrMaterial = null;
+    var plastic: ?PbrMaterial = null;
+    var wall: ?PbrMaterial = null;
 
     var input = InputState{};
     var orbit = OrbitCamera{};
 
-    var lightPos = Vec3{ .x = 1.2, .y = 1.0, .z = 2.0 };
+    var lightPositions = [_][4]f32{
+        .{ -10.0, 10.0, 10.0, 0 },
+        .{ 10.0, 10.0, 10.0, 0 },
+        .{ -10.0, -10.0, 10.0, 0 },
+        .{ 10.0, -10.0, 10.0, 0 },
+    };
+    var lightColors = [_][4]f32{
+        .{ 300.0, 300.0, 300.0, 0 },
+        .{ 300.0, 300.0, 300.0, 0 },
+        .{ 300.0, 300.0, 300.0, 0 },
+        .{ 300.0, 300.0, 300.0, 0 },
+    };
 };
+
+const IbrMaterial = struct {
+    //         // bind pre-computed IBL data
+    //         glActiveTexture(GL_TEXTURE0);
+    //         glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
+    //         glActiveTexture(GL_TEXTURE1);
+    //         glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+    //         glActiveTexture(GL_TEXTURE2);
+    //         glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
+
+};
+
+const PbrMaterial = struct {
+    albedo: Texture,
+    normal: Texture,
+    metallic: Texture,
+    roughness: Texture,
+    ao: Texture,
+};
+
+pub fn bind_pbr_material(m: PbrMaterial, bindings: *sg.Bindings) void {
+    bindings.fs.images[pbr_shader.SLOT_albedoMap] = m.albedo.image;
+    bindings.fs.samplers[pbr_shader.SLOT_albedoMapSampler] = m.albedo.sampler;
+    bindings.fs.images[pbr_shader.SLOT_normalMap] = m.albedo.image;
+    bindings.fs.samplers[pbr_shader.SLOT_normalMapSampler] = m.albedo.sampler;
+    bindings.fs.images[pbr_shader.SLOT_metallicMap] = m.albedo.image;
+    bindings.fs.samplers[pbr_shader.SLOT_metallicMapSampler] = m.albedo.sampler;
+    bindings.fs.images[pbr_shader.SLOT_roughnessMap] = m.albedo.image;
+    bindings.fs.samplers[pbr_shader.SLOT_roughnessMapSampler] = m.albedo.sampler;
+    bindings.fs.images[pbr_shader.SLOT_aoMap] = m.albedo.image;
+    bindings.fs.samplers[pbr_shader.SLOT_aoMapSampler] = m.albedo.sampler;
+}
 
 export fn init() void {
     sg.setup(.{
@@ -32,17 +86,22 @@ export fn init() void {
     {
         var pip_desc = sg.PipelineDesc{
             .label = "pbr",
-            .shader = sg.makeShader(pbr_shader.pbrShader(
+            .shader = sg.makeShader(pbr_shader.pbrShaderDesc(
                 sg.queryBackend(),
             )),
             .depth = .{
                 .write_enabled = true,
                 .compare = .LESS_EQUAL,
             },
+            .index_type = .UINT16,
         };
         pip_desc.layout.attrs[pbr_shader.ATTR_vs_aPos].format = .FLOAT3;
-        state.lighting_pip = sg.makePipeline(pip_desc);
+        pip_desc.layout.attrs[pbr_shader.ATTR_vs_aNormal].format = .FLOAT3;
+        pip_desc.layout.attrs[pbr_shader.ATTR_vs_aTexCoords].format = .FLOAT2;
+        state.pbr_pip = sg.makePipeline(pip_desc);
     }
+
+    state.sphere = Sphere.init(std.heap.c_allocator) catch @panic("Sphere.init");
 
     // configure global opengl state
     // -----------------------------
@@ -57,20 +116,7 @@ export fn init() void {
     //     Shader prefilterShader("2.2.2.cubemap.vs", "2.2.2.prefilter.fs");
     //     Shader brdfShader("2.2.2.brdf.vs", "2.2.2.brdf.fs");
     //     Shader backgroundShader("2.2.2.background.vs", "2.2.2.background.fs");
-    //
-    //     pbrShader.use();
-    //     pbrShader.setInt("irradianceMap", 0);
-    //     pbrShader.setInt("prefilterMap", 1);
-    //     pbrShader.setInt("brdfLUT", 2);
-    //     pbrShader.setInt("albedoMap", 3);
-    //     pbrShader.setInt("normalMap", 4);
-    //     pbrShader.setInt("metallicMap", 5);
-    //     pbrShader.setInt("roughnessMap", 6);
-    //     pbrShader.setInt("aoMap", 7);
-    //
-    //     backgroundShader.use();
-    //     backgroundShader.setInt("environmentMap", 0);
-    //
+
     //     // load PBR material textures
     //     // --------------------------
     //     // rusted iron
@@ -107,21 +153,7 @@ export fn init() void {
     //     unsigned int wallMetallicMap = loadTexture(FileSystem::getPath("resources/textures/pbr/wall/metallic.png").c_str());
     //     unsigned int wallRoughnessMap = loadTexture(FileSystem::getPath("resources/textures/pbr/wall/roughness.png").c_str());
     //     unsigned int wallAOMap = loadTexture(FileSystem::getPath("resources/textures/pbr/wall/ao.png").c_str());
-    //
-    //     // lights
-    //     // ------
-    //     glm::vec3 lightPositions[] = {
-    //         glm::vec3(-10.0f,  10.0f, 10.0f),
-    //         glm::vec3( 10.0f,  10.0f, 10.0f),
-    //         glm::vec3(-10.0f, -10.0f, 10.0f),
-    //         glm::vec3( 10.0f, -10.0f, 10.0f),
-    //     };
-    //     glm::vec3 lightColors[] = {
-    //         glm::vec3(300.0f, 300.0f, 300.0f),
-    //         glm::vec3(300.0f, 300.0f, 300.0f),
-    //         glm::vec3(300.0f, 300.0f, 300.0f),
-    //         glm::vec3(300.0f, 300.0f, 300.0f)
-    //     };
+
     //
     //     // pbr: setup framebuffer
     //     // ----------------------
@@ -341,330 +373,192 @@ export fn init() void {
     //     glViewport(0, 0, scrWidth, scrHeight);
 }
 
-//     // render loop
-//     // -----------
-//     while (!glfwWindowShouldClose(window))
-//     {
-//         // per-frame time logic
-//         // --------------------
-//         float currentFrame = static_cast<float>(glfwGetTime());
-//         deltaTime = currentFrame - lastFrame;
-//         lastFrame = currentFrame;
-//
-//         // input
-//         // -----
-//         processInput(window);
-//
-//         // render
-//         // ------
-//         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-//         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//         // render scene, supplying the convoluted irradiance map to the final shader.
-//         // ------------------------------------------------------------------------------------------
-//         pbrShader.use();
-//         glm::mat4 model = glm::mat4(1.0f);
-//         glm::mat4 view = camera.GetViewMatrix();
-//         pbrShader.setMat4("view", view);
-//         pbrShader.setVec3("camPos", camera.Position);
-//
-//         // bind pre-computed IBL data
-//         glActiveTexture(GL_TEXTURE0);
-//         glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
-//         glActiveTexture(GL_TEXTURE1);
-//         glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
-//         glActiveTexture(GL_TEXTURE2);
-//         glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
-//
-//         // rusted iron
-//         glActiveTexture(GL_TEXTURE3);
-//         glBindTexture(GL_TEXTURE_2D, ironAlbedoMap);
-//         glActiveTexture(GL_TEXTURE4);
-//         glBindTexture(GL_TEXTURE_2D, ironNormalMap);
-//         glActiveTexture(GL_TEXTURE5);
-//         glBindTexture(GL_TEXTURE_2D, ironMetallicMap);
-//         glActiveTexture(GL_TEXTURE6);
-//         glBindTexture(GL_TEXTURE_2D, ironRoughnessMap);
-//         glActiveTexture(GL_TEXTURE7);
-//         glBindTexture(GL_TEXTURE_2D, ironAOMap);
-//
-//         model = glm::mat4(1.0f);
-//         model = glm::translate(model, glm::vec3(-5.0, 0.0, 2.0));
-//         pbrShader.setMat4("model", model);
-//         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-//         renderSphere();
-//
-//         // gold
-//         glActiveTexture(GL_TEXTURE3);
-//         glBindTexture(GL_TEXTURE_2D, goldAlbedoMap);
-//         glActiveTexture(GL_TEXTURE4);
-//         glBindTexture(GL_TEXTURE_2D, goldNormalMap);
-//         glActiveTexture(GL_TEXTURE5);
-//         glBindTexture(GL_TEXTURE_2D, goldMetallicMap);
-//         glActiveTexture(GL_TEXTURE6);
-//         glBindTexture(GL_TEXTURE_2D, goldRoughnessMap);
-//         glActiveTexture(GL_TEXTURE7);
-//         glBindTexture(GL_TEXTURE_2D, goldAOMap);
-//
-//         model = glm::mat4(1.0f);
-//         model = glm::translate(model, glm::vec3(-3.0, 0.0, 2.0));
-//         pbrShader.setMat4("model", model);
-//         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-//         renderSphere();
-//
-//         // grass
-//         glActiveTexture(GL_TEXTURE3);
-//         glBindTexture(GL_TEXTURE_2D, grassAlbedoMap);
-//         glActiveTexture(GL_TEXTURE4);
-//         glBindTexture(GL_TEXTURE_2D, grassNormalMap);
-//         glActiveTexture(GL_TEXTURE5);
-//         glBindTexture(GL_TEXTURE_2D, grassMetallicMap);
-//         glActiveTexture(GL_TEXTURE6);
-//         glBindTexture(GL_TEXTURE_2D, grassRoughnessMap);
-//         glActiveTexture(GL_TEXTURE7);
-//         glBindTexture(GL_TEXTURE_2D, grassAOMap);
-//
-//         model = glm::mat4(1.0f);
-//         model = glm::translate(model, glm::vec3(-1.0, 0.0, 2.0));
-//         pbrShader.setMat4("model", model);
-//         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-//         renderSphere();
-//
-//         // plastic
-//         glActiveTexture(GL_TEXTURE3);
-//         glBindTexture(GL_TEXTURE_2D, plasticAlbedoMap);
-//         glActiveTexture(GL_TEXTURE4);
-//         glBindTexture(GL_TEXTURE_2D, plasticNormalMap);
-//         glActiveTexture(GL_TEXTURE5);
-//         glBindTexture(GL_TEXTURE_2D, plasticMetallicMap);
-//         glActiveTexture(GL_TEXTURE6);
-//         glBindTexture(GL_TEXTURE_2D, plasticRoughnessMap);
-//         glActiveTexture(GL_TEXTURE7);
-//         glBindTexture(GL_TEXTURE_2D, plasticAOMap);
-//
-//         model = glm::mat4(1.0f);
-//         model = glm::translate(model, glm::vec3(1.0, 0.0, 2.0));
-//         pbrShader.setMat4("model", model);
-//         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-//         renderSphere();
-//
-//         // wall
-//         glActiveTexture(GL_TEXTURE3);
-//         glBindTexture(GL_TEXTURE_2D, wallAlbedoMap);
-//         glActiveTexture(GL_TEXTURE4);
-//         glBindTexture(GL_TEXTURE_2D, wallNormalMap);
-//         glActiveTexture(GL_TEXTURE5);
-//         glBindTexture(GL_TEXTURE_2D, wallMetallicMap);
-//         glActiveTexture(GL_TEXTURE6);
-//         glBindTexture(GL_TEXTURE_2D, wallRoughnessMap);
-//         glActiveTexture(GL_TEXTURE7);
-//         glBindTexture(GL_TEXTURE_2D, wallAOMap);
-//
-//         model = glm::mat4(1.0f);
-//         model = glm::translate(model, glm::vec3(3.0, 0.0, 2.0));
-//         pbrShader.setMat4("model", model);
-//         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-//         renderSphere();
-//
-//         // render light source (simply re-render sphere at light positions)
-//         // this looks a bit off as we use the same shader, but it'll make their positions obvious and
-//         // keeps the codeprint small.
-//         for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
-//         {
-//             glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, 0.0, 0.0);
-//             newPos = lightPositions[i];
-//             pbrShader.setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
-//             pbrShader.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
-//
-//             model = glm::mat4(1.0f);
-//             model = glm::translate(model, newPos);
-//             model = glm::scale(model, glm::vec3(0.5f));
-//             pbrShader.setMat4("model", model);
-//             pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-//             renderSphere();
-//         }
-//
-//         // render skybox (render as last to prevent overdraw)
-//         backgroundShader.use();
-//
-//         backgroundShader.setMat4("view", view);
-//         glActiveTexture(GL_TEXTURE0);
-//         glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
-//         //glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap); // display irradiance map
-//         //glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap); // display prefilter map
-//         renderCube();
-//
-//         // render BRDF map to screen
-//         //brdfShader.Use();
-//         //renderQuad();
-//
-//
-//         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-//         // -------------------------------------------------------------------------------
-//         glfwSwapBuffers(window);
-//         glfwPollEvents();
-//     }
-//
-//     // glfw: terminate, clearing all previously allocated GLFW resources.
-//     // ------------------------------------------------------------------
-//     glfwTerminate();
-//     return 0;
-// }
+export fn frame() void {
+    state.input.screen_width = sokol.app.widthf();
+    state.input.screen_height = sokol.app.heightf();
+    state.orbit.frame(state.input);
+    state.input.mouse_wheel = 0;
+    const view = state.orbit.viewMatrix();
+    const projection = state.orbit.projectionMatrix();
+    const campos = state.orbit.camera.transform.translation;
+    const fs = pbr_shader.FsParams{
+        .lightColors = state.lightColors,
+        .lightPositions = state.lightPositions,
+        .camPos = .{
+            campos.x,
+            campos.y,
+            campos.z,
+        },
+    };
 
-// // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// // ---------------------------------------------------------------------------------------------------------
-// void processInput(GLFWwindow *window)
-// {
-//     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-//         glfwSetWindowShouldClose(window, true);
-//
-//     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-//         camera.ProcessKeyboard(FORWARD, deltaTime);
-//     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-//         camera.ProcessKeyboard(BACKWARD, deltaTime);
-//     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-//         camera.ProcessKeyboard(LEFT, deltaTime);
-//     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-//         camera.ProcessKeyboard(RIGHT, deltaTime);
-// }
-//
-// // glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// // ---------------------------------------------------------------------------------------------
-// void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-// {
-//     // make sure the viewport matches the new window dimensions; note that width and
-//     // height will be significantly larger than specified on retina displays.
-//     glViewport(0, 0, width, height);
-// }
-//
-//
-// // glfw: whenever the mouse moves, this callback is called
-// // -------------------------------------------------------
-// void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-// {
-//     float xpos = static_cast<float>(xposIn);
-//     float ypos = static_cast<float>(yposIn);
-//
-//     if (firstMouse)
-//     {
-//         lastX = xpos;
-//         lastY = ypos;
-//         firstMouse = false;
-//     }
-//
-//     float xoffset = xpos - lastX;
-//     float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-//
-//     lastX = xpos;
-//     lastY = ypos;
-//
-//     camera.ProcessMouseMovement(xoffset, yoffset);
-// }
-//
-// // glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// // ----------------------------------------------------------------------
-// void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-// {
-//     camera.ProcessMouseScroll(static_cast<float>(yoffset));
-// }
-//
-// // renders (and builds at first invocation) a sphere
-// // -------------------------------------------------
-// unsigned int sphereVAO = 0;
-// GLsizei indexCount;
-// void renderSphere()
-// {
-//     if (sphereVAO == 0)
-//     {
-//         glGenVertexArrays(1, &sphereVAO);
-//
-//         unsigned int vbo, ebo;
-//         glGenBuffers(1, &vbo);
-//         glGenBuffers(1, &ebo);
-//
-//         std::vector<glm::vec3> positions;
-//         std::vector<glm::vec2> uv;
-//         std::vector<glm::vec3> normals;
-//         std::vector<unsigned int> indices;
-//
-//         const unsigned int X_SEGMENTS = 64;
-//         const unsigned int Y_SEGMENTS = 64;
-//         const float PI = 3.14159265359f;
-//         for (unsigned int x = 0; x <= X_SEGMENTS; ++x)
-//         {
-//             for (unsigned int y = 0; y <= Y_SEGMENTS; ++y)
-//             {
-//                 float xSegment = (float)x / (float)X_SEGMENTS;
-//                 float ySegment = (float)y / (float)Y_SEGMENTS;
-//                 float xPos = std::cos(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
-//                 float yPos = std::cos(ySegment * PI);
-//                 float zPos = std::sin(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
-//
-//                 positions.push_back(glm::vec3(xPos, yPos, zPos));
-//                 uv.push_back(glm::vec2(xSegment, ySegment));
-//                 normals.push_back(glm::vec3(xPos, yPos, zPos));
-//             }
-//         }
-//
-//         bool oddRow = false;
-//         for (unsigned int y = 0; y < Y_SEGMENTS; ++y)
-//         {
-//             if (!oddRow) // even rows: y == 0, y == 2; and so on
-//             {
-//                 for (unsigned int x = 0; x <= X_SEGMENTS; ++x)
-//                 {
-//                     indices.push_back(y * (X_SEGMENTS + 1) + x);
-//                     indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
-//                 }
-//             }
-//             else
-//             {
-//                 for (int x = X_SEGMENTS; x >= 0; --x)
-//                 {
-//                     indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
-//                     indices.push_back(y * (X_SEGMENTS + 1) + x);
-//                 }
-//             }
-//             oddRow = !oddRow;
-//         }
-//         indexCount = static_cast<GLsizei>(indices.size());
-//
-//         std::vector<float> data;
-//         for (unsigned int i = 0; i < positions.size(); ++i)
-//         {
-//             data.push_back(positions[i].x);
-//             data.push_back(positions[i].y);
-//             data.push_back(positions[i].z);
-//             if (normals.size() > 0)
-//             {
-//                 data.push_back(normals[i].x);
-//                 data.push_back(normals[i].y);
-//                 data.push_back(normals[i].z);
-//             }
-//             if (uv.size() > 0)
-//             {
-//                 data.push_back(uv[i].x);
-//                 data.push_back(uv[i].y);
-//             }
-//         }
-//         glBindVertexArray(sphereVAO);
-//         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-//         glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data[0], GL_STATIC_DRAW);
-//         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-//         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-//         unsigned int stride = (3 + 2 + 3) * sizeof(float);
-//         glEnableVertexAttribArray(0);
-//         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
-//         glEnableVertexAttribArray(1);
-//         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
-//         glEnableVertexAttribArray(2);
-//         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
-//     }
-//
-//     glBindVertexArray(sphereVAO);
-//     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
-// }
-//
+    defer sg.commit();
+    {
+        const pass_action = sg.PassAction{
+            .colors = .{
+                .{
+                    .load_action = .CLEAR,
+                    .clear_value = .{ .r = 0.2, .g = 0.3, .b = 0.3, .a = 1.0 },
+                },
+                .{},
+                .{},
+                .{},
+            },
+        };
+        sg.beginPass(.{
+            .action = pass_action,
+            .swapchain = sokol.glue.swapchain(),
+        });
+        defer sg.endPass();
+
+        if (state.iron) |material| {
+            // iron
+            sg.applyPipeline(state.pbr_pip);
+            const model = Mat4.makeTranslation(.{ .x = -5.0, .y = 0.0, .z = 2.0 });
+            const vs = pbr_shader.VsParams{
+                .model = model.m,
+                .view = view.m,
+                .projection = projection.m,
+                .normalMatrixCol0 = .{ 1, 0, 0 },
+                .normalMatrixCol1 = .{ 0, 1, 0 },
+                .normalMatrixCol2 = .{ 0, 0, 1 },
+            };
+            sg.applyUniforms(.VS, pbr_shader.SLOT_vs_params, sg.asRange(&vs));
+            sg.applyUniforms(.FS, pbr_shader.SLOT_fs_params, sg.asRange(&fs));
+            var bind = sg.Bindings{};
+            state.sphere.bind(&bind);
+            bind_pbr_material(material, &bind);
+            sg.applyBindings(bind);
+            sg.draw(0, state.sphere.index_count, 1);
+        }
+
+        if (state.gold) |material| {
+            _ = material;
+            //         // gold
+            //         glActiveTexture(GL_TEXTURE3);
+            //         glBindTexture(GL_TEXTURE_2D, goldAlbedoMap);
+            //         glActiveTexture(GL_TEXTURE4);
+            //         glBindTexture(GL_TEXTURE_2D, goldNormalMap);
+            //         glActiveTexture(GL_TEXTURE5);
+            //         glBindTexture(GL_TEXTURE_2D, goldMetallicMap);
+            //         glActiveTexture(GL_TEXTURE6);
+            //         glBindTexture(GL_TEXTURE_2D, goldRoughnessMap);
+            //         glActiveTexture(GL_TEXTURE7);
+            //         glBindTexture(GL_TEXTURE_2D, goldAOMap);
+            //
+            //         model = glm::mat4(1.0f);
+            //         model = glm::translate(model, glm::vec3(-3.0, 0.0, 2.0));
+            //         pbrShader.setMat4("model", model);
+            //         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
+            //         renderSphere();
+            //
+        }
+
+        if (state.grass) |material| {
+            _ = material;
+            //         // grass
+            //         glActiveTexture(GL_TEXTURE3);
+            //         glBindTexture(GL_TEXTURE_2D, grassAlbedoMap);
+            //         glActiveTexture(GL_TEXTURE4);
+            //         glBindTexture(GL_TEXTURE_2D, grassNormalMap);
+            //         glActiveTexture(GL_TEXTURE5);
+            //         glBindTexture(GL_TEXTURE_2D, grassMetallicMap);
+            //         glActiveTexture(GL_TEXTURE6);
+            //         glBindTexture(GL_TEXTURE_2D, grassRoughnessMap);
+            //         glActiveTexture(GL_TEXTURE7);
+            //         glBindTexture(GL_TEXTURE_2D, grassAOMap);
+            //
+            //         model = glm::mat4(1.0f);
+            //         model = glm::translate(model, glm::vec3(-1.0, 0.0, 2.0));
+            //         pbrShader.setMat4("model", model);
+            //         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
+            //         renderSphere();
+            //
+        }
+
+        if (state.plastic) |material| {
+            _ = material;
+            //         // plastic
+            //         glActiveTexture(GL_TEXTURE3);
+            //         glBindTexture(GL_TEXTURE_2D, plasticAlbedoMap);
+            //         glActiveTexture(GL_TEXTURE4);
+            //         glBindTexture(GL_TEXTURE_2D, plasticNormalMap);
+            //         glActiveTexture(GL_TEXTURE5);
+            //         glBindTexture(GL_TEXTURE_2D, plasticMetallicMap);
+            //         glActiveTexture(GL_TEXTURE6);
+            //         glBindTexture(GL_TEXTURE_2D, plasticRoughnessMap);
+            //         glActiveTexture(GL_TEXTURE7);
+            //         glBindTexture(GL_TEXTURE_2D, plasticAOMap);
+            //
+            //         model = glm::mat4(1.0f);
+            //         model = glm::translate(model, glm::vec3(1.0, 0.0, 2.0));
+            //         pbrShader.setMat4("model", model);
+            //         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
+            //         renderSphere();
+            //
+        }
+
+        if (state.wall) |material| {
+            _ = material;
+            //         // wall
+            //         glActiveTexture(GL_TEXTURE3);
+            //         glBindTexture(GL_TEXTURE_2D, wallAlbedoMap);
+            //         glActiveTexture(GL_TEXTURE4);
+            //         glBindTexture(GL_TEXTURE_2D, wallNormalMap);
+            //         glActiveTexture(GL_TEXTURE5);
+            //         glBindTexture(GL_TEXTURE_2D, wallMetallicMap);
+            //         glActiveTexture(GL_TEXTURE6);
+            //         glBindTexture(GL_TEXTURE_2D, wallRoughnessMap);
+            //         glActiveTexture(GL_TEXTURE7);
+            //         glBindTexture(GL_TEXTURE_2D, wallAOMap);
+            //
+            //         model = glm::mat4(1.0f);
+            //         model = glm::translate(model, glm::vec3(3.0, 0.0, 2.0));
+            //         pbrShader.setMat4("model", model);
+            //         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
+            //         renderSphere();
+            //
+        }
+
+        // render light source (simply re-render sphere at light positions)
+        // this looks a bit off as we use the same shader, but it'll make their positions obvious and
+        // keeps the codeprint small.
+        for (state.lightPositions) |p| {
+            const lightPosition = Vec3{ .x = p[0], .y = p[1], .z = p[2] };
+            const newPos = lightPosition.add(
+                Vec3{
+                    .x = std.math.sin(@as(f32, @floatCast(sokol.time.sec(sokol.time.now()))) * 5.0) * 5.0,
+                    .y = 0.0,
+                    .z = 0.0,
+                },
+            );
+            _ = newPos;
+            //             pbrShader.setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
+            //             pbrShader.setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
+            //
+            //             model = glm::mat4(1.0f);
+            //             model = glm::translate(model, newPos);
+            //             model = glm::scale(model, glm::vec3(0.5f));
+            //             pbrShader.setMat4("model", model);
+            //             pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
+            //             renderSphere();
+        }
+    }
+
+    // render skybox (render as last to prevent overdraw)
+    //         backgroundShader.use();
+    //
+    //         backgroundShader.setMat4("view", view);
+    //         glActiveTexture(GL_TEXTURE0);
+    //         glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+    //         //glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap); // display irradiance map
+    //         //glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap); // display prefilter map
+    //         renderCube();
+
+    // render BRDF map to screen
+    //brdfShader.Use();
+    //renderQuad();
+}
+
 // // renderCube() renders a 1x1 3D cube in NDC.
 // // -------------------------------------------------
 // unsigned int cubeVAO = 0;
@@ -739,7 +633,7 @@ export fn init() void {
 //     glDrawArrays(GL_TRIANGLES, 0, 36);
 //     glBindVertexArray(0);
 // }
-//
+
 // // renderQuad() renders a 1x1 XY quad in NDC
 // // -----------------------------------------
 // unsigned int quadVAO = 0;
@@ -770,7 +664,7 @@ export fn init() void {
 //     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 //     glBindVertexArray(0);
 // }
-//
+
 // // utility function for loading a 2D texture from file
 // // ---------------------------------------------------
 // unsigned int loadTexture(char const * path)
@@ -810,12 +704,57 @@ export fn init() void {
 //     return textureID;
 // }
 
+export fn event(e: [*c]const sokol.app.Event) void {
+    switch (e.*.type) {
+        .MOUSE_DOWN => {
+            switch (e.*.mouse_button) {
+                .LEFT => {
+                    state.input.mouse_left = true;
+                },
+                .RIGHT => {
+                    state.input.mouse_right = true;
+                },
+                .MIDDLE => {
+                    state.input.mouse_middle = true;
+                },
+                .INVALID => {},
+            }
+        },
+        .MOUSE_UP => {
+            switch (e.*.mouse_button) {
+                .LEFT => {
+                    state.input.mouse_left = false;
+                },
+                .RIGHT => {
+                    state.input.mouse_right = false;
+                },
+                .MIDDLE => {
+                    state.input.mouse_middle = false;
+                },
+                .INVALID => {},
+            }
+        },
+        .MOUSE_MOVE => {
+            state.input.mouse_x = e.*.mouse_x;
+            state.input.mouse_y = e.*.mouse_y;
+        },
+        .MOUSE_SCROLL => {
+            state.input.mouse_wheel = e.*.scroll_y;
+        },
+        else => {},
+    }
+}
+
+export fn cleanup() void {
+    sg.shutdown();
+}
+
 pub fn main() void {
     sokol.app.run(.{
-        // .init_cb = init,
-        // .frame_cb = frame,
-        // .cleanup_cb = cleanup,
-        // .event_cb = event,
+        .init_cb = init,
+        .frame_cb = frame,
+        .cleanup_cb = cleanup,
+        .event_cb = event,
         .width = SCR_WIDTH,
         .height = SCR_HEIGHT,
         .high_dpi = true,

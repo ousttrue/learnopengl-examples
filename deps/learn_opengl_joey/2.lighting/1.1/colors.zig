@@ -118,21 +118,19 @@ export fn frame() void {
     state.orbit.frame(state.input);
     state.input.mouse_wheel = 0;
 
-    // render
-    // ------
-    const pass_action = sg.PassAction{
-        .colors = .{
-            .{
-                .load_action = .CLEAR,
-                .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
-            },
-            .{},
-            .{},
-            .{},
-        },
-    };
-
+    defer sg.commit();
     {
+        const pass_action = sg.PassAction{
+            .colors = .{
+                .{
+                    .load_action = .CLEAR,
+                    .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
+                },
+                .{},
+                .{},
+                .{},
+            },
+        };
         sg.beginPass(.{
             .action = pass_action,
             .swapchain = sokol.glue.swapchain(),
@@ -187,7 +185,6 @@ export fn frame() void {
             sg.draw(0, 36, 1);
         }
     }
-    sg.commit();
 }
 
 export fn event(e: [*c]const sokol.app.Event) void {
