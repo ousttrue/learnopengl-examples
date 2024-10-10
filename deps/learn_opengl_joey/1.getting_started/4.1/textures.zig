@@ -1,31 +1,31 @@
 // https://github.com/JoeyDeVries/LearnOpenGL/blob/master/src/1.getting_started/4.1.textures/textures.cpp
+const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const shader = @import("textures.glsl.zig");
+const stb_image = @import("stb_image");
+const Texture = @import("Texture.zig");
 
 // settings
 const SCR_WIDTH = 800;
 const SCR_HEIGHT = 600;
 const TITLE = "1.4.1 textures";
+const TEXTURE = "container.jpg";
 
 const state = struct {
     var pip = sg.Pipeline{};
     var vertex_buffer = sg.Buffer{};
     var index_buffer = sg.Buffer{};
+    var texture: ?Texture = null;
 };
+
+var fetch_buffer: [512 * 1024]u8 = undefined;
 
 export fn init() void {
     sg.setup(.{
         .environment = sokol.glue.environment(),
         .logger = .{ .func = sokol.log.func },
     });
-
-    var pip_desc = sg.PipelineDesc{
-        .shader = sg.makeShader(shader.texturesShaderDesc(sg.queryBackend())),
-        .label = "textures",
-    };
-    pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
-    state.pip = sg.makePipeline(pip_desc);
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -48,41 +48,98 @@ export fn init() void {
     state.index_buffer = sg.makeBuffer(.{
         .data = sg.asRange(&indices),
         .label = "indices",
+        .type = .INDEXBUFFER,
     });
 
-    //     // load and create a texture
-    //     // -------------------------
-    //     unsigned int texture;
-    //     glGenTextures(1, &texture);
-    //     glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-    //     // set the texture wrapping parameters
-    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    //     // set texture filtering parameters
-    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //     // load image, create texture and generate mipmaps
-    //     int width, height, nrChannels;
-    //     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    //     unsigned char *data = stbi_load(FileSystem::getPath("resources/textures/container.jpg").c_str(), &width, &height, &nrChannels, 0);
-    //     if (data)
-    //     {
-    //         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    //         glGenerateMipmap(GL_TEXTURE_2D);
-    //     }
-    //     else
-    //     {
-    //         std::cout << "Failed to load texture" << std::endl;
-    //     }
-    //     stbi_image_free(data);
+    var pip_desc = sg.PipelineDesc{
+        .shader = sg.makeShader(shader.texturesShaderDesc(sg.queryBackend())),
+        .label = "textures",
+        .index_type = .UINT16,
+    };
+    pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
+    pip_desc.layout.attrs[shader.ATTR_vs_aColor].format = .FLOAT3;
+    pip_desc.layout.attrs[shader.ATTR_vs_aTexCoord].format = .FLOAT2;
+    state.pip = sg.makePipeline(pip_desc);
+
+    sokol.fetch.setup(.{
+        .max_requests = 1,
+        .num_channels = 1,
+        .num_lanes = 1,
+    });
+    _ = sokol.fetch.send(.{
+        .path = TEXTURE,
+        .callback = fetch_callback,
+        .buffer = sokol.fetch.asRange(&fetch_buffer),
+    });
+}
+
+export fn fetch_callback(response: [*c]const sokol.fetch.Response) void {
+    if (response.*.fetched) {
+        var img_width: c_int = undefined;
+        var img_height: c_int = undefined;
+        var num_channels: c_int = undefined;
+        const desired_channels = 4;
+        const pixels = stb_image.stbi_load_from_memory(
+            @ptrCast(response.*.data.ptr),
+            @intCast(response.*.data.size),
+            &img_width,
+            &img_height,
+            &num_channels,
+            desired_channels,
+        );
+        if (pixels != null) {
+            std.debug.print(
+                "{s} => {} x {}: {}ch\n",
+                .{ TEXTURE, img_width, img_height, num_channels },
+            );
+            state.texture = Texture.init(
+                img_width,
+                img_height,
+                pixels,
+            );
+            stb_image.stbi_image_free(pixels);
+        } else {
+            std.debug.print("stbi_load_from_memory failed\n", .{});
+        }
+    } else if (response.*.failed) {
+        std.debug.print("fetch failed\n", .{});
+    }
 }
 
 export fn frame() void {
-    //         // render
-    //         // ------
-    //         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    //         glClear(GL_COLOR_BUFFER_BIT);
-    //
+    sokol.fetch.dowork();
+    defer sg.commit();
+
+    {
+        const pass_action = sg.PassAction{
+            .colors = .{
+                .{
+                    .load_action = .CLEAR,
+                    .clear_value = .{ .r = 0.2, .g = 0.3, .b = 0.3, .a = 1.0 },
+                },
+                .{},
+                .{},
+                .{},
+            },
+        };
+        sg.beginPass(.{
+            .action = pass_action,
+            .swapchain = sokol.glue.swapchain(),
+        });
+        defer sg.endPass();
+
+        if (state.texture) |texture| {
+            sg.applyPipeline(state.pip);
+            var bind = sg.Bindings{};
+            bind.index_buffer = state.index_buffer;
+            bind.vertex_buffers[0] = state.vertex_buffer;
+            bind.fs.images[shader.SLOT_texture1] = texture.image;
+            bind.fs.samplers[shader.SLOT_sampler1] = texture.sampler;
+            sg.applyBindings(bind);
+            sg.draw(0, 6, 1);
+        }
+    }
+
     //         // bind Texture
     //         glBindTexture(GL_TEXTURE_2D, texture);
     //

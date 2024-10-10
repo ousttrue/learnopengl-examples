@@ -86,7 +86,6 @@ function Home() {
 
         <div className="item">
           <a href="https://github.com/JoeyDeVries/LearnOpenGL" target="_blank">
-            <img width={75} src={sokol_logo} />
             🔗learnopengl-examples(joey)
           </a>
         </div>

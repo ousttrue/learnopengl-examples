@@ -42,20 +42,20 @@ export fn init() void {
 }
 
 export fn frame() void {
-    const pass_action = sg.PassAction{
-        .colors = .{
-            .{
-                .load_action = .CLEAR,
-                .clear_value = .{ .r = 0.2, .g = 0.3, .b = 0.3, .a = 1.0 },
-            },
-            .{},
-            .{},
-            .{},
-        },
-    };
     defer sg.commit();
 
     {
+        const pass_action = sg.PassAction{
+            .colors = .{
+                .{
+                    .load_action = .CLEAR,
+                    .clear_value = .{ .r = 0.2, .g = 0.3, .b = 0.3, .a = 1.0 },
+                },
+                .{},
+                .{},
+                .{},
+            },
+        };
         sg.beginPass(.{
             .action = pass_action,
             .swapchain = sokol.glue.swapchain(),

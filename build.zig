@@ -19,20 +19,22 @@ pub fn build(b: *std.Build) !void {
             .optimize = optimize,
         });
 
-        if (target.result.isWasm()) {
-            const wf = dep.namedWriteFiles("web");
-            b.installDirectory(.{
-                .source_dir = wf.getDirectory(),
-                .install_dir = .{ .prefix = void{} },
-                .install_subdir = "web",
-            });
-        } else {
+        const wf = dep.namedWriteFiles("web");
+        const install_wf = b.addInstallDirectory(.{
+            .source_dir = wf.getDirectory(),
+            .install_dir = .{ .prefix = void{} },
+            .install_subdir = "web",
+        });
+
+        if (target.result.isWasm()) {} else {
             for (dep.builder.install_tls.step.dependencies.items) |dep_step| {
                 if (dep_step.cast(std.Build.Step.InstallArtifact)) |install_artifact| {
                     const install = b.addInstallArtifact(install_artifact.artifact, .{});
                     b.getInstallStep().dependOn(&install.step);
+                    install.step.dependOn(&install_wf.step);
 
                     const run = b.addRunArtifact(install_artifact.artifact);
+                    run.setCwd(b.path("zig-out/web"));
                     run.step.dependOn(&install.step);
 
                     b.step(

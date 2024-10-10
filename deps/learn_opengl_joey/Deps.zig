@@ -6,6 +6,7 @@ sokol_dep: *std.Build.Dependency,
 cimgui_dep: *std.Build.Dependency,
 rowmath: *std.Build.Module,
 emsdk_dep: *std.Build.Dependency,
+stbi_dep: *std.Build.Dependency,
 
 pub fn init(
     b: *std.Build,
@@ -24,6 +25,10 @@ pub fn init(
             .optimize = optimize,
         }),
         .emsdk_dep = b.dependency("emsdk-zig", .{}).builder.dependency("emsdk", .{}),
+        .stbi_dep = b.dependency("stb_image", .{
+            .target = target,
+            .optimize = optimize,
+        }),
     };
 
     // inject the cimgui header search path into the sokol C library compile step
@@ -57,4 +62,8 @@ pub fn inject_dependencies(
     compile.root_module.addImport("sokol", self.sokol_dep.module("sokol"));
     compile.root_module.addImport("cimgui", self.cimgui_dep.module("cimgui"));
     compile.root_module.addImport("rowmath", self.rowmath);
+    compile.root_module.addImport(
+        "stb_image",
+        &self.stbi_dep.artifact("stb_image").root_module,
+    );
 }

@@ -10,6 +10,7 @@ pub fn build(b: *std.Build) void {
     const deps = Deps.init(b, target, optimize);
 
     const wf = b.addNamedWriteFiles("web");
+    _ = wf.addCopyFile(b.path("assets/container.jpg"), "container.jpg");
 
     for (build_examples.examples) |example| {
         const compile = if (target.result.isWasm())
