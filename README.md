@@ -21,7 +21,5 @@
 #### WASM Build
 
 ```bash
-# ubuntu ok
-# windows failed
 > zig build -Dtarget=wasm32-emscripten
 ```

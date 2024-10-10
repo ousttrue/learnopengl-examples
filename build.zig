@@ -26,7 +26,9 @@ pub fn build(b: *std.Build) !void {
             .install_subdir = "web",
         });
 
-        if (target.result.isWasm()) {} else {
+        if (target.result.isWasm()) {
+            b.getInstallStep().dependOn(&install_wf.step);
+        } else {
             for (dep.builder.install_tls.step.dependencies.items) |dep_step| {
                 if (dep_step.cast(std.Build.Step.InstallArtifact)) |install_artifact| {
                     const install = b.addInstallArtifact(install_artifact.artifact, .{});

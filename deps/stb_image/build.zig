@@ -11,10 +11,14 @@ pub fn build(b: *std.Build) void {
         .root_source_file = b.path("stb_image.zig"),
         .link_libc = true,
     });
-    lib.addCSourceFiles(.{
-        .files = &.{
-            "stb_image.c",
-        },
-    });
+    if (target.result.isWasm()) {
+        // use emscripten builtin stb_image
+    } else {
+        lib.addCSourceFiles(.{
+            .files = &.{
+                "stb_image.c",
+            },
+        });
+    }
     b.installArtifact(lib);
 }
