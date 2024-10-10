@@ -17,6 +17,13 @@ export const CATEGORIES: CategoryType[] = [
   {
     name: "Getting started", articles: [
       {
+        title: "Hello Triangle",
+        url: "https://learnopengl.com/Getting-started/Hello-Triangle",
+        samples: [
+          "hello_triangle",
+        ],
+      },
+      {
         title: "Textures",
         url: "https://learnopengl.com/Getting-started/Textures",
         samples: [

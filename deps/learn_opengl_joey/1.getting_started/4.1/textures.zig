@@ -139,19 +139,6 @@ export fn frame() void {
             sg.draw(0, 6, 1);
         }
     }
-
-    //         // bind Texture
-    //         glBindTexture(GL_TEXTURE_2D, texture);
-    //
-    //         // render container
-    //         ourShader.use();
-    //         glBindVertexArray(VAO);
-    //         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    //
-    //         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-    //         // -------------------------------------------------------------------------------
-    //         glfwSwapBuffers(window);
-    //         glfwPollEvents();
 }
 
 export fn cleanup() void {
