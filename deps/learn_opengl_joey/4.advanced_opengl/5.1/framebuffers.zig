@@ -1,5 +1,6 @@
 // https://github.com/JoeyDeVries/LearnOpenGL/blob/master/src/4.advanced_opengl/5.1.framebuffers/framebuffers.cpp
 const std = @import("std");
+const builtin = @import("builtin");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const shader = @import("framebuffers.glsl.zig");
@@ -123,23 +124,30 @@ export fn init() void {
     //
     // screen
     //
-    const quadVertices = [_]f32{ // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-        // positions   // texCoords
-        // -1.0, 1.0,  0.0, 1.0,
-        // -1.0, -1.0, 0.0, 0.0,
-        // 1.0,  -1.0, 1.0, 0.0,
-        //
-        // -1.0, 1.0,  0.0, 1.0,
-        // 1.0,  -1.0, 1.0, 0.0,
-        // 1.0,  1.0,  1.0, 1.0,
-        -1.0, 1.0,  0.0, 0.0,
-        -1.0, -1.0, 0.0, 1.0,
-        1.0,  -1.0, 1.0, 1.0,
+    const quadVertices: [6 * 4]f32 = if (builtin.cpu.arch == .wasm32)
+        // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+        .{
+            // positions   // texCoords
+            -1.0, 1.0,  0.0, 1.0,
+            -1.0, -1.0, 0.0, 0.0,
+            1.0,  -1.0, 1.0, 0.0,
 
-        -1.0, 1.0,  0.0, 0.0,
-        1.0,  -1.0, 1.0, 1.0,
-        1.0,  1.0,  1.0, 0.0,
-    };
+            -1.0, 1.0,  0.0, 1.0,
+            1.0,  -1.0, 1.0, 0.0,
+            1.0,  1.0,  1.0, 1.0,
+        }
+    else
+        // reverse y. d3d ?
+        .{
+            -1.0, 1.0,  0.0, 0.0,
+            -1.0, -1.0, 0.0, 1.0,
+            1.0,  -1.0, 1.0, 1.0,
+
+            -1.0, 1.0,  0.0, 0.0,
+            1.0,  -1.0, 1.0, 1.0,
+            1.0,  1.0,  1.0, 0.0,
+        };
+
     state.screen_vbo = sg.makeBuffer(.{
         .label = "quad",
         .data = sg.asRange(&quadVertices),
