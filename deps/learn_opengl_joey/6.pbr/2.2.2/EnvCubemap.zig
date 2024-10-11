@@ -1,214 +1,191 @@
 const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
-const tocubemap_shader = @import("equirectangular_to_cubemap.zig");
+const shader = @import("equirectangular_to_cubemap.glsl.zig");
 const rowmath = @import("rowmath");
-const FrameBuffer = @import("FrameBuffer.zig");
-const FloatTexture = @import("FloatTexture.zig");
 const Mat4 = rowmath.Mat4;
 const Vec3 = rowmath.Vec3;
+const FloatTexture = @import("FloatTexture.zig");
 pub const EnvCubemap = @This();
 
-fn init(texture: FloatTexture) void {
+image: sg.Image,
+sampler: sg.Sampler,
+attachments: [6]sg.Attachments,
+vbo: sg.Buffer,
 
-    // configure global opengl state
-    // -----------------------------
-    // enable seamless cubemap sampling for lower mip levels in the pre-filter map.
-    //     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+pub const captureProjection = Mat4.makePerspective(
+    std.math.degreesToRadians(90.0),
+    1.0,
+    0.1,
+    10.0,
+);
+pub const captureViews = [_]Mat4{
+    Mat4.makeLookAt(Vec3.zero, Vec3.right, Vec3.down),
+    Mat4.makeLookAt(Vec3.zero, Vec3.left, Vec3.down),
+    Mat4.makeLookAt(Vec3.zero, Vec3.up, Vec3.forward),
+    Mat4.makeLookAt(Vec3.zero, Vec3.down, Vec3.backward),
+    Mat4.makeLookAt(Vec3.zero, Vec3.forward, Vec3.down),
+    Mat4.makeLookAt(Vec3.zero, Vec3.backward, Vec3.down),
+};
 
-    // pbr: set up projection and view matrices for capturing data onto the 6 cubemap face directions
-    // ----------------------------------------------------------------------------------------------
-    const captureProjection = Mat4.makePerspective(
-        std.math.degreesToRadians(90.0),
-        1.0,
-        0.1,
-        10.0,
-    );
-
-    const captureViews = [_]Mat4{
-        Mat4.makeLookAt(Vec3.zero, Vec3.right, Vec3.down),
-        // glm::lookAt(glm::vec3(0.0, 0.0, 0.0), glm::vec3(-1.0,  0.0,  0.0), glm::vec3(0.0, -1.0,  0.0)),
-        // glm::lookAt(glm::vec3(0.0, 0.0, 0.0), glm::vec3( 0.0,  1.0,  0.0), glm::vec3(0.0,  0.0,  1.0)),
-        // glm::lookAt(glm::vec3(0.0, 0.0, 0.0), glm::vec3( 0.0, -1.0,  0.0), glm::vec3(0.0,  0.0, -1.0)),
-        // glm::lookAt(glm::vec3(0.0, 0.0, 0.0), glm::vec3( 0.0,  0.0,  1.0), glm::vec3(0.0, -1.0,  0.0)),
-        // glm::lookAt(glm::vec3(0.0, 0.0, 0.0), glm::vec3( 0.0,  0.0, -1.0), glm::vec3(0.0, -1.0,  0.0))
+pub fn init() @This() {
+    const size = 512;
+    // framebuffer configuration
+    // -------------------------
+    // setup a render pass struct with one color and one depth render attachment image
+    // NOTE: we need to explicitly set the sample count in the attachment image objects,
+    // because the offscreen pass uses a different sample count than the display render pass
+    // (the display render pass is multi-sampled, the offscreen pass is not)
+    // create a color attachment texture
+    var img_desc = sg.ImageDesc{
+        .type = .CUBE,
+        .render_target = true,
+        .width = size,
+        .height = size,
+        .pixel_format = .RGBA16F,
+        .sample_count = 1,
+        .label = "color-image",
     };
-    _ = captureViews;
+    const color_img = sg.makeImage(img_desc);
+    img_desc.pixel_format = .DEPTH;
+    img_desc.label = "depth-image";
+    // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+    const depth_img = sg.makeImage(img_desc);
+    var attachments_desc = sg.AttachmentsDesc{
+        .depth_stencil = .{
+            .image = depth_img,
+        },
+        .label = "offscreen-attachments",
+    };
+    attachments_desc.colors[0].image = color_img;
+    var attachments: [6]sg.Attachments = undefined;
+    for (0..6) |i| {
+        attachments_desc.colors[0].slice = @intCast(i);
+        attachments[i] = sg.makeAttachments(attachments_desc);
+    }
 
-    // pbr: convert HDR equirectangular environment map to cubemap equivalent
-    // ----------------------------------------------------------------------
-    const equirectangularToCubemap_pip = tocubemap_shader_pipeline();
-    {
+    const vertices = [_]f32{
+        // back ace
+        -1.0, -1.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, // bottom-let
+        1.0, 1.0, -1.0, 0.0, 0.0, -1.0, 1.0, 1.0, // top-right
+        1.0, -1.0, -1.0, 0.0, 0.0, -1.0, 1.0, 0.0, // bottom-right
+        1.0, 1.0, -1.0, 0.0, 0.0, -1.0, 1.0, 1.0, // top-right
+        -1.0, -1.0, -1.0, 0.0, 0.0, -1.0, 0.0, 0.0, // bottom-let
+        -1.0, 1.0, -1.0, 0.0, 0.0, -1.0, 0.0, 1.0, // top-let
+        // ront ace
+        -1.0, -1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom-let
+        1.0, -1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, // bottom-right
+        1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, // top-right
+        1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, // top-right
+        -1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, // top-let
+        -1.0, -1.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, // bottom-let
+        // let ace
+        -1.0, 1.0, 1.0, -1.0, 0.0, 0.0, 1.0, 0.0, // top-right
+        -1.0, 1.0, -1.0, -1.0, 0.0, 0.0, 1.0, 1.0, // top-let
+        -1.0, -1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, // bottom-let
+        -1.0, -1.0, -1.0, -1.0, 0.0, 0.0, 0.0, 1.0, // bottom-let
+        -1.0, -1.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0, // bottom-right
+        -1.0, 1.0, 1.0, -1.0, 0.0, 0.0, 1.0, 0.0, // top-right
+        // right ace
+        1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, // top-let
+        1.0, -1.0, -1.0, 1.0, 0.0, 0.0, 0.0, 1.0, // bottom-right
+        1.0, 1.0, -1.0, 1.0, 0.0, 0.0, 1.0, 1.0, // top-right
+        1.0, -1.0, -1.0, 1.0, 0.0, 0.0, 0.0, 1.0, // bottom-right
+        1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, // top-let
+        1.0, -1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0, // bottom-let
+        // bottom ace
+        -1.0, -1.0, -1.0, 0.0, -1.0, 0.0, 0.0, 1.0, // top-right
+        1.0, -1.0, -1.0, 0.0, -1.0, 0.0, 1.0, 1.0, // top-let
+        1.0, -1.0, 1.0, 0.0, -1.0, 0.0, 1.0, 0.0, // bottom-let
+        1.0, -1.0, 1.0, 0.0, -1.0, 0.0, 1.0, 0.0, // bottom-let
+        -1.0, -1.0, 1.0, 0.0, -1.0, 0.0, 0.0, 0.0, // bottom-right
+        -1.0, -1.0, -1.0, 0.0, -1.0, 0.0, 0.0, 1.0, // top-right
+        // top ace
+        -1.0, 1.0, -1.0, 0.0, 1.0, 0.0, 0.0, 1.0, // top-let
+        1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom-right
+        1.0, 1.0, -1.0, 0.0, 1.0, 0.0, 1.0, 1.0, // top-right
+        1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, // bottom-right
+        -1.0, 1.0, -1.0, 0.0, 1.0, 0.0, 0.0, 1.0, // top-let
+        -1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0, // bottom-let
+    };
+    const vbo = sg.makeBuffer(.{
+        .data = sg.asRange(&vertices),
+        .label = "cubemap",
+    });
+
+    return .{
+        .image = color_img,
+        .sampler = sg.makeSampler(.{
+            .mipmap_filter = .LINEAR,
+            .min_filter = .LINEAR,
+            .mag_filter = .LINEAR,
+            .wrap_u = .CLAMP_TO_EDGE,
+            .wrap_v = .CLAMP_TO_EDGE,
+            .wrap_w = .CLAMP_TO_EDGE,
+        }),
+        .attachments = attachments,
+        .vbo = vbo,
+    };
+}
+
+pub fn render(self: @This(), texture: FloatTexture) void {
+    // glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
+
+    var pip_desc = sg.PipelineDesc{
+        .label = "to_cubemap",
+        .shader = sg.makeShader(shader.equirectangularToCubemapShaderDesc(
+            sg.queryBackend(),
+        )),
+        .depth = .{
+            .write_enabled = true,
+            .compare = .LESS,
+            .pixel_format = .DEPTH,
+        },
+    };
+
+    pip_desc.colors[0].pixel_format = .RGBA16F;
+    pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
+    const pip = sg.makePipeline(pip_desc);
+
+    var bind = sg.Bindings{};
+    bind.vertex_buffers[0] = self.vbo;
+    bind.fs.images[shader.SLOT_equirectangularMap] = texture.image;
+    bind.fs.samplers[shader.SLOT_equirectangularMapSampler] = texture.sampler;
+    for (0..6) |i| {
         const pass_action = sg.PassAction{
             .colors = .{
                 .{
                     .load_action = .CLEAR,
-                    .clear_value = .{ .r = 0.2, .g = 0.3, .b = 0.3, .a = 1.0 },
+                    .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
                 },
                 .{},
                 .{},
                 .{},
             },
         };
+        sg.beginPass(.{
+            .action = pass_action,
+            .attachments = self.attachments[i],
+        });
+        defer sg.endPass();
 
         {
-            sg.applyPipeline(equirectangularToCubemap_pip);
-
-            var bind = sg.Bindings{};
-            bind.fs.images[tocubemap_shader.SLOT_texture1] = texture.image;
-            bind.fs.samplers[tocubemap_shader.SLOT_sampler1] = texture.sampler;
+            sg.applyPipeline(pip);
             sg.applyBindings(bind);
-
-            var vs_params = tocubemap_shader.VsParams{
+            const vs_params = shader.VsParams{
                 .projection = captureProjection.m,
+                .view = captureViews[i].m,
             };
-            for (0..6) |i| {
-                vs_params.view = captureViews[i].m;
-
-                sg.beginPass(.{
-                    .action = pass_action,
-                    .attachments = captureFbo.attachments,
-                });
-                defer sg.endPass();
-                // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-                // renderCube();
-            }
-            //     glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
-            //     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+            sg.applyUniforms(
+                .VS,
+                shader.SLOT_vs_params,
+                sg.asRange(&vs_params),
+            );
+            sg.draw(0, 36, 1);
         }
     }
 
-    //     // pbr: create an irradiance cubemap, and re-scale capture FBO to irradiance scale.
-    //     // --------------------------------------------------------------------------------
-    //     unsigned int irradianceMap;
-    //     glGenTextures(1, &irradianceMap);
-    //     glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
-    //     for (unsigned int i = 0; i < 6; ++i)
-    //     {
-    //         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 32, 32, 0, GL_RGB, GL_FLOAT, nullptr);
-    //     }
-    //     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    //     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    //     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //
-    //     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
-    //     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    //     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
-    //
-    //     // pbr: solve diffuse integral by convolution to create an irradiance (cube)map.
-    //     // -----------------------------------------------------------------------------
-    //     irradianceShader.use();
-    //     irradianceShader.setInt("environmentMap", 0);
-    //     irradianceShader.setMat4("projection", captureProjection);
-    //     glActiveTexture(GL_TEXTURE0);
-    //     glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
-    //
-    //     glViewport(0, 0, 32, 32); // don't forget to configure the viewport to the capture dimensions.
-    //     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
-    //     for (unsigned int i = 0; i < 6; ++i)
-    //     {
-    //         irradianceShader.setMat4("view", captureViews[i]);
-    //         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap, 0);
-    //         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //
-    //         renderCube();
-    //     }
-    //     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    //
-    //     // pbr: create a pre-filter cubemap, and re-scale capture FBO to pre-filter scale.
-    //     // --------------------------------------------------------------------------------
-    //     unsigned int prefilterMap;
-    //     glGenTextures(1, &prefilterMap);
-    //     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
-    //     for (unsigned int i = 0; i < 6; ++i)
-    //     {
-    //         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0, GL_RGB, GL_FLOAT, nullptr);
-    //     }
-    //     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    //     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    //     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // be sure to set minification filter to mip_linear
-    //     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //     // generate mipmaps for the cubemap so OpenGL automatically allocates the required memory.
-    //     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-    //
-    //     // pbr: run a quasi monte-carlo simulation on the environment lighting to create a prefilter (cube)map.
-    //     // ----------------------------------------------------------------------------------------------------
-    //     prefilterShader.use();
-    //     prefilterShader.setInt("environmentMap", 0);
-    //     prefilterShader.setMat4("projection", captureProjection);
-    //     glActiveTexture(GL_TEXTURE0);
-    //     glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
-    //
-    //     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
-    //     unsigned int maxMipLevels = 5;
-    //     for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
-    //     {
-    //         // reisze framebuffer according to mip-level size.
-    //         unsigned int mipWidth = static_cast<unsigned int>(128 * std::pow(0.5, mip));
-    //         unsigned int mipHeight = static_cast<unsigned int>(128 * std::pow(0.5, mip));
-    //         glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    //         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
-    //         glViewport(0, 0, mipWidth, mipHeight);
-    //
-    //         float roughness = (float)mip / (float)(maxMipLevels - 1);
-    //         prefilterShader.setFloat("roughness", roughness);
-    //         for (unsigned int i = 0; i < 6; ++i)
-    //         {
-    //             prefilterShader.setMat4("view", captureViews[i]);
-    //             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterMap, mip);
-    //
-    //             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //             renderCube();
-    //         }
-    //     }
-    //     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    //
-    //     // pbr: generate a 2D LUT from the BRDF equations used.
-    //     // ----------------------------------------------------
-    //     unsigned int brdfLUTTexture;
-    //     glGenTextures(1, &brdfLUTTexture);
-    //
-    //     // pre-allocate enough memory for the LUT texture.
-    //     glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
-    //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, 0);
-    //     // be sure to set wrapping mode to GL_CLAMP_TO_EDGE
-    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //
-    //     // then re-configure capture framebuffer object and render screen-space quad with BRDF shader.
-    //     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
-    //     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    //     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
-    //     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
-    //
-    //     glViewport(0, 0, 512, 512);
-    //     brdfShader.use();
-    //     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //     renderQuad();
-    //
-    //     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-fn tocubemap_shader_pipeline() sg.Pipeline {
-    const pip_desc = sg.PipelineDesc{
-        .label = "tocubemap",
-        .shader = sg.makeShader(tocubemap_shader.equirectangularToCubemapShader(
-            sg.queryBackend(),
-        )),
-        // .depth = .{
-        //     .write_enabled = true,
-        //     .compare = .LESS_EQUAL,
-        // },
-    };
-    // pip_desc.layout.attrs[pbr_shader.ATTR_vs_aPos].format = .FLOAT3;
-    // pip_desc.layout.attrs[pbr_shader.ATTR_vs_aNormal].format = .FLOAT3;
-    // pip_desc.layout.attrs[pbr_shader.ATTR_vs_aTexCoords].format = .FLOAT2;
-    return sg.makePipeline(pip_desc);
+    // then let OpenGL generate mipmaps from first mip face (combatting visible dots artifact)
+    // glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+    // glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 }
