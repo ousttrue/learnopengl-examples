@@ -37,6 +37,7 @@ pub const examples = [_]Example{
         .root_source = _6 ++ "2.2.2/ibl_specular_textured.zig",
         .shaders = &.{
             _6 ++ "2.2.2/pbr.glsl",
+            _6 ++ "2.2.2/equirectangular_to_cubemap.glsl",
         },
     },
     // 4.advanced_opengl

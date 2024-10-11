@@ -1,14 +1,20 @@
-fn renderEnv() void {
+const std = @import("std");
+const sokol = @import("sokol");
+const sg = sokol.gfx;
+const tocubemap_shader = @import("equirectangular_to_cubemap.zig");
+const rowmath = @import("rowmath");
+const FrameBuffer = @import("FrameBuffer.zig");
+const FloatTexture = @import("FloatTexture.zig");
+const Mat4 = rowmath.Mat4;
+const Vec3 = rowmath.Vec3;
+pub const EnvCubemap = @This();
+
+fn init(texture: FloatTexture) void {
+
     // configure global opengl state
     // -----------------------------
     // enable seamless cubemap sampling for lower mip levels in the pre-filter map.
     //     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-    const captureFbo = FrameBuffer.init(512);
-    _ = captureFbo;
-
-    const envCubemap = Cubemap.create(512);
-    _ = envCubemap;
 
     // pbr: set up projection and view matrices for capturing data onto the 6 cubemap face directions
     // ----------------------------------------------------------------------------------------------
@@ -18,7 +24,6 @@ fn renderEnv() void {
         0.1,
         10.0,
     );
-    _ = captureProjection;
 
     const captureViews = [_]Mat4{
         Mat4.makeLookAt(Vec3.zero, Vec3.right, Vec3.down),
@@ -30,28 +35,50 @@ fn renderEnv() void {
     };
     _ = captureViews;
 
-    //     // pbr: convert HDR equirectangular environment map to cubemap equivalent
-    //     // ----------------------------------------------------------------------
-    //     equirectangularToCubemapShader.use();
-    //     equirectangularToCubemapShader.setInt("equirectangularMap", 0);
-    //     equirectangularToCubemapShader.setMat4("projection", captureProjection);
-    //     glActiveTexture(GL_TEXTURE0);
-    //     glBindTexture(GL_TEXTURE_2D, hdrTexture);
-    //
-    //     glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
-    //     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
-    //     for (unsigned int i = 0; i < 6; ++i)
-    //     {
-    //         equirectangularToCubemapShader.setMat4("view", captureViews[i]);
-    //         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
-    //         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //
-    //         renderCube();
-    //     }
-    //     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    //     // then let OpenGL generate mipmaps from first mip face (combatting visible dots artifact)
-    //     glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
-    //     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+    // pbr: convert HDR equirectangular environment map to cubemap equivalent
+    // ----------------------------------------------------------------------
+    const equirectangularToCubemap_pip = tocubemap_shader_pipeline();
+    {
+        const pass_action = sg.PassAction{
+            .colors = .{
+                .{
+                    .load_action = .CLEAR,
+                    .clear_value = .{ .r = 0.2, .g = 0.3, .b = 0.3, .a = 1.0 },
+                },
+                .{},
+                .{},
+                .{},
+            },
+        };
+
+        {
+            sg.applyPipeline(equirectangularToCubemap_pip);
+
+            var bind = sg.Bindings{};
+            bind.fs.images[tocubemap_shader.SLOT_texture1] = texture.image;
+            bind.fs.samplers[tocubemap_shader.SLOT_sampler1] = texture.sampler;
+            sg.applyBindings(bind);
+
+            var vs_params = tocubemap_shader.VsParams{
+                .projection = captureProjection.m,
+            };
+            for (0..6) |i| {
+                vs_params.view = captureViews[i].m;
+
+                sg.beginPass(.{
+                    .action = pass_action,
+                    .attachments = captureFbo.attachments,
+                });
+                defer sg.endPass();
+                // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, envCubemap, 0);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+                // renderCube();
+            }
+            //     glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
+            //     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+        }
+    }
 
     //     // pbr: create an irradiance cubemap, and re-scale capture FBO to irradiance scale.
     //     // --------------------------------------------------------------------------------
@@ -167,4 +194,21 @@ fn renderEnv() void {
     //     renderQuad();
     //
     //     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+fn tocubemap_shader_pipeline() sg.Pipeline {
+    const pip_desc = sg.PipelineDesc{
+        .label = "tocubemap",
+        .shader = sg.makeShader(tocubemap_shader.equirectangularToCubemapShader(
+            sg.queryBackend(),
+        )),
+        // .depth = .{
+        //     .write_enabled = true,
+        //     .compare = .LESS_EQUAL,
+        // },
+    };
+    // pip_desc.layout.attrs[pbr_shader.ATTR_vs_aPos].format = .FLOAT3;
+    // pip_desc.layout.attrs[pbr_shader.ATTR_vs_aNormal].format = .FLOAT3;
+    // pip_desc.layout.attrs[pbr_shader.ATTR_vs_aTexCoords].format = .FLOAT2;
+    return sg.makePipeline(pip_desc);
 }

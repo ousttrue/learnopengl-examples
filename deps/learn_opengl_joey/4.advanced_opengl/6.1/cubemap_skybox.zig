@@ -264,7 +264,7 @@ export fn frame() void {
             sg.applyPipeline(state.skybox_pip);
             var bind = sg.Bindings{};
             bind.vertex_buffers[0] = state.skybox_vbo;
-            bind.fs.images[skybox_shader.SLOT_skybox] = skybox.image;
+            bind.fs.images[skybox_shader.SLOT_skybox] =  skybox.image;
             bind.fs.samplers[skybox_shader.SLOT_skyboxSampler] = skybox.sampler;
             sg.applyBindings(bind);
             var vs_params = skybox_shader.VsParams{

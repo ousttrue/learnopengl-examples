@@ -15,7 +15,7 @@ const Texture = @import("Texture.zig");
 const FloatTexture = @import("FloatTexture.zig");
 const PbrMaterial = @import("PbrMaterial.zig");
 const FrameBuffer = @import("FrameBuffer.zig");
-const Cubemap = @import("Cubemap.zig");
+// const EnvCubemap = @import("EnvCubemap.zig");
 
 // settings
 const SCR_WIDTH = 1280;
@@ -97,7 +97,11 @@ export fn hdr_texture_callback(response: [*c]const sokol.fetch.Response) void {
             response.*.data.ptr,
             response.*.data.size,
         ) catch @panic("FloatTexture.load");
-        _ = texture;
+
+        const cubemap = FrameBuffer.initCubemap(512);
+
+        cubemap.render(texture);
+
         std.debug.print("loaded\n", .{});
     } else if (response.*.failed) {
         std.debug.print("[hdr_texture_callback] failed\n", .{});
@@ -505,5 +509,6 @@ pub fn main() void {
         .height = SCR_HEIGHT,
         .high_dpi = true,
         .window_title = TITLE,
+        .logger = .{ .func = sokol.log.func },
     });
 }
