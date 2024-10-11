@@ -2,14 +2,13 @@ const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const stb_image = @import("stb_image");
-
-pub const Texture = @This();
+pub const FloatTexture = @This();
 
 image: sg.Image,
 sampler: sg.Sampler,
 
-pub fn init(width: i32, height: i32, pixels: [*]const u8) @This() {
-    const texture = Texture{
+pub fn init(width: i32, height: i32, pixels: [*]const f32) @This() {
+    const texture = FloatTexture{
         .image = sg.allocImage(),
         .sampler = sg.allocSampler(),
     };
@@ -19,49 +18,50 @@ pub fn init(width: i32, height: i32, pixels: [*]const u8) @This() {
         .width = width,
         .height = height,
         // set pixel_format to RGBA8 for WebGL
-        .pixel_format = .RGBA8,
+        .pixel_format = .RGBA16F,
     };
     img_desc.data.subimage[0][0] = .{
         .ptr = pixels,
-        .size = @intCast(width * height * 4),
+        .size = @intCast(width * height * 2 * 4),
     };
     sg.initImage(texture.image, img_desc);
 
     sg.initSampler(texture.sampler, .{
-        .wrap_u = .REPEAT,
-        .wrap_v = .REPEAT,
+        .wrap_u = .CLAMP_TO_EDGE,
+        .wrap_v = .CLAMP_TO_EDGE,
         .min_filter = .LINEAR,
         .mag_filter = .LINEAR,
-        .compare = .NEVER,
     });
     return texture;
 }
 
 pub fn load(ptr: ?*const anyopaque, size: usize) !@This() {
-    var img_width: c_int = undefined;
-    var img_height: c_int = undefined;
-    var num_channels: c_int = undefined;
-    const desired_channels = 4;
-    const _pixels = stb_image.stbi_load_from_memory(
+    // pbr: load the HDR environment map
+    // ---------------------------------
+    stb_image.stbi_set_flip_vertically_on_load(1);
+    var width: c_int = undefined;
+    var height: c_int = undefined;
+    var nrComponents: c_int = undefined;
+    const _pixels = stb_image.stbi_loadf_from_memory(
         @ptrCast(ptr),
         @intCast(size),
-        &img_width,
-        &img_height,
-        &num_channels,
-        desired_channels,
+        &width,
+        &height,
+        &nrComponents,
+        4,
     );
     const pixels = _pixels orelse {
-        return error.stbi_load;
+        return error.stbi_loadf_from_memory;
     };
     defer stb_image.stbi_image_free(pixels);
 
     std.debug.print(
         "{} x {}: {}ch\n",
-        .{ img_width, img_height, num_channels },
+        .{ width, height, nrComponents },
     );
-    return Texture.init(
-        img_width,
-        img_height,
+    return FloatTexture.init(
+        width,
+        height,
         pixels,
     );
 }
