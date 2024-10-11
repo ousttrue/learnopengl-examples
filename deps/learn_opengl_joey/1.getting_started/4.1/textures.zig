@@ -9,7 +9,7 @@ const Texture = @import("Texture.zig");
 const SCR_WIDTH = 800;
 const SCR_HEIGHT = 600;
 const TITLE = "1.4.1 textures";
-const TEXTURE = "container.jpg";
+const TEXTURE = "resources/textures/container.jpg";
 
 const state = struct {
     var pip = sg.Pipeline{};

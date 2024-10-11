@@ -19,14 +19,14 @@ const SCR_HEIGHT = 600;
 const TITLE = "4.6.1 cubemaps_skybox";
 
 const src = [6][:0]const u8{
-    "skybox_right.jpg",
-    "skybox_left.jpg",
-    "skybox_top.jpg",
-    "skybox_bottom.jpg",
-    "skybox_front.jpg",
-    "skybox_back.jpg",
+    "resource/texture/skybox/right.jpg",
+    "resource/texture/skybox/left.jpg",
+    "resource/texture/skybox/top.jpg",
+    "resource/texture/skybox/bottom.jpg",
+    "resource/texture/skybox/front.jpg",
+    "resource/texture/skybox/back.jpg",
 };
-const TEXTURE = "container.jpg";
+const TEXTURE = "resources/textures/container.jpg";
 
 const state = struct {
     var input = InputState{};
