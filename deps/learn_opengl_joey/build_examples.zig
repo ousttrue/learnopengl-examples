@@ -41,6 +41,14 @@ pub const examples = [_]Example{
     },
     // 4.advanced_opengl
     .{
+        .name = "framebuffers",
+        .root_source = _4 ++ "5.1/framebuffers.zig",
+        .shaders = &.{
+            _4 ++ "5.1/framebuffers.glsl",
+            _4 ++ "5.1/screen.glsl",
+        },
+    },
+    .{
         .name = "cubemap_skybox",
         .root_source = _4 ++ "6.1/cubemap_skybox.zig",
         .shaders = &.{

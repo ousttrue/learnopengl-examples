@@ -28,6 +28,10 @@
             .url = "git+https://github.com/ousttrue/ozz-animation.git#d91fd0da39dd2484ee0d130966459e6bd3e71568",
             .hash = "1220b0c856cfe4739561c1fa0aa1eb1c09231a063c0f7c610a4428c1e3bd9909cece",
         },
+        .joey = .{
+            .url = "git+https://github.com/JoeyDeVries/LearnOpenGL.git#a545a703f95893258d16dbe32f5ccbb6400fd213",
+            .hash = "122052ff11d9dc47227ba31516c1325d76160254dc8c77d6d9c61029b555bbec57e3",
+        },
     },
     .paths = .{""},
 }

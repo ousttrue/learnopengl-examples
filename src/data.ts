@@ -59,6 +59,13 @@ export const CATEGORIES: CategoryType[] = [
   {
     name: "Advanced OpenGL", articles: [
       {
+        title: "Framebuffers",
+        url: "https://learnopengl.com/Advanced-OpenGL/Framebuffers",
+        samples: [
+          "framebuffers",
+        ],
+      },
+      {
         title: "Cubemap",
         url: "https://learnopengl.com/Advanced-OpenGL/Cubemaps",
         samples: [
