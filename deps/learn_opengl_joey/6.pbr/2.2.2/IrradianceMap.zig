@@ -6,50 +6,28 @@ pub const IrradianceMap = @This();
 
 image: sg.Image,
 sampler: sg.Sampler,
-attachments: [6]sg.Attachments,
+
+const size = 32;
 
 // pbr: create an irradiance cubemap, and re-scale capture FBO to irradiance scale.
 pub fn init() @This() {
-    const size = 32;
-    var img_desc = sg.ImageDesc{
-        .type = .CUBE,
-        .render_target = true,
-        .width = size,
-        .height = size,
-        .pixel_format = .RGBA16F,
-        .sample_count = 1,
-        .label = "color-image",
-    };
-    const color_img = sg.makeImage(img_desc);
-
-    img_desc.pixel_format = .DEPTH;
-    img_desc.label = "depth-image";
-    // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
-    const depth_img = sg.makeImage(img_desc);
-
-    var attachments_desc = sg.AttachmentsDesc{
-        .depth_stencil = .{
-            .image = depth_img,
-        },
-        .label = "offscreen-attachments",
-    };
-    attachments_desc.colors[0].image = color_img;
-    var attachments: [6]sg.Attachments = undefined;
-    for (0..6) |i| {
-        attachments_desc.colors[0].slice = @intCast(i);
-        attachments[i] = sg.makeAttachments(attachments_desc);
-    }
-
     return .{
-        .image = color_img,
-        .sampler = sg.makeSampler(.{
-            // glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            // glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            // glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            // glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            // glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        .image = sg.makeImage(.{
+            .type = .CUBE,
+            .render_target = true,
+            .width = size,
+            .height = size,
+            .pixel_format = .RGBA16F,
+            .sample_count = 1,
+            .label = "color-image",
         }),
-        .attachments = attachments,
+        .sampler = sg.makeSampler(.{
+            .wrap_u = .CLAMP_TO_EDGE,
+            .wrap_v = .CLAMP_TO_EDGE,
+            .wrap_w = .CLAMP_TO_EDGE,
+            .min_filter = .LINEAR,
+            .mag_filter = .LINEAR,
+        }),
     };
 }
 
@@ -71,42 +49,15 @@ pub fn render(self: @This(), envCubemap: EnvCubemap) void {
     pip_desc.colors[0].pixel_format = .RGBA16F;
     pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
     const pip = sg.makePipeline(pip_desc);
+    defer sg.destroyPipeline(pip);
 
-    var bind = sg.Bindings{};
-    bind.vertex_buffers[0] = envCubemap.vbo;
-    bind.fs.images[shader.SLOT_environmentMap] = envCubemap.image;
-    bind.fs.samplers[shader.SLOT_environmentMapSampler] = envCubemap.sampler;
-    for (0..6) |i| {
-        const pass_action = sg.PassAction{
-            .colors = .{
-                .{
-                    .load_action = .CLEAR,
-                    .clear_value = .{ .r = 0.1, .g = 0.1, .b = 0.1, .a = 1.0 },
-                },
-                .{},
-                .{},
-                .{},
-            },
-        };
-        sg.beginPass(.{
-            .action = pass_action,
-            .attachments = self.attachments[i],
-        });
-        defer sg.endPass();
-
-        {
-            sg.applyPipeline(pip);
-            sg.applyBindings(bind);
-            const vs_params = shader.VsParams{
-                .projection = EnvCubemap.captureProjection.m,
-                .view = EnvCubemap.captureViews[i].m,
-            };
-            sg.applyUniforms(
-                .VS,
-                shader.SLOT_vs_params,
-                sg.asRange(&vs_params),
-            );
-            sg.draw(0, 36, 1);
-        }
-    }
+    envCubemap.renderCube(
+        size,
+        envCubemap.image,
+        envCubemap.sampler,
+        self.image,
+        pip,
+        shader,
+        .{},
+    );
 }

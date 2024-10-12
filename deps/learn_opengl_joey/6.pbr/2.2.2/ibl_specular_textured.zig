@@ -16,6 +16,7 @@ const FloatTexture = @import("FloatTexture.zig");
 const PbrMaterial = @import("PbrMaterial.zig");
 const EnvCubemap = @import("EnvCubemap.zig");
 const IrradianceMap = @import("IrradianceMap.zig");
+const PrefilterMap = @import("prefilterMap.zig");
 
 // settings
 const SCR_WIDTH = 1280;
@@ -48,12 +49,17 @@ const state = struct {
         .{ 300.0, 300.0, 300.0, 0 },
         .{ 300.0, 300.0, 300.0, 0 },
     };
+
+    var env_cubemap: ?EnvCubemap = null;
+    var irradiance_map: ?IrradianceMap = null;
+    var prefilter_map: ?PrefilterMap = null;
 };
 
 export fn init() void {
     sg.setup(.{
         .environment = sokol.glue.environment(),
         .logger = .{ .func = sokol.log.func },
+        // .pipeline_pool_size = 128,
     });
     sokol.time.setup();
 
@@ -101,9 +107,15 @@ export fn hdr_texture_callback(response: [*c]const sokol.fetch.Response) void {
         const env_cubemap = EnvCubemap.init();
         env_cubemap.render(texture);
 
-        const irradiance_map = IrradianceMap.init();          
+        const irradiance_map = IrradianceMap.init();
         irradiance_map.render(env_cubemap);
 
+        const prefilter_map = PrefilterMap.init();
+        prefilter_map.render(env_cubemap);
+
+        state.env_cubemap = env_cubemap;
+        state.irradiance_map = irradiance_map;
+        state.prefilter_map = prefilter_map;
     } else if (response.*.failed) {
         std.debug.print("[hdr_texture_callback] failed\n", .{});
     }
