@@ -17,7 +17,6 @@ const quadVertices = [_]f32{
 pub fn init() @This() {
     return .{
         .image = sg.makeImage(.{
-            .type = .CUBE,
             .render_target = true,
             .width = size,
             .height = size,

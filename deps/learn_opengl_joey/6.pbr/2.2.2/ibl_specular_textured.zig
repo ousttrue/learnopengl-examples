@@ -15,21 +15,59 @@ const Sphere = @import("Sphere.zig");
 const Texture = @import("Texture.zig");
 const FloatTexture = @import("FloatTexture.zig");
 const PbrMaterial = @import("PbrMaterial.zig");
+const PbrTextureSrc = @import("PbrTextureSrc.zig");
 const EnvCubemap = @import("EnvCubemap.zig");
 const IrradianceMap = @import("IrradianceMap.zig");
 const PrefilterMap = @import("PrefilterMap.zig");
 const BrdfLut = @import("BrdfLut.zig");
+const PbrMaterialFetcher = @import("PbrMaterialFetcher.zig");
 
 // settings
 const SCR_WIDTH = 1280;
 const SCR_HEIGHT = 720;
 const TITLE = "6.2.2.2 ibl_specular_textured";
-var fetch_buffer: [1024 * 1024 * 10]u8 = undefined;
+var fetch_buffer: [1024 * 1024 * 15]u8 = undefined;
+
+const IbrMaterial = struct {
+    irradiance_map: IrradianceMap,
+    prefilter_map: PrefilterMap,
+    brdf_lut: BrdfLut,
+
+    pub fn bind(m: @This(), bindings: *sg.Bindings) void {
+        bindings.fs.images[pbr_shader.SLOT_irradianceMap] = m.irradiance_map.image;
+        bindings.fs.samplers[pbr_shader.SLOT_irradianceMapSampler] = m.irradiance_map.sampler;
+        bindings.fs.images[pbr_shader.SLOT_prefilterMap] = m.prefilter_map.image;
+        bindings.fs.samplers[pbr_shader.SLOT_prefilterMapSampler] = m.prefilter_map.sampler;
+        bindings.fs.images[pbr_shader.SLOT_brdfLUT] = m.brdf_lut.image;
+        bindings.fs.samplers[pbr_shader.SLOT_brdfLUTSampler] = m.brdf_lut.sampler;
+    }
+};
 
 const state = struct {
     var pbr_pip = sg.Pipeline{};
     var background_pip = sg.Pipeline{};
     var sphere: Sphere = undefined;
+
+    var iron_fetcher = PbrMaterialFetcher{
+        .src = PbrTextureSrc.iron,
+        .on_load = on_iron,
+    };
+    var gold_fetcher = PbrMaterialFetcher{
+        .src = PbrTextureSrc.gold,
+        .on_load = on_gold,
+    };
+    var grass_fetcher = PbrMaterialFetcher{
+        .src = PbrTextureSrc.grass,
+        .on_load = on_grass,
+    };
+    var plastic_fetcher = PbrMaterialFetcher{
+        .src = PbrTextureSrc.plastic,
+        .on_load = on_plastic,
+    };
+    var wall_fetcher = PbrMaterialFetcher{
+        .src = PbrTextureSrc.wall,
+        .on_load = on_wall,
+    };
 
     var iron: ?PbrMaterial = null;
     var gold: ?PbrMaterial = null;
@@ -54,9 +92,7 @@ const state = struct {
     };
 
     var env_cubemap: ?EnvCubemap = null;
-    var irradiance_map: ?IrradianceMap = null;
-    var prefilter_map: ?PrefilterMap = null;
-    var brdf_lut: ?BrdfLut = null;
+    var ibr_material: ?IbrMaterial = null;
 };
 
 export fn init() void {
@@ -77,6 +113,7 @@ export fn init() void {
                 .compare = .LESS_EQUAL,
             },
             .index_type = .UINT16,
+            .primitive_type = .TRIANGLE_STRIP,
         };
         pip_desc.layout.attrs[pbr_shader.ATTR_vs_aPos].format = .FLOAT3;
         pip_desc.layout.attrs[pbr_shader.ATTR_vs_aNormal].format = .FLOAT3;
@@ -100,19 +137,40 @@ export fn init() void {
     }
 
     state.sphere = Sphere.init(std.heap.c_allocator) catch @panic("Sphere.init");
+    std.debug.print("\n\n", .{});
 
     sokol.fetch.setup(.{
-        .max_requests = 1,
+        .max_requests = 1 + 5 * 5,
         .num_channels = 1,
         .num_lanes = 1,
+        .logger = .{ .func = sokol.log.func },
     });
     _ = sokol.fetch.send(.{
         .path = "resources/textures/hdr/newport_loft.hdr",
         .callback = hdr_texture_callback,
         .buffer = sokol.fetch.asRange(&fetch_buffer),
     });
+    state.iron_fetcher.fetch(&fetch_buffer);
+    state.gold_fetcher.fetch(&fetch_buffer);
+    state.grass_fetcher.fetch(&fetch_buffer);
+    state.plastic_fetcher.fetch(&fetch_buffer);
+    state.wall_fetcher.fetch(&fetch_buffer);
+}
 
-    std.debug.print("\n\n", .{});
+fn on_iron(pbr: PbrMaterial) void {
+    state.iron = pbr;
+}
+fn on_gold(pbr: PbrMaterial) void {
+    state.gold = pbr;
+}
+fn on_grass(pbr: PbrMaterial) void {
+    state.grass = pbr;
+}
+fn on_plastic(pbr: PbrMaterial) void {
+    state.plastic = pbr;
+}
+fn on_wall(pbr: PbrMaterial) void {
+    state.wall = pbr;
 }
 
 export fn hdr_texture_callback(response: [*c]const sokol.fetch.Response) void {
@@ -135,9 +193,11 @@ export fn hdr_texture_callback(response: [*c]const sokol.fetch.Response) void {
         brdf_lut.render();
 
         state.env_cubemap = env_cubemap;
-        state.irradiance_map = irradiance_map;
-        state.prefilter_map = prefilter_map;
-        state.brdf_lut = brdf_lut;
+        state.ibr_material = .{
+            .irradiance_map = irradiance_map,
+            .prefilter_map = prefilter_map,
+            .brdf_lut = brdf_lut,
+        };
     } else if (response.*.failed) {
         std.debug.print("[hdr_texture_callback] failed\n", .{});
     }
@@ -173,6 +233,40 @@ export fn frame() void {
         defer sg.endPass();
         sg.applyViewport(0, 0, sokol.app.width(), sokol.app.height(), false);
 
+        if (state.ibr_material) |ibl| {
+            const campos = state.orbit.camera.transform.translation;
+            const fs = pbr_shader.FsParams{
+                .lightColors = state.lightColors,
+                .lightPositions = state.lightPositions,
+                .camPos = .{
+                    campos.x,
+                    campos.y,
+                    campos.z,
+                },
+            };
+
+            if (state.iron) |pbr| {
+                const model = Mat4.makeTranslation(.{ .x = -5.0, .y = 0.0, .z = 2.0 });
+                render_pbr_sphere(ibl, pbr, &fs, .{ .view = view, .projection = projection, .model = model });
+            }
+            if (state.gold) |pbr| {
+                const model = Mat4.makeTranslation(.{ .x = -3.0, .y = 0.0, .z = 2.0 });
+                render_pbr_sphere(ibl, pbr, &fs, .{ .view = view, .projection = projection, .model = model });
+            }
+            if (state.grass) |pbr| {
+                const model = Mat4.makeTranslation(.{ .x = -1.0, .y = 0.0, .z = 2.0 });
+                render_pbr_sphere(ibl, pbr, &fs, .{ .view = view, .projection = projection, .model = model });
+            }
+            if (state.plastic) |pbr| {
+                const model = Mat4.makeTranslation(.{ .x = 1.0, .y = 0.0, .z = 2.0 });
+                render_pbr_sphere(ibl, pbr, &fs, .{ .view = view, .projection = projection, .model = model });
+            }
+            if (state.wall) |pbr| {
+                const model = Mat4.makeTranslation(.{ .x = 3.0, .y = 0.0, .z = 2.0 });
+                render_pbr_sphere(ibl, pbr, &fs, .{ .view = view, .projection = projection, .model = model });
+            }
+        }
+
         // render light source (simply re-render sphere at light positions)
         // this looks a bit off as we use the same shader, but it'll make their positions obvious and
         // keeps the codeprint small.
@@ -205,8 +299,7 @@ export fn frame() void {
                 .projection = projection.m,
             };
             sg.applyUniforms(.VS, pbr_shader.SLOT_vs_params, sg.asRange(&vs));
-            var bind = sg.Bindings{
-            };
+            var bind = sg.Bindings{};
             bind.vertex_buffers[0] = cubemap.vbo;
             bind.fs.images[background_shader.SLOT_environmentMap] = cubemap.image;
             bind.fs.samplers[background_shader.SLOT_environmentMapSampler] = cubemap.sampler;
@@ -214,6 +307,36 @@ export fn frame() void {
             sg.draw(0, 36, 1);
         }
     }
+}
+
+const Opts = struct {
+    view: Mat4,
+    projection: Mat4,
+    model: Mat4,
+};
+fn render_pbr_sphere(
+    ibl: IbrMaterial,
+    pbr: PbrMaterial,
+    fs: *const pbr_shader.FsParams,
+    opts: Opts,
+) void {
+    sg.applyPipeline(state.pbr_pip);
+    var bind = sg.Bindings{};
+    state.sphere.bind(&bind);
+    ibl.bind(&bind);
+    pbr.bind(&bind);
+    sg.applyBindings(bind);
+    const vs = pbr_shader.VsParams{
+        .model = opts.model.m,
+        .view = opts.view.m,
+        .projection = opts.projection.m,
+        .normalMatrixCol0 = .{ 1, 0, 0 },
+        .normalMatrixCol1 = .{ 0, 1, 0 },
+        .normalMatrixCol2 = .{ 0, 0, 1 },
+    };
+    sg.applyUniforms(.VS, pbr_shader.SLOT_vs_params, sg.asRange(&vs));
+    sg.applyUniforms(.FS, pbr_shader.SLOT_fs_params, sg.asRange(fs));
+    sg.draw(0, state.sphere.index_count, 1);
 }
 
 export fn event(e: [*c]const sokol.app.Event) void {
