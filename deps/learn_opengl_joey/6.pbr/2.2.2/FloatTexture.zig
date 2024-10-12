@@ -18,11 +18,11 @@ pub fn init(width: i32, height: i32, pixels: [*]const f32) @This() {
         .width = width,
         .height = height,
         // set pixel_format to RGBA8 for WebGL
-        .pixel_format = .RGBA16F,
+        .pixel_format = .RGBA32F,
     };
     img_desc.data.subimage[0][0] = .{
         .ptr = pixels,
-        .size = @intCast(width * height * 2 * 4),
+        .size = @intCast(width * height * 4 * 4),
     };
     sg.initImage(texture.image, img_desc);
 
@@ -38,7 +38,7 @@ pub fn init(width: i32, height: i32, pixels: [*]const f32) @This() {
 pub fn load(ptr: ?*const anyopaque, size: usize) !@This() {
     // pbr: load the HDR environment map
     // ---------------------------------
-    stb_image.stbi_set_flip_vertically_on_load(1);
+    // stb_image.stbi_set_flip_vertically_on_load(1);
     var width: c_int = undefined;
     var height: c_int = undefined;
     var nrComponents: c_int = undefined;

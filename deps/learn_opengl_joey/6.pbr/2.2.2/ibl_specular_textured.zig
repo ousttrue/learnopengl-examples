@@ -3,6 +3,7 @@ const std = @import("std");
 const sokol = @import("sokol");
 const sg = sokol.gfx;
 const pbr_shader = @import("pbr.glsl.zig");
+const background_shader = @import("background.glsl.zig");
 const rowmath = @import("rowmath");
 const stb_image = @import("stb_image");
 const InputState = rowmath.InputState;
@@ -27,6 +28,7 @@ var fetch_buffer: [1024 * 1024 * 10]u8 = undefined;
 
 const state = struct {
     var pbr_pip = sg.Pipeline{};
+    var background_pip = sg.Pipeline{};
     var sphere: Sphere = undefined;
 
     var iron: ?PbrMaterial = null;
@@ -61,7 +63,6 @@ export fn init() void {
     sg.setup(.{
         .environment = sokol.glue.environment(),
         .logger = .{ .func = sokol.log.func },
-        // .pipeline_pool_size = 128,
     });
     sokol.time.setup();
 
@@ -81,6 +82,20 @@ export fn init() void {
         pip_desc.layout.attrs[pbr_shader.ATTR_vs_aNormal].format = .FLOAT3;
         pip_desc.layout.attrs[pbr_shader.ATTR_vs_aTexCoords].format = .FLOAT2;
         state.pbr_pip = sg.makePipeline(pip_desc);
+    }
+    {
+        var pip_desc = sg.PipelineDesc{
+            .label = "background",
+            .shader = sg.makeShader(background_shader.backgroundShaderDesc(
+                sg.queryBackend(),
+            )),
+            .depth = .{
+                .write_enabled = true,
+                .compare = .LESS_EQUAL,
+            },
+        };
+        pip_desc.layout.attrs[pbr_shader.ATTR_vs_aPos].format = .FLOAT3;
+        state.background_pip = sg.makePipeline(pip_desc);
     }
 
     state.sphere = Sphere.init(std.heap.c_allocator) catch @panic("Sphere.init");
@@ -128,6 +143,7 @@ export fn hdr_texture_callback(response: [*c]const sokol.fetch.Response) void {
 }
 
 export fn frame() void {
+    defer sg.commit();
     sokol.fetch.dowork();
 
     state.input.screen_width = sokol.app.widthf();
@@ -136,31 +152,7 @@ export fn frame() void {
     state.input.mouse_wheel = 0;
     const view = state.orbit.viewMatrix();
     const projection = state.orbit.projectionMatrix();
-    const campos = state.orbit.camera.transform.translation;
-    const fs = pbr_shader.FsParams{
-        .lightColors = state.lightColors,
-        .lightPositions = state.lightPositions,
-        .camPos = .{
-            campos.x,
-            campos.y,
-            campos.z,
-        },
-    };
 
-    // initialize static shader uniforms before rendering
-    // --------------------------------------------------
-    //     glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-    //     pbrShader.use();
-    //     pbrShader.setMat4("projection", projection);
-    //     backgroundShader.use();
-    //     backgroundShader.setMat4("projection", projection);
-    //
-    //     // then before rendering, configure the viewport to the original framebuffer's screen dimensions
-    //     int scrWidth, scrHeight;
-    //     glfwGetFramebufferSize(window, &scrWidth, &scrHeight);
-    //     glViewport(0, 0, scrWidth, scrHeight);
-
-    defer sg.commit();
     {
         const pass_action = sg.PassAction{
             .colors = .{
@@ -178,115 +170,7 @@ export fn frame() void {
             .swapchain = sokol.glue.swapchain(),
         });
         defer sg.endPass();
-
-        if (state.iron) |material| {
-            // iron
-            sg.applyPipeline(state.pbr_pip);
-            const model = Mat4.makeTranslation(.{ .x = -5.0, .y = 0.0, .z = 2.0 });
-            const vs = pbr_shader.VsParams{
-                .model = model.m,
-                .view = view.m,
-                .projection = projection.m,
-                .normalMatrixCol0 = .{ 1, 0, 0 },
-                .normalMatrixCol1 = .{ 0, 1, 0 },
-                .normalMatrixCol2 = .{ 0, 0, 1 },
-            };
-            sg.applyUniforms(.VS, pbr_shader.SLOT_vs_params, sg.asRange(&vs));
-            sg.applyUniforms(.FS, pbr_shader.SLOT_fs_params, sg.asRange(&fs));
-            var bind = sg.Bindings{};
-            state.sphere.bind(&bind);
-            material.bind(&bind);
-            sg.applyBindings(bind);
-            sg.draw(0, state.sphere.index_count, 1);
-        }
-
-        if (state.gold) |material| {
-            _ = material;
-            //         // gold
-            //         glActiveTexture(GL_TEXTURE3);
-            //         glBindTexture(GL_TEXTURE_2D, goldAlbedoMap);
-            //         glActiveTexture(GL_TEXTURE4);
-            //         glBindTexture(GL_TEXTURE_2D, goldNormalMap);
-            //         glActiveTexture(GL_TEXTURE5);
-            //         glBindTexture(GL_TEXTURE_2D, goldMetallicMap);
-            //         glActiveTexture(GL_TEXTURE6);
-            //         glBindTexture(GL_TEXTURE_2D, goldRoughnessMap);
-            //         glActiveTexture(GL_TEXTURE7);
-            //         glBindTexture(GL_TEXTURE_2D, goldAOMap);
-            //
-            //         model = glm::mat4(1.0f);
-            //         model = glm::translate(model, glm::vec3(-3.0, 0.0, 2.0));
-            //         pbrShader.setMat4("model", model);
-            //         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-            //         renderSphere();
-            //
-        }
-
-        if (state.grass) |material| {
-            _ = material;
-            //         // grass
-            //         glActiveTexture(GL_TEXTURE3);
-            //         glBindTexture(GL_TEXTURE_2D, grassAlbedoMap);
-            //         glActiveTexture(GL_TEXTURE4);
-            //         glBindTexture(GL_TEXTURE_2D, grassNormalMap);
-            //         glActiveTexture(GL_TEXTURE5);
-            //         glBindTexture(GL_TEXTURE_2D, grassMetallicMap);
-            //         glActiveTexture(GL_TEXTURE6);
-            //         glBindTexture(GL_TEXTURE_2D, grassRoughnessMap);
-            //         glActiveTexture(GL_TEXTURE7);
-            //         glBindTexture(GL_TEXTURE_2D, grassAOMap);
-            //
-            //         model = glm::mat4(1.0f);
-            //         model = glm::translate(model, glm::vec3(-1.0, 0.0, 2.0));
-            //         pbrShader.setMat4("model", model);
-            //         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-            //         renderSphere();
-            //
-        }
-
-        if (state.plastic) |material| {
-            _ = material;
-            //         // plastic
-            //         glActiveTexture(GL_TEXTURE3);
-            //         glBindTexture(GL_TEXTURE_2D, plasticAlbedoMap);
-            //         glActiveTexture(GL_TEXTURE4);
-            //         glBindTexture(GL_TEXTURE_2D, plasticNormalMap);
-            //         glActiveTexture(GL_TEXTURE5);
-            //         glBindTexture(GL_TEXTURE_2D, plasticMetallicMap);
-            //         glActiveTexture(GL_TEXTURE6);
-            //         glBindTexture(GL_TEXTURE_2D, plasticRoughnessMap);
-            //         glActiveTexture(GL_TEXTURE7);
-            //         glBindTexture(GL_TEXTURE_2D, plasticAOMap);
-            //
-            //         model = glm::mat4(1.0f);
-            //         model = glm::translate(model, glm::vec3(1.0, 0.0, 2.0));
-            //         pbrShader.setMat4("model", model);
-            //         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-            //         renderSphere();
-            //
-        }
-
-        if (state.wall) |material| {
-            _ = material;
-            //         // wall
-            //         glActiveTexture(GL_TEXTURE3);
-            //         glBindTexture(GL_TEXTURE_2D, wallAlbedoMap);
-            //         glActiveTexture(GL_TEXTURE4);
-            //         glBindTexture(GL_TEXTURE_2D, wallNormalMap);
-            //         glActiveTexture(GL_TEXTURE5);
-            //         glBindTexture(GL_TEXTURE_2D, wallMetallicMap);
-            //         glActiveTexture(GL_TEXTURE6);
-            //         glBindTexture(GL_TEXTURE_2D, wallRoughnessMap);
-            //         glActiveTexture(GL_TEXTURE7);
-            //         glBindTexture(GL_TEXTURE_2D, wallAOMap);
-            //
-            //         model = glm::mat4(1.0f);
-            //         model = glm::translate(model, glm::vec3(3.0, 0.0, 2.0));
-            //         pbrShader.setMat4("model", model);
-            //         pbrShader.setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-            //         renderSphere();
-            //
-        }
+        sg.applyViewport(0, 0, sokol.app.width(), sokol.app.height(), false);
 
         // render light source (simply re-render sphere at light positions)
         // this looks a bit off as we use the same shader, but it'll make their positions obvious and
@@ -313,58 +197,23 @@ export fn frame() void {
         }
 
         // render skybox (render as last to prevent overdraw)
-        //         backgroundShader.use();
-
-        //         backgroundShader.setMat4("view", view);
-        //         glActiveTexture(GL_TEXTURE0);
-        //         glBindTexture(GL_TEXTURE_CUBE_MAP, envCubemap);
-        //         //glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap); // display irradiance map
-        //         //glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap); // display prefilter map
-        //         renderCube();
-        // render BRDF map to screen
-        //brdfShader.Use();
-        //renderQuad();
+        if (state.env_cubemap) |cubemap| {
+            sg.applyPipeline(state.background_pip);
+            const vs = background_shader.VsParams{
+                .view = view.m,
+                .projection = projection.m,
+            };
+            sg.applyUniforms(.VS, pbr_shader.SLOT_vs_params, sg.asRange(&vs));
+            var bind = sg.Bindings{
+            };
+            bind.vertex_buffers[0] = cubemap.vbo;
+            bind.fs.images[background_shader.SLOT_environmentMap] = cubemap.image;
+            bind.fs.samplers[background_shader.SLOT_environmentMapSampler] = cubemap.sampler;
+            sg.applyBindings(bind);
+            sg.draw(0, 36, 1);
+        }
     }
 }
-
-// // utility function for loading a 2D texture from file
-// // ---------------------------------------------------
-// unsigned int loadTexture(char const * path)
-// {
-//     unsigned int textureID;
-//     glGenTextures(1, &textureID);
-//
-//     int width, height, nrComponents;
-//     unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
-//     if (data)
-//     {
-//         GLenum format;
-//         if (nrComponents == 1)
-//             format = GL_RED;
-//         else if (nrComponents == 3)
-//             format = GL_RGB;
-//         else if (nrComponents == 4)
-//             format = GL_RGBA;
-//
-//         glBindTexture(GL_TEXTURE_2D, textureID);
-//         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-//         glGenerateMipmap(GL_TEXTURE_2D);
-//
-//         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-//         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//
-//         stbi_image_free(data);
-//     }
-//     else
-//     {
-//         std::cout << "Texture failed to load at path: " << path << std::endl;
-//         stbi_image_free(data);
-//     }
-//
-//     return textureID;
-// }
 
 export fn event(e: [*c]const sokol.app.Event) void {
     switch (e.*.type) {

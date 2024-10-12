@@ -51,6 +51,15 @@ pub const examples = [_]Example{
     },
     // 6.pbr
     .{
+        .name = "hdr_cubemap",
+        .root_source = _6 ++ "2.2.2/hdr_cubemap.zig",
+        .shaders = &.{
+            _6 ++ "2.2.2/equirectangular_to_cubemap.glsl",
+            _6 ++ "2.2.2/background.glsl",
+            _6 ++ "2.2.2/quad.glsl",
+        },
+    },
+    .{
         .name = "ibl_specular_textured",
         .root_source = _6 ++ "2.2.2/ibl_specular_textured.zig",
         .shaders = &.{
@@ -59,6 +68,7 @@ pub const examples = [_]Example{
             _6 ++ "2.2.2/irradiance_convolution.glsl",
             _6 ++ "2.2.2/prefilter.glsl",
             _6 ++ "2.2.2/brdf.glsl",
+            _6 ++ "2.2.2/background.glsl",
         },
     },
 };

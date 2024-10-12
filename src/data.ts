@@ -103,6 +103,7 @@ export const CATEGORIES: CategoryType[] = [
         url: "https://learnopengl.com/PBR/IBL/Specular-IBL",
         samples: [
           "ibl_specular",
+          "hdr_cubemap",
           "ibl_specular_textured",
         ],
       },
