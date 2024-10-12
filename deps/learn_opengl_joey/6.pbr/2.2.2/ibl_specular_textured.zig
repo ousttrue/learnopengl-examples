@@ -17,7 +17,7 @@ const FloatTexture = @import("FloatTexture.zig");
 const PbrMaterial = @import("PbrMaterial.zig");
 const EnvCubemap = @import("EnvCubemap.zig");
 const IrradianceMap = @import("IrradianceMap.zig");
-const PrefilterMap = @import("prefilterMap.zig");
+const PrefilterMap = @import("PrefilterMap.zig");
 const BrdfLut = @import("BrdfLut.zig");
 
 // settings
