@@ -17,6 +17,7 @@ const PbrMaterial = @import("PbrMaterial.zig");
 const EnvCubemap = @import("EnvCubemap.zig");
 const IrradianceMap = @import("IrradianceMap.zig");
 const PrefilterMap = @import("prefilterMap.zig");
+const BrdfLut = @import("BrdfLut.zig");
 
 // settings
 const SCR_WIDTH = 1280;
@@ -53,6 +54,7 @@ const state = struct {
     var env_cubemap: ?EnvCubemap = null;
     var irradiance_map: ?IrradianceMap = null;
     var prefilter_map: ?PrefilterMap = null;
+    var brdf_lut: ?BrdfLut = null;
 };
 
 export fn init() void {
@@ -113,9 +115,13 @@ export fn hdr_texture_callback(response: [*c]const sokol.fetch.Response) void {
         const prefilter_map = PrefilterMap.init();
         prefilter_map.render(env_cubemap);
 
+        const brdf_lut = BrdfLut.init();
+        brdf_lut.render();
+
         state.env_cubemap = env_cubemap;
         state.irradiance_map = irradiance_map;
         state.prefilter_map = prefilter_map;
+        state.brdf_lut = brdf_lut;
     } else if (response.*.failed) {
         std.debug.print("[hdr_texture_callback] failed\n", .{});
     }
@@ -320,37 +326,6 @@ export fn frame() void {
         //renderQuad();
     }
 }
-
-// // renderQuad() renders a 1x1 XY quad in NDC
-// // -----------------------------------------
-// unsigned int quadVAO = 0;
-// unsigned int quadVBO;
-// void renderQuad()
-// {
-//     if (quadVAO == 0)
-//     {
-//         float quadVertices[] = {
-//             // positions        // texture Coords
-//             -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-//             -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-//              1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-//              1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-//         };
-//         // setup plane VAO
-//         glGenVertexArrays(1, &quadVAO);
-//         glGenBuffers(1, &quadVBO);
-//         glBindVertexArray(quadVAO);
-//         glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-//         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-//         glEnableVertexAttribArray(0);
-//         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-//         glEnableVertexAttribArray(1);
-//         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-//     }
-//     glBindVertexArray(quadVAO);
-//     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-//     glBindVertexArray(0);
-// }
 
 // // utility function for loading a 2D texture from file
 // // ---------------------------------------------------

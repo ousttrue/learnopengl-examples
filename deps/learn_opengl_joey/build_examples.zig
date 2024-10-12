@@ -58,6 +58,7 @@ pub const examples = [_]Example{
             _6 ++ "2.2.2/equirectangular_to_cubemap.glsl",
             _6 ++ "2.2.2/irradiance_convolution.glsl",
             _6 ++ "2.2.2/prefilter.glsl",
+            _6 ++ "2.2.2/brdf.glsl",
         },
     },
 };
