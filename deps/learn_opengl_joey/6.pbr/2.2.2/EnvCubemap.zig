@@ -23,8 +23,8 @@ pub const captureProjection = Mat4.makePerspective(
 pub const captureViews = [_]Mat4{
     Mat4.makeLookAt(Vec3.zero, Vec3.right, Vec3.down),
     Mat4.makeLookAt(Vec3.zero, Vec3.left, Vec3.down),
-    Mat4.makeLookAt(Vec3.zero, Vec3.down, Vec3.backward),
     Mat4.makeLookAt(Vec3.zero, Vec3.up, Vec3.forward),
+    Mat4.makeLookAt(Vec3.zero, Vec3.down, Vec3.backward),
     Mat4.makeLookAt(Vec3.zero, Vec3.forward, Vec3.down),
     Mat4.makeLookAt(Vec3.zero, Vec3.backward, Vec3.down),
 };
