@@ -63,8 +63,7 @@ pub fn render(self: @This(), env_cubemap: EnvCubemap) void {
         const roughness = @as(f32, @floatFromInt(mip_level)) / @as(f32, @floatFromInt(maxMipLevels - 1));
         env_cubemap.renderCube(
             mip_size,
-            env_cubemap.image,
-            env_cubemap.sampler,
+            .{ .image = env_cubemap.image, .sampler = env_cubemap.sampler },
             self.image,
             pip,
             shader,

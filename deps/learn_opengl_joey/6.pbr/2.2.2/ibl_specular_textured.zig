@@ -95,6 +95,7 @@ export fn init() void {
             },
         };
         pip_desc.layout.attrs[pbr_shader.ATTR_vs_aPos].format = .FLOAT3;
+        pip_desc.layout.buffers[0].stride = 4 * 8;
         state.background_pip = sg.makePipeline(pip_desc);
     }
 

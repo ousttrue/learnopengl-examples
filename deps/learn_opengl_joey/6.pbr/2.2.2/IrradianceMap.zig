@@ -53,8 +53,7 @@ pub fn render(self: @This(), envCubemap: EnvCubemap) void {
 
     envCubemap.renderCube(
         size,
-        envCubemap.image,
-        envCubemap.sampler,
+        .{ .image = envCubemap.image, .sampler = envCubemap.sampler },
         self.image,
         pip,
         shader,
