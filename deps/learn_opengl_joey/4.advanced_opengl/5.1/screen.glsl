@@ -16,8 +16,8 @@ out vec4 FragColor;
 
 in vec2 TexCoords;
 
-uniform texture2D screenTexture;
-uniform sampler screenTextureSampler;
+layout(binding=0)uniform texture2D screenTexture;
+layout(binding=0)uniform sampler screenTextureSampler;
 
 void main()
 {

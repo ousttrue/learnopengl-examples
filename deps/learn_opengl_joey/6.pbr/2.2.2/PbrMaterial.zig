@@ -12,14 +12,14 @@ roughness: Texture,
 ao: Texture,
 
 pub fn bind(m: @This(), bindings: *sg.Bindings) void {
-    bindings.fs.images[pbr_shader.SLOT_albedoMap] = m.albedo.image;
-    bindings.fs.samplers[pbr_shader.SLOT_albedoMapSampler] = m.albedo.sampler;
-    bindings.fs.images[pbr_shader.SLOT_normalMap] = m.normal.image;
-    bindings.fs.samplers[pbr_shader.SLOT_normalMapSampler] = m.normal.sampler;
-    bindings.fs.images[pbr_shader.SLOT_metallicMap] = m.metallic.image;
-    bindings.fs.samplers[pbr_shader.SLOT_metallicMapSampler] = m.metallic.sampler;
-    bindings.fs.images[pbr_shader.SLOT_roughnessMap] = m.roughness.image;
-    bindings.fs.samplers[pbr_shader.SLOT_roughnessMapSampler] = m.roughness.sampler;
-    bindings.fs.images[pbr_shader.SLOT_aoMap] = m.ao.image;
-    bindings.fs.samplers[pbr_shader.SLOT_aoMapSampler] = m.ao.sampler;
+    bindings.images[pbr_shader.IMG_albedoMap] = m.albedo.image;
+    bindings.samplers[pbr_shader.SMP_albedoMapSampler] = m.albedo.sampler;
+    bindings.images[pbr_shader.IMG_normalMap] = m.normal.image;
+    bindings.samplers[pbr_shader.SMP_normalMapSampler] = m.normal.sampler;
+    bindings.images[pbr_shader.IMG_metallicMap] = m.metallic.image;
+    bindings.samplers[pbr_shader.SMP_metallicMapSampler] = m.metallic.sampler;
+    bindings.images[pbr_shader.IMG_roughnessMap] = m.roughness.image;
+    bindings.samplers[pbr_shader.SMP_roughnessMapSampler] = m.roughness.sampler;
+    bindings.images[pbr_shader.IMG_aoMap] = m.ao.image;
+    bindings.samplers[pbr_shader.SMP_aoMapSampler] = m.ao.sampler;
 }

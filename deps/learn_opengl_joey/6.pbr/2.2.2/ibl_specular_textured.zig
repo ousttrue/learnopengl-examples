@@ -34,12 +34,12 @@ const IbrMaterial = struct {
     brdf_lut: BrdfLut,
 
     pub fn bind(m: @This(), bindings: *sg.Bindings) void {
-        bindings.fs.images[pbr_shader.SLOT_irradianceMap] = m.irradiance_map.image;
-        bindings.fs.samplers[pbr_shader.SLOT_irradianceMapSampler] = m.irradiance_map.sampler;
-        bindings.fs.images[pbr_shader.SLOT_prefilterMap] = m.prefilter_map.image;
-        bindings.fs.samplers[pbr_shader.SLOT_prefilterMapSampler] = m.prefilter_map.sampler;
-        bindings.fs.images[pbr_shader.SLOT_brdfLUT] = m.brdf_lut.image;
-        bindings.fs.samplers[pbr_shader.SLOT_brdfLUTSampler] = m.brdf_lut.sampler;
+        bindings.images[pbr_shader.IMG_irradianceMap] = m.irradiance_map.image;
+        bindings.samplers[pbr_shader.SMP_irradianceMapSampler] = m.irradiance_map.sampler;
+        bindings.images[pbr_shader.IMG_prefilterMap] = m.prefilter_map.image;
+        bindings.samplers[pbr_shader.SMP_prefilterMapSampler] = m.prefilter_map.sampler;
+        bindings.images[pbr_shader.IMG_brdfLUT] = m.brdf_lut.image;
+        bindings.samplers[pbr_shader.SMP_brdfLUTSampler] = m.brdf_lut.sampler;
     }
 };
 
@@ -115,9 +115,9 @@ export fn init() void {
             .index_type = .UINT16,
             .primitive_type = .TRIANGLE_STRIP,
         };
-        pip_desc.layout.attrs[pbr_shader.ATTR_vs_aPos].format = .FLOAT3;
-        pip_desc.layout.attrs[pbr_shader.ATTR_vs_aNormal].format = .FLOAT3;
-        pip_desc.layout.attrs[pbr_shader.ATTR_vs_aTexCoords].format = .FLOAT2;
+        pip_desc.layout.attrs[pbr_shader.ATTR_pbr_aPos].format = .FLOAT3;
+        pip_desc.layout.attrs[pbr_shader.ATTR_pbr_aNormal].format = .FLOAT3;
+        pip_desc.layout.attrs[pbr_shader.ATTR_pbr_aTexCoords].format = .FLOAT2;
         state.pbr_pip = sg.makePipeline(pip_desc);
     }
     {
@@ -131,7 +131,7 @@ export fn init() void {
                 .compare = .LESS_EQUAL,
             },
         };
-        pip_desc.layout.attrs[pbr_shader.ATTR_vs_aPos].format = .FLOAT3;
+        pip_desc.layout.attrs[pbr_shader.ATTR_pbr_aPos].format = .FLOAT3;
         pip_desc.layout.buffers[0].stride = 4 * 8;
         state.background_pip = sg.makePipeline(pip_desc);
     }
@@ -298,11 +298,11 @@ export fn frame() void {
                 .view = view.m,
                 .projection = projection.m,
             };
-            sg.applyUniforms(.VS, pbr_shader.SLOT_vs_params, sg.asRange(&vs));
+            sg.applyUniforms(pbr_shader.UB_vs_params, sg.asRange(&vs));
             var bind = sg.Bindings{};
             bind.vertex_buffers[0] = cubemap.vbo;
-            bind.fs.images[background_shader.SLOT_environmentMap] = cubemap.image;
-            bind.fs.samplers[background_shader.SLOT_environmentMapSampler] = cubemap.sampler;
+            bind.images[background_shader.IMG_environmentMap] = cubemap.image;
+            bind.samplers[background_shader.SMP_environmentMapSampler] = cubemap.sampler;
             sg.applyBindings(bind);
             sg.draw(0, 36, 1);
         }
@@ -334,8 +334,8 @@ fn render_pbr_sphere(
         .normalMatrixCol1 = .{ 0, 1, 0 },
         .normalMatrixCol2 = .{ 0, 0, 1 },
     };
-    sg.applyUniforms(.VS, pbr_shader.SLOT_vs_params, sg.asRange(&vs));
-    sg.applyUniforms(.FS, pbr_shader.SLOT_fs_params, sg.asRange(fs));
+    sg.applyUniforms(pbr_shader.UB_vs_params, sg.asRange(&vs));
+    sg.applyUniforms(pbr_shader.UB_fs_params, sg.asRange(fs));
     sg.draw(0, state.sphere.index_count, 1);
 }
 

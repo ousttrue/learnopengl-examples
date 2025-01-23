@@ -13,7 +13,7 @@ pub fn init(
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
 ) @This() {
-    var deps = .{
+    var deps = Deps{
         .rowmath = b.dependency("rowmath", .{}).module("rowmath"),
         .sokol_dep = b.dependency("sokol", .{
             .target = target,
@@ -32,8 +32,7 @@ pub fn init(
     };
 
     // inject the cimgui header search path into the sokol C library compile step
-    const cimgui_root = deps.cimgui_dep.namedWriteFiles("cimgui").getDirectory();
-    deps.sokol_dep.artifact("sokol_clib").addIncludePath(cimgui_root);
+    deps.sokol_dep.artifact("sokol_clib").addIncludePath(deps.cimgui_dep.path("src"));
 
     const cimgui_clib_artifact = deps.cimgui_dep.artifact("cimgui_clib");
     cimgui_clib_artifact.step.dependOn(&deps.sokol_dep.artifact("sokol_clib").step);
@@ -64,6 +63,6 @@ pub fn inject_dependencies(
     compile.root_module.addImport("rowmath", self.rowmath);
     compile.root_module.addImport(
         "stb_image",
-        &self.stbi_dep.artifact("stb_image").root_module,
+        self.stbi_dep.artifact("stb_image").root_module,
     );
 }

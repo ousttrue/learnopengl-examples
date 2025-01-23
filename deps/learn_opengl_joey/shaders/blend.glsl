@@ -12,7 +12,7 @@ void main() {
 @end
 
 @fs fs_bg
-uniform bg_fs_params {
+layout(binding=0)uniform bg_fs_params {
     float tick;
 };
 

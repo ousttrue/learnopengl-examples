@@ -20,8 +20,8 @@ out vec4 FragColor;
 in vec3 ourColor;
 in vec2 TexCoord;
 
-uniform texture2D texture1;
-uniform sampler sampler1;
+layout(binding=0)uniform texture2D texture1;
+layout(binding=0)uniform sampler sampler1;
 
 void main()
 {

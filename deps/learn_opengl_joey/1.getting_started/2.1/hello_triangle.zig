@@ -37,7 +37,7 @@ export fn init() void {
         .shader = sg.makeShader(shader.helloTriangleShaderDesc(sg.queryBackend())),
         .label = "hello_triangle",
     };
-    pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
+    pip_desc.layout.attrs[shader.ATTR_hello_triangle_aPos].format = .FLOAT3;
     state.pip = sg.makePipeline(pip_desc);
 }
 

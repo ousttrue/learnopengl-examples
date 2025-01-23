@@ -1,7 +1,7 @@
 @vs vs
 layout (location = 0) in vec3 aPos;
 
-uniform vs_params {
+layout(binding=0)uniform vs_params {
 mat4 model;
 mat4 view;
 mat4 projection;

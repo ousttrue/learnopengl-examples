@@ -3,7 +3,7 @@ layout (location = 0) in vec3 aPos;
 
 out vec3 TexCoords;
 
-uniform vs_params {
+layout(binding=0)uniform vs_params {
 mat4 projection;
 mat4 view;
 };
@@ -21,8 +21,8 @@ out vec4 FragColor;
 
 in vec3 TexCoords;
 
-uniform textureCube skybox;
-uniform sampler skyboxSampler;
+layout(binding=0)uniform textureCube skybox;
+layout(binding=0)uniform sampler skyboxSampler;
 
 void main()
 {    

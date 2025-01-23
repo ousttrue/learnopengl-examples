@@ -75,8 +75,8 @@ pub fn render(self: @This()) void {
         .primitive_type = .TRIANGLE_STRIP,
     };
     pip_desc.colors[0].pixel_format = .RGBA16F;
-    pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
-    pip_desc.layout.attrs[shader.ATTR_vs_aTexCoords].format = .FLOAT2;
+    pip_desc.layout.attrs[shader.ATTR_brdf_aPos].format = .FLOAT3;
+    pip_desc.layout.attrs[shader.ATTR_brdf_aTexCoords].format = .FLOAT2;
     const pip = sg.makePipeline(pip_desc);
     defer sg.destroyPipeline(pip);
 

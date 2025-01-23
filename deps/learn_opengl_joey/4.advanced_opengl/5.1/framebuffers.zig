@@ -116,8 +116,8 @@ export fn init() void {
             },
         };
         pip_desc.colors[0].pixel_format = .RGBA8;
-        pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
-        pip_desc.layout.attrs[shader.ATTR_vs_aTexCoords].format = .FLOAT2;
+        pip_desc.layout.attrs[shader.ATTR_framebuffers_aPos].format = .FLOAT3;
+        pip_desc.layout.attrs[shader.ATTR_framebuffers_aTexCoords].format = .FLOAT2;
         state.pip = sg.makePipeline(pip_desc);
     }
 
@@ -163,8 +163,8 @@ export fn init() void {
             //     .compare = .LESS,
             // },
         };
-        pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT2;
-        pip_desc.layout.attrs[shader.ATTR_vs_aTexCoords].format = .FLOAT2;
+        pip_desc.layout.attrs[shader.ATTR_framebuffers_aPos].format = .FLOAT2;
+        pip_desc.layout.attrs[shader.ATTR_framebuffers_aTexCoords].format = .FLOAT2;
         state.screen_pip = sg.makePipeline(pip_desc);
     }
 
@@ -245,8 +245,8 @@ export fn frame() void {
             // cubes
             var bind = sg.Bindings{};
             bind.vertex_buffers[0] = state.cube_vbo;
-            bind.fs.images[shader.SLOT_texture1] = texture.image;
-            bind.fs.samplers[shader.SLOT_texture1Sampler] = texture.sampler;
+            bind.images[shader.IMG_texture1] = texture.image;
+            bind.samplers[shader.SMP_texture1Sampler] = texture.sampler;
             sg.applyBindings(bind);
             {
                 const vs_params = shader.VsParams{
@@ -254,7 +254,7 @@ export fn frame() void {
                     .view = view.m,
                     .projection = projection.m,
                 };
-                sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
+                sg.applyUniforms(shader.UB_vs_params, sg.asRange(&vs_params));
                 sg.draw(0, 36, 1);
             }
             {
@@ -263,22 +263,22 @@ export fn frame() void {
                     .view = view.m,
                     .projection = projection.m,
                 };
-                sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
+                sg.applyUniforms(shader.UB_vs_params, sg.asRange(&vs_params));
                 sg.draw(0, 36, 1);
             }
         }
         if (state.plane_texture) |texture| {
             var bind = sg.Bindings{};
             bind.vertex_buffers[0] = state.plane_vbo;
-            bind.fs.images[shader.SLOT_texture1] = texture.image;
-            bind.fs.samplers[shader.SLOT_texture1Sampler] = texture.sampler;
+            bind.images[shader.IMG_texture1] = texture.image;
+            bind.samplers[shader.SMP_texture1Sampler] = texture.sampler;
             sg.applyBindings(bind);
             const vs_params = shader.VsParams{
                 .model = Mat4.identity.m,
                 .view = view.m,
                 .projection = projection.m,
             };
-            sg.applyUniforms(.VS, shader.SLOT_vs_params, sg.asRange(&vs_params));
+            sg.applyUniforms(shader.UB_vs_params, sg.asRange(&vs_params));
             sg.draw(0, 6, 1);
         }
     }
@@ -304,8 +304,8 @@ export fn frame() void {
             sg.applyPipeline(state.screen_pip);
             var bind = sg.Bindings{};
             bind.vertex_buffers[0] = state.screen_vbo;
-            bind.fs.images[screen_shader.SLOT_screenTexture] = state.fbo.image;
-            bind.fs.samplers[screen_shader.SLOT_screenTextureSampler] = state.fbo.sampler;
+            bind.images[screen_shader.IMG_screenTexture] = state.fbo.image;
+            bind.samplers[screen_shader.SMP_screenTextureSampler] = state.fbo.sampler;
             sg.applyBindings(bind);
             sg.draw(0, 6, 1);
         }

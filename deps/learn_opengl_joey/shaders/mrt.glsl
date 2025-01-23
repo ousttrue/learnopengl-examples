@@ -8,7 +8,7 @@
 // shaders for offscreen-pass rendering
 @vs vs_offscreen
 
-uniform offscreen_params {
+layout(binding=0)uniform offscreen_params {
     mat4 mvp;
 };
 

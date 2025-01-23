@@ -93,7 +93,7 @@ export fn init() void {
                 .compare = .LESS_EQUAL,
             },
         };
-        pip_desc.layout.attrs[colors_shader.ATTR_vs_aPos].format = .FLOAT3;
+        pip_desc.layout.attrs[colors_shader.ATTR_colors_aPos].format = .FLOAT3;
         state.lighting_pip = sg.makePipeline(pip_desc);
     }
     {
@@ -107,7 +107,7 @@ export fn init() void {
                 .compare = .LESS_EQUAL,
             },
         };
-        pip_desc.layout.attrs[colors_shader.ATTR_vs_aPos].format = .FLOAT3;
+        pip_desc.layout.attrs[colors_shader.ATTR_colors_aPos].format = .FLOAT3;
         state.light_cube_pip = sg.makePipeline(pip_desc);
     }
 }
@@ -153,13 +153,13 @@ export fn frame() void {
                 .view = view.m,
                 .projection = projection.m,
             };
-            sg.applyUniforms(.VS, colors_shader.SLOT_vs_params, sg.asRange(&vs_params));
+            sg.applyUniforms(colors_shader.UB_vs_params, sg.asRange(&vs_params));
 
             const fs_params = colors_shader.FsParams{
                 .objectColor = .{ 1.0, 0.5, 0.31 },
                 .lightColor = .{ 1.0, 1.0, 1.0 },
             };
-            sg.applyUniforms(.FS, colors_shader.SLOT_fs_params, sg.asRange(&fs_params));
+            sg.applyUniforms(colors_shader.UB_fs_params, sg.asRange(&fs_params));
 
             // render the cube
             sg.draw(0, 36, 1);
@@ -180,7 +180,7 @@ export fn frame() void {
                 .view = view.m,
                 .projection = projection.m,
             };
-            sg.applyUniforms(.VS, light_cube_shader.SLOT_vs_params, sg.asRange(&vs_params));
+            sg.applyUniforms(light_cube_shader.UB_vs_params, sg.asRange(&vs_params));
 
             sg.draw(0, 36, 1);
         }

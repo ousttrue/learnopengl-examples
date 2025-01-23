@@ -3,31 +3,32 @@
     .version = "0.0.0",
     .dependencies = .{
         .cimgui = .{
-            .path = "../cimgui",
+            .url = "git+https://github.com/floooh/dcimgui.git#9356c08eb4d1d320e79e418a36d59a427627634a",
+            .hash = "1220c640ad23d8800437166865e54f172c612fcfe6e000149a2b2af631c37b605f50",
         },
         .stb_image = .{
             .path = "../stb_image",
         },
         .@"sokol-tools-bin" = .{
-            .url = "git+https://github.com/floooh/sokol-tools-bin.git#8cc8c257380c9a5e230a84aeebf09cd500903fbc",
-            .hash = "12200f5129c997728160ab584adcc939b9dbca6f802d7273f386dad777de85e80421",
+            .url = "git+https://github.com/floooh/sokol-tools-bin.git#ef8085f4ea119e966d434096e9be5a4f782e262a",
+            .hash = "122098d8d293155e6afd216ee0b00b85600fdf49424239d060bc0dec666478b9e6b2",
         },
         .sokol = .{
-            .url = "git+https://github.com/ousttrue/sokol-zig.git#38014bc673fd3c82f44612f02573d5af00dfc66f",
-            .hash = "12205b36041f858db146628cd3b25fae4cda5f161a6a52d48fa22cde0c03b689ccb8",
+            .url = "git+https://github.com/ousttrue/sokol-zig.git#832406c9096ffa73b7082c81bf653fa613f7467a",
+            .hash = "1220e2f2b5b9b4abafaaf3785c262d8da11fb3a5376ebe10c46363d225e95545effa",
         },
         .rowmath = .{
-            .url = "git+https://github.com/ousttrue/rowmath.git#2e45b1cadd5797c01c161526756cca8b4c48d330",
-            .hash = "1220936a43d2c29ab65c47545da511bcccdba6e7a01506319bcd38e40ded53b2c4f3",
+            .url = "git+https://github.com/ousttrue/rowmath.git#b1d82f097e94d1eaa2c8b18180f10553e8dc45db",
+            .hash = "12209a003f1b957dc95faabf008bb53048de40324e8f3b1c8fcbf4933dc481844885",
         },
         .@"emsdk-zig" = .{
-            .url = "git+https://github.com/ousttrue/emsdk-zig.git#4b3df5dc7824514a3ef99c1dee77ee3087019050",
-            .hash = "122062b769fe74a24375a9409bce954bdd378f79b4b9fd2adf7a23360634cf5ad55c",
+            .url = "git+https://github.com/ousttrue/emsdk-zig.git#809f22970be1011612bb7d30f66f86b29d373a4f",
+            .hash = "122054ac4d1e8660beed583ad89b800c69d982cc2353ca09c75df2bf114a99ad8df6",
         },
-        .@"ozz-animation" = .{
-            .url = "git+https://github.com/ousttrue/ozz-animation.git#d91fd0da39dd2484ee0d130966459e6bd3e71568",
-            .hash = "1220b0c856cfe4739561c1fa0aa1eb1c09231a063c0f7c610a4428c1e3bd9909cece",
-        },
+        // .@"ozz-animation" = .{
+        //     .url = "git+https://github.com/ousttrue/ozz-animation.git#d91fd0da39dd2484ee0d130966459e6bd3e71568",
+        //     .hash = "1220b0c856cfe4739561c1fa0aa1eb1c09231a063c0f7c610a4428c1e3bd9909cece",
+        // },
         .joey = .{
             .url = "git+https://github.com/JoeyDeVries/LearnOpenGL.git#a545a703f95893258d16dbe32f5ccbb6400fd213",
             .hash = "122052ff11d9dc47227ba31516c1325d76160254dc8c77d6d9c61029b555bbec57e3",

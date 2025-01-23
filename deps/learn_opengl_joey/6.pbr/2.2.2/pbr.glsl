@@ -7,7 +7,7 @@ out vec2 TexCoords;
 out vec3 WorldPos;
 out vec3 Normal;
 
-uniform vs_params {
+layout(binding=0)uniform vs_params {
   mat4 projection;
   mat4 view;
   mat4 model;
@@ -33,27 +33,27 @@ in vec3 WorldPos;
 in vec3 Normal;
 
 // material parameters
-uniform texture2D albedoMap;
-uniform texture2D normalMap;
-uniform texture2D metallicMap;
-uniform texture2D roughnessMap;
-uniform texture2D aoMap;
-uniform sampler albedoMapSampler;
-uniform sampler normalMapSampler;
-uniform sampler metallicMapSampler;
-uniform sampler roughnessMapSampler;
-uniform sampler aoMapSampler;
+layout(binding=0)uniform texture2D albedoMap;
+layout(binding=1)uniform texture2D normalMap;
+layout(binding=2)uniform texture2D metallicMap;
+layout(binding=3)uniform texture2D roughnessMap;
+layout(binding=4)uniform texture2D aoMap;
+layout(binding=0)uniform sampler albedoMapSampler;
+layout(binding=1)uniform sampler normalMapSampler;
+layout(binding=2)uniform sampler metallicMapSampler;
+layout(binding=3)uniform sampler roughnessMapSampler;
+layout(binding=4)uniform sampler aoMapSampler;
 
 
 // IBL
-uniform textureCube irradianceMap;
-uniform textureCube prefilterMap;
-uniform texture2D brdfLUT;
-uniform sampler irradianceMapSampler;
-uniform sampler prefilterMapSampler;
-uniform sampler brdfLUTSampler;
+layout(binding=5)uniform textureCube irradianceMap;
+layout(binding=6)uniform textureCube prefilterMap;
+layout(binding=7)uniform texture2D brdfLUT;
+layout(binding=5)uniform sampler irradianceMapSampler;
+layout(binding=6)uniform sampler prefilterMapSampler;
+layout(binding=7)uniform sampler brdfLUTSampler;
 
-uniform fs_params {
+layout(binding=1)uniform fs_params {
   // lights
   vec4 lightPositions[4];
   vec4 lightColors[4];

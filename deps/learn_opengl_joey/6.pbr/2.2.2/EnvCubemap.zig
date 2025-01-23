@@ -85,7 +85,7 @@ pub fn init() @This() {
             .compare = .LESS_EQUAL,
         },
     };
-    pip_desc.layout.attrs[background_shader.ATTR_vs_aPos].format = .FLOAT3;
+    pip_desc.layout.attrs[background_shader.ATTR_background_aPos].format = .FLOAT3;
     pip_desc.layout.buffers[0].stride = 8 * 4;
 
     return .{
@@ -127,7 +127,7 @@ pub fn render(self: @This(), texture: FloatTexture) void {
         },
     };
     pip_desc.colors[0].pixel_format = .RGBA16F;
-    pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
+    pip_desc.layout.attrs[shader.ATTR_equirectangular_to_cubemap_aPos].format = .FLOAT3;
     pip_desc.layout.buffers[0].stride = 4 * 8;
     const pip = sg.makePipeline(pip_desc);
     defer sg.destroyPipeline(pip);
@@ -183,8 +183,8 @@ pub fn renderCube(
 
         var bind = sg.Bindings{};
         bind.vertex_buffers[0] = self.vbo;
-        bind.fs.images[shader.SLOT_equirectangularMap] = src.image;
-        bind.fs.samplers[shader.SLOT_equirectangularMapSampler] = src.sampler;
+        bind.images[shader.IMG_equirectangularMap] = src.image;
+        bind.samplers[shader.SMP_equirectangularMapSampler] = src.sampler;
         const pass_action = sg.PassAction{
             .depth = .{
                 .load_action = .CLEAR,
@@ -218,8 +218,7 @@ pub fn renderCube(
             vs_params.view[13] = 0;
             vs_params.view[14] = 0;
             sg.applyUniforms(
-                .VS,
-                shader.SLOT_vs_params,
+                shader.UB_vs_params,
                 sg.asRange(&vs_params),
             );
             if (@hasField(@TypeOf(opts), "roughness")) {
@@ -227,8 +226,7 @@ pub fn renderCube(
                     .roughness = opts.roughness,
                 };
                 sg.applyUniforms(
-                    .FS,
-                    SHADER.SLOT_fs_params,
+                    SHADER.UB_fs_params,
                     sg.asRange(&fs_params),
                 );
             }
@@ -246,8 +244,8 @@ pub fn draw(self: @This(), opts: DrawOpts) void {
     sg.applyPipeline(self.background_pip);
     var bind = sg.Bindings{};
     bind.vertex_buffers[0] = self.vbo;
-    bind.fs.images[background_shader.SLOT_environmentMap] = self.image;
-    bind.fs.samplers[background_shader.SLOT_environmentMapSampler] = self.sampler;
+    bind.images[background_shader.IMG_environmentMap] = self.image;
+    bind.samplers[background_shader.SMP_environmentMapSampler] = self.sampler;
     var vs_params = background_shader.VsParams{
         .view = opts.view.m,
         .projection = opts.projection.m,
@@ -255,7 +253,7 @@ pub fn draw(self: @This(), opts: DrawOpts) void {
     vs_params.view[12] = 0;
     vs_params.view[13] = 0;
     vs_params.view[14] = 0;
-    sg.applyUniforms(.VS, background_shader.SLOT_vs_params, sg.asRange(&vs_params));
+    sg.applyUniforms(background_shader.UB_vs_params, sg.asRange(&vs_params));
     sg.applyBindings(bind);
     sg.draw(0, 36, 1);
 }

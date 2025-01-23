@@ -113,8 +113,8 @@ export fn init() void {
                 .compare = .LESS,
             },
         };
-        pip_desc.layout.attrs[cubemap_shader.ATTR_vs_aPos].format = .FLOAT3;
-        pip_desc.layout.attrs[cubemap_shader.ATTR_vs_aTexCoords].format = .FLOAT2;
+        pip_desc.layout.attrs[cubemap_shader.ATTR_cubemap_aPos].format = .FLOAT3;
+        pip_desc.layout.attrs[cubemap_shader.ATTR_cubemap_aTexCoords].format = .FLOAT2;
         state.cubemap_pip = sg.makePipeline(pip_desc);
     }
 
@@ -178,7 +178,7 @@ export fn init() void {
             },
             .cull_mode = .NONE,
         };
-        pip_desc.layout.attrs[skybox_shader.ATTR_vs_aPos].format = .FLOAT3;
+        pip_desc.layout.attrs[skybox_shader.ATTR_skybox_aPos].format = .FLOAT3;
         state.skybox_pip = sg.makePipeline(pip_desc);
     }
 
@@ -246,15 +246,15 @@ export fn frame() void {
             sg.applyPipeline(state.cubemap_pip);
             var bind = sg.Bindings{};
             bind.vertex_buffers[0] = state.cubemap_vbo;
-            bind.fs.images[cubemap_shader.SLOT_texture1] = texture.image;
-            bind.fs.samplers[cubemap_shader.SLOT_texture1Sampler] = texture.sampler;
+            bind.images[cubemap_shader.IMG_texture1] = texture.image;
+            bind.samplers[cubemap_shader.SMP_texture1Sampler] = texture.sampler;
             sg.applyBindings(bind);
             const vs_params = cubemap_shader.VsParams{
                 .view = state.orbit.viewMatrix().m,
                 .projection = state.orbit.projectionMatrix().m,
                 .model = Mat4.identity.m,
             };
-            sg.applyUniforms(.VS, cubemap_shader.SLOT_vs_params, sg.asRange(&vs_params));
+            sg.applyUniforms(cubemap_shader.UB_vs_params, sg.asRange(&vs_params));
             sg.draw(0, 36, 1);
         }
 
@@ -264,8 +264,8 @@ export fn frame() void {
             sg.applyPipeline(state.skybox_pip);
             var bind = sg.Bindings{};
             bind.vertex_buffers[0] = state.skybox_vbo;
-            bind.fs.images[skybox_shader.SLOT_skybox] =  skybox.image;
-            bind.fs.samplers[skybox_shader.SLOT_skyboxSampler] = skybox.sampler;
+            bind.images[skybox_shader.IMG_skybox] =  skybox.image;
+            bind.samplers[skybox_shader.SMP_skyboxSampler] = skybox.sampler;
             sg.applyBindings(bind);
             var vs_params = skybox_shader.VsParams{
                 .view = state.orbit.viewMatrix().m,
@@ -274,7 +274,7 @@ export fn frame() void {
             vs_params.view[12] = 0;
             vs_params.view[13] = 0;
             vs_params.view[14] = 0;
-            sg.applyUniforms(.VS, skybox_shader.SLOT_vs_params, sg.asRange(&vs_params));
+            sg.applyUniforms(skybox_shader.UB_vs_params, sg.asRange(&vs_params));
             sg.draw(0, 36, 1);
         }
     }

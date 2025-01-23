@@ -49,7 +49,7 @@ pub fn render(self: @This(), env_cubemap: EnvCubemap) void {
     };
     pip_desc.colors[0].pixel_format = .RGBA16F;
     pip_desc.layout.buffers[0].stride = 4 * 8;
-    pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
+    pip_desc.layout.attrs[shader.ATTR_prefilter_aPos].format = .FLOAT3;
     const pip = sg.makePipeline(pip_desc);
     defer sg.destroyPipeline(pip);
 

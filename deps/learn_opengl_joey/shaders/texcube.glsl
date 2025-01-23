@@ -8,7 +8,7 @@
 #pragma sokol @ctype mat4 m.Mat4
 
 #pragma sokol @vs vs
-uniform vs_params {
+layout(binding=0)uniform vs_params {
     mat4 mvp;
 };
 

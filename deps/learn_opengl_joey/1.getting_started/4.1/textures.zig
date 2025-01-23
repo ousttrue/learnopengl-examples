@@ -55,9 +55,9 @@ export fn init() void {
         .label = "textures",
         .index_type = .UINT16,
     };
-    pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
-    pip_desc.layout.attrs[shader.ATTR_vs_aColor].format = .FLOAT3;
-    pip_desc.layout.attrs[shader.ATTR_vs_aTexCoord].format = .FLOAT2;
+    pip_desc.layout.attrs[shader.ATTR_textures_aPos].format = .FLOAT3;
+    pip_desc.layout.attrs[shader.ATTR_textures_aColor].format = .FLOAT3;
+    pip_desc.layout.attrs[shader.ATTR_textures_aTexCoord].format = .FLOAT2;
     state.pip = sg.makePipeline(pip_desc);
 
     sokol.fetch.setup(.{
@@ -111,8 +111,8 @@ export fn frame() void {
             var bind = sg.Bindings{};
             bind.index_buffer = state.index_buffer;
             bind.vertex_buffers[0] = state.vertex_buffer;
-            bind.fs.images[shader.SLOT_texture1] = texture.image;
-            bind.fs.samplers[shader.SLOT_sampler1] = texture.sampler;
+            bind.images[shader.IMG_texture1] = texture.image;
+            bind.samplers[shader.SMP_sampler1] = texture.sampler;
             sg.applyBindings(bind);
             sg.draw(0, 6, 1);
         }

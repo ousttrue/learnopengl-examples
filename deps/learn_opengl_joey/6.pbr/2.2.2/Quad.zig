@@ -23,8 +23,8 @@ pub fn init() @This() {
         )),
         .primitive_type = .TRIANGLE_STRIP,
     };
-    pip_desc.layout.attrs[shader.ATTR_vs_aPos].format = .FLOAT3;
-    pip_desc.layout.attrs[shader.ATTR_vs_aTexCoords].format = .FLOAT2;
+    pip_desc.layout.attrs[shader.ATTR_quad_aPos].format = .FLOAT3;
+    pip_desc.layout.attrs[shader.ATTR_quad_aTexCoords].format = .FLOAT2;
 
     return .{
         .vbo = sg.makeBuffer(.{

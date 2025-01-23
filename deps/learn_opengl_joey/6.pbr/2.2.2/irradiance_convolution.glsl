@@ -3,7 +3,7 @@ layout (location = 0) in vec3 aPos;
 
 out vec3 WorldPos;
 
-uniform vs_params {
+layout(binding=0)uniform vs_params {
 mat4 projection;
 mat4 view;
 };
@@ -19,8 +19,8 @@ void main()
 out vec4 FragColor;
 in vec3 WorldPos;
 
-uniform textureCube environmentMap;
-uniform sampler environmentMapSampler;
+layout(binding=0)uniform textureCube environmentMap;
+layout(binding=0)uniform sampler environmentMapSampler;
 
 const float PI = 3.14159265359;
 

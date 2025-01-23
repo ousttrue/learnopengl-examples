@@ -3,7 +3,7 @@ layout (location = 0) in vec3 aPos;
 
 out vec3 WorldPos;
 
-uniform vs_params {
+layout(binding=0)uniform vs_params {
 mat4 projection;
 mat4 view;
 };
@@ -19,8 +19,8 @@ void main()
 out vec4 FragColor;
 in vec3 WorldPos;
 
-uniform texture2D equirectangularMap;
-uniform sampler equirectangularMapSampler;
+layout(binding=0)uniform texture2D equirectangularMap;
+layout(binding=0)uniform sampler equirectangularMapSampler;
 
 const vec2 invAtan = vec2(0.1591, 0.3183);
 vec2 SampleSphericalMap(vec3 v)
